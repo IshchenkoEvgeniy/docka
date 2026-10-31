@@ -1,13 +1,20 @@
 import { useEffect } from 'react';
 import { useStore } from 'zustand';
-import { imageAsset, useAsset } from '../../elements';
+import type { BoardElement } from '../../core';
+import { definitionFor } from '../../elements';
 import { t } from '../../i18n';
 import { Button } from '../../ui';
 import type { BoardModel } from './model';
 import styles from './Board.module.css';
 
-function Viewer({ asset, onClose }: { readonly asset: string; readonly onClose: () => void }) {
-  const state = useAsset(asset);
+function Viewer({
+  element,
+  onClose,
+}: {
+  readonly element: BoardElement;
+  readonly onClose: () => void;
+}) {
+  const { Viewer: Content } = definitionFor(element.type);
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
       if (event.key !== 'Escape') return;
@@ -19,6 +26,7 @@ function Viewer({ asset, onClose }: { readonly asset: string; readonly onClose: 
       window.removeEventListener('keydown', onKey);
     };
   }, [onClose]);
+  if (Content === null) return null;
   return (
     <div
       className={styles.viewer}
@@ -28,11 +36,14 @@ function Viewer({ asset, onClose }: { readonly asset: string; readonly onClose: 
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      {state.status === 'ready' ? (
-        <img className={styles.viewerImage} src={state.url} alt={t('elements.image.alt')} />
-      ) : (
-        <p className={styles.viewerMessage}>{t('elements.image.syncing')}</p>
-      )}
+      <div
+        className={styles.viewerBody}
+        onPointerDown={(event) => {
+          if (event.target === event.currentTarget) onClose();
+        }}
+      >
+        <Content element={element} />
+      </div>
       <Button className={styles.viewerClose} onClick={onClose}>
         {t('common.close')}
       </Button>
@@ -40,15 +51,14 @@ function Viewer({ asset, onClose }: { readonly asset: string; readonly onClose: 
   );
 }
 
-/** Картинка на весь экран (двойной щелчок или касание выделенной картинки). */
-export function ImageViewer({ model }: { readonly model: BoardModel }) {
+/** Просмотр на весь экран (двойной щелчок или касание выделенного): что показать — решает тип. */
+export function ElementViewer({ model }: { readonly model: BoardModel }) {
   const viewingId = useStore(model.overlay, (state) => state.viewingId);
   const element = viewingId === null ? undefined : model.elements.getSnapshot().get(viewingId);
-  const asset = element === undefined ? null : imageAsset(element.data);
-  if (asset === null) return null;
+  if (element === undefined) return null;
   return (
     <Viewer
-      asset={asset}
+      element={element}
       onClose={() => {
         model.overlay.setState({ viewingId: null });
       }}

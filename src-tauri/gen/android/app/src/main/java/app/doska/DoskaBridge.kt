@@ -12,13 +12,15 @@ import android.provider.Settings
 import android.util.Base64
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
+import androidx.core.content.FileProvider
+import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
 /**
  * Мост «Доски» к Android для веб-части (window.DoskaAndroid):
  * доступ ко всем файлам — чтобы папка проектов могла лежать в общей памяти рядом с Syncthing,
- * и «Поделиться → Доска» — текст и картинки из других приложений.
+ * «Поделиться → Доска» — текст и картинки из других приложений, открытие файлов проекта.
  */
 class DoskaBridge(private val activity: Activity) {
   private val shared = mutableListOf<JSONObject>()
@@ -66,6 +68,29 @@ class DoskaBridge(private val activity: Activity) {
   /** Корень общей памяти, обычно /storage/emulated/0. */
   @JavascriptInterface
   fun externalStorageRoot(): String = Environment.getExternalStorageDirectory().absolutePath
+
+  /**
+   * Открывает файл проекта системной программой (ADR 0005): content:// через FileProvider —
+   * file:// другим приложениям Android не отдаёт. false — файла нет или нечем открыть.
+   */
+  @JavascriptInterface
+  fun openFile(path: String, mime: String): Boolean =
+    try {
+      val file = File(path)
+      if (!file.isFile) {
+        false
+      } else {
+        val uri = FileProvider.getUriForFile(activity, activity.packageName + ".fileprovider", file)
+        val view = Intent(Intent.ACTION_VIEW)
+          .setDataAndType(uri, mime.ifBlank { "*/*" })
+          .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val chooser = Intent.createChooser(view, file.name).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        activity.runOnUiThread { activity.startActivity(chooser) }
+        true
+      }
+    } catch (error: Exception) {
+      false
+    }
 
   /** Полученное через «Поделиться» (JSON-массив); после чтения очищается. */
   @JavascriptInterface

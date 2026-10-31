@@ -6,6 +6,7 @@ interface DoskaAndroid {
   requestAllFilesAccess(): void;
   externalStorageRoot(): string;
   takeShared(): string;
+  openFile(path: string, mime: string): boolean;
 }
 
 /** Получено через «Поделиться → Доска». Файл — в base64 (как его отдаёт Android). */
@@ -21,6 +22,12 @@ export type SharedItem =
 function bridge(): DoskaAndroid | null {
   const candidate: unknown = Reflect.get(window, 'DoskaAndroid');
   return typeof candidate === 'object' && candidate !== null ? (candidate as DoskaAndroid) : null; // объект из addJavascriptInterface
+}
+
+/** Открывает файл программой Android (FileProvider); null — не Android. */
+export function androidFileOpener(): ((path: string, mime: string) => boolean) | null {
+  const android = bridge();
+  return android === null ? null : (path, mime) => android.openFile(path, mime);
 }
 
 export interface AndroidStorage {

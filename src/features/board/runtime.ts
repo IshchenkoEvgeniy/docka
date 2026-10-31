@@ -3,7 +3,9 @@ import { ensureText, setMeasuredHeight, textOf } from '../../data';
 import type { ElementRuntime } from '../../elements';
 import { stopEditing } from './boardActions';
 import { createChildView } from './ColumnChild';
+import { enrichElement } from './enrich';
 import type { BoardModel } from './model';
+import { t } from '../../i18n';
 
 /**
  * Высоту контейнера можно перемерить, когда правят или только что положили его карточку:
@@ -41,6 +43,25 @@ export function createElementRuntime(model: BoardModel): ElementRuntime {
     },
     redo: () => {
       model.undo.redo();
+    },
+    openAsset: (() => {
+      const open = model.host.openAsset;
+      if (open === null) return null;
+      return (asset: string, mime: string) => {
+        open(asset, mime).catch((error: unknown) => {
+          console.error('Файл не открылся', error);
+          model.showNotice(t('board.notice.openFailed'));
+        });
+      };
+    })(),
+    openUrl: (url) => {
+      model.host.openUrl(url).catch((error: unknown) => {
+        console.error('Ссылка не открылась', error);
+        model.showNotice(t('board.notice.openFailed'));
+      });
+    },
+    refresh: (elementId) => {
+      void enrichElement(model, elementId);
     },
     reportHeight: (elementId, height) => {
       if (mayMeasure(model, elementId)) setMeasuredHeight(model.doc, elementId, height);

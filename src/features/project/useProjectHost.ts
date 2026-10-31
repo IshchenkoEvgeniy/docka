@@ -15,11 +15,13 @@ interface HostParts {
   readonly currentId: BoardId;
   readonly session: ProjectEntitiesSession;
   readonly renameBoard: (boardId: BoardId) => void;
+  readonly openAsset: ((asset: string, mime: string) => Promise<void>) | null;
 }
 
 /** Что доска получает от проекта: файлы, доски, сущности, «Поделиться», «На доску». */
 export function useProjectHost(parts: HostParts): BoardHost {
-  const { assets, directory, workspace, actions, currentId, session, renameBoard } = parts;
+  const { assets, directory, workspace, actions, currentId, session, renameBoard, openAsset } =
+    parts;
   return useMemo<BoardHost>(
     () => ({
       assets,
@@ -33,11 +35,14 @@ export function useProjectHost(parts: HostParts): BoardHost {
       setBackground: (background) => {
         actions.run({ kind: 'updateBoard', boardId: currentId, changes: { background } });
       },
+      network: workspace.services.network,
+      openAsset,
+      openUrl: workspace.services.openUrl,
       inbox: {
         take: workspace.takeInbox,
         subscribe: (listener) => workspace.store.subscribe(listener),
       },
     }),
-    [assets, directory, workspace, actions, currentId, session, renameBoard],
+    [assets, directory, workspace, actions, currentId, session, renameBoard, openAsset],
   );
 }

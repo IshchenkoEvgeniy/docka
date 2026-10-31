@@ -1,6 +1,6 @@
 import type * as Y from 'yjs';
 import { createStore, type StoreApi } from 'zustand/vanilla';
-import { createInteractionStore, type InteractionStore } from '../../canvas';
+import { createInteractionStore, type InteractionStore, type Point } from '../../canvas';
 import type {
   BoardCommand,
   BoardId,
@@ -39,6 +39,8 @@ export type BoardDialog =
   | { readonly kind: 'connectionColor'; readonly connectionId: string }
   | { readonly kind: 'label'; readonly connectionId: string }
   | { readonly kind: 'background' }
+  /** Адрес новой ссылки; at — куда положить карточку. */
+  | { readonly kind: 'link'; readonly at: Point }
   /** Вставка элементов-ссылок на сущности: ссылка на те же или независимые копии. */
   | { readonly kind: 'references'; readonly elements: readonly NewElement[] };
 
@@ -64,6 +66,8 @@ export interface BoardModel {
   /** Выполняет команду; при ошибке показывает сообщение и возвращает null. */
   readonly run: (command: BoardCommand) => CommandResult | null;
   readonly showNotice: (message: string) => void;
+  /** Текущее время по часам команд (для записей вне команд, например превью ссылки). */
+  readonly now: () => number;
   /** Текст элемента в нейтральном виде или null (нет текста в Yjs). */
   readonly richTextOf: (elementId: string) => RichNode[] | null;
   /**
@@ -170,6 +174,7 @@ export function createBoardModel(
     settings,
     notice,
     showNotice,
+    now: () => environment.clock.now(),
     run: (command) => {
       const result = executeBoardCommand(doc, boardId, command, environment);
       if (result.ok) return result.value;

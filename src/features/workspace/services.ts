@@ -1,4 +1,4 @@
-import type { Clock, FileSystem, FolderWatcher, IdGenerator } from '../../core';
+import type { Clock, FileSystem, FolderWatcher, IdGenerator, Network } from '../../core';
 
 /** Получено через «Поделиться → Доска» (Android); файл — в base64. */
 export type SharedItem =
@@ -23,6 +23,8 @@ export interface OpenedFolder {
   readonly path: string;
   readonly fs: FileSystem;
   readonly watcher: FolderWatcher | null;
+  /** Открыть файл папки системной программой; null — нельзя на этой платформе. */
+  readonly open: ((relativePath: string, mime: string) => Promise<void>) | null;
 }
 
 /**
@@ -54,6 +56,12 @@ export interface AppServices {
   readonly storage: StorageAccess | null;
   readonly takeShared: () => SharedItem[];
   readonly onShared: (listener: () => void) => () => void;
+  /** Сеть для превью ссылок (ADR 0005); null — недоступна (браузер при разработке). */
+  readonly network: Network | null;
+  /** Ссылка — в браузере системы. */
+  readonly openUrl: (url: string) => Promise<void>;
+  /** Файл папки проектов (путь от неё) — системной программой; null — нельзя. */
+  readonly projectsOpen: ((relativePath: string, mime: string) => Promise<void>) | null;
   /** Перезапуск после смены папки проектов. */
   readonly restart: () => void;
 }

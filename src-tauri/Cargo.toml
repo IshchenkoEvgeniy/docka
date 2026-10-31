@@ -22,6 +22,11 @@ dunce = "1.0.5"
 percent-encoding = "2.3.2"
 tauri-plugin-dialog = "2"
 base64 = "0.23"
+# Превью ссылок (ADR 0005): тот же HTTP-клиент, что уже есть в Tauri, TLS — rustls с ring.
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+webpki-roots = "1"
+tauri-plugin-opener = "2"
 
 [profile.release]
 codegen-units = 1

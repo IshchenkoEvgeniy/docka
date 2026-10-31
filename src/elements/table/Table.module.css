@@ -1,0 +1,133 @@
+.table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+/* Полоса сверху — за неё таблицу берут и тянут: ячейки заняты вводом. */
+.bar {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  cursor: grab;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.grid th,
+.grid td {
+  min-width: 60px;
+  padding: 0;
+  vertical-align: middle;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.grid th:last-child,
+.grid td:last-child {
+  border-right: none;
+}
+
+.grid th {
+  background: var(--color-overlay);
+}
+
+.input,
+.numberInput {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  font: inherit;
+  color: var(--color-text);
+  background: transparent;
+  border: none;
+}
+
+.numberInput {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.input:focus,
+.numberInput:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.check {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: var(--space-1) auto;
+  accent-color: var(--color-accent);
+}
+
+.sort {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.columnSettings {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-1);
+}
+
+.columnSettings .input {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.sum {
+  padding: var(--space-1) var(--space-2) !important;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+}
+
+.add,
+.remove {
+  padding: var(--space-1) var(--space-2);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.add:hover,
+.remove:hover {
+  color: var(--color-text);
+  background: var(--color-overlay);
+}

@@ -23,6 +23,15 @@ export function defineElement<D extends ElementData>(
     if (!parsed.success) return <ElementPlaceholder reason="broken" />;
     return <View element={element} data={parsed.data} editing={editing} />;
   });
+  const { Viewer } = definition;
+  const RenderViewer =
+    Viewer === undefined
+      ? null
+      : memo(function RenderViewer({ element }: { readonly element: BoardElement }) {
+          const parsed = useMemo(() => dataSchema.safeParse(element.data), [element.data]);
+          if (!parsed.success) return <ElementPlaceholder reason="broken" />;
+          return <Viewer element={element} data={parsed.data} editing={false} />;
+        });
   return {
     type: definition.type,
     defaultSize: definition.defaultSize,
@@ -31,6 +40,7 @@ export function defineElement<D extends ElementData>(
     richText: definition.richText,
     activate: definition.activate,
     container: definition.container ?? false,
+    editOnCreate: definition.editOnCreate ?? definition.activate === 'edit',
     createData: definition.createData,
     Render,
     toPlainText: (element, rich) => {
@@ -60,5 +70,17 @@ export function defineElement<D extends ElementData>(
         ? []
         : definition.menuActions(data);
     },
+    Viewer: RenderViewer,
+    fromPastedText: definition.fromPastedText ?? null,
+    fromFile: definition.fromFile ?? null,
+    enrich:
+      definition.enrich === undefined
+        ? null
+        : async (raw, tools) => {
+            const data = parse(raw);
+            return data === null || definition.enrich === undefined
+              ? null
+              : definition.enrich(data, tools);
+          },
   };
 }

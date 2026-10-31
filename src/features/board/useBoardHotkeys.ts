@@ -5,7 +5,7 @@ import {
   clearSelection,
   createBoardCard,
   createNote,
-  createTextElement,
+  createElementAt,
   deleteSelection,
   editSelection,
   duplicateSelection,
@@ -15,6 +15,7 @@ import {
   selectAll,
   toggleLockSelection,
 } from './boardActions';
+import type { AddPickers } from './addMenu';
 import { BOARD_HOTKEYS } from './boardHotkeys';
 import type { BoardModel } from './model';
 import { fitAll, worldPoint, zoomBy, zoomTo } from './view';
@@ -25,7 +26,7 @@ interface HotkeyContext {
   /** Последняя точка указателя во вьюпорте: туда создаётся заметка по N. */
   readonly pointer: () => Point | null;
   readonly openHelp: () => void;
-  readonly pickImages: () => void;
+  readonly pickers: AddPickers;
 }
 
 function nudgeHandlers(model: BoardModel): HotkeyHandlers {
@@ -65,7 +66,7 @@ function viewHandlers({ model, controls, openHelp }: HotkeyContext): HotkeyHandl
   };
 }
 
-function editHandlers({ model, controls, pointer, pickImages }: HotkeyContext): HotkeyHandlers {
+function editHandlers({ model, controls, pointer, pickers }: HotkeyContext): HotkeyHandlers {
   const on = (action: (target: BoardModel) => void) => () => {
     action(model);
   };
@@ -78,15 +79,19 @@ function editHandlers({ model, controls, pointer, pickImages }: HotkeyContext): 
       createNote(model, worldPoint(controls, pointer()));
     },
     addTitle: () => {
-      createTextElement(model, 'title', worldPoint(controls, pointer()));
+      createElementAt(model, 'title', worldPoint(controls, pointer()));
     },
     editText: on(editSelection),
-    addImage: pickImages,
+    addImage: pickers.images,
+    addLink: pickers.link,
+    addShape: () => {
+      createElementAt(model, 'shape', worldPoint(controls, pointer()));
+    },
     addChecklist: () => {
-      createTextElement(model, 'checklist', worldPoint(controls, pointer()));
+      createElementAt(model, 'checklist', worldPoint(controls, pointer()));
     },
     addColumn: () => {
-      createTextElement(model, 'column', worldPoint(controls, pointer()));
+      createElementAt(model, 'column', worldPoint(controls, pointer()));
     },
     addBoard: () => {
       createBoardCard(model, worldPoint(controls, pointer()));
@@ -108,10 +113,10 @@ function editHandlers({ model, controls, pointer, pickImages }: HotkeyContext): 
 }
 
 export function useBoardHotkeys(context: HotkeyContext, enabled: boolean): void {
-  const { model, controls, pointer, openHelp, pickImages } = context;
+  const { model, controls, pointer, openHelp, pickers } = context;
   const handlers = useMemo(() => {
-    const full = { model, controls, pointer, openHelp, pickImages };
+    const full = { model, controls, pointer, openHelp, pickers };
     return { ...editHandlers(full), ...nudgeHandlers(model), ...viewHandlers(full) };
-  }, [model, controls, pointer, openHelp, pickImages]);
+  }, [model, controls, pointer, openHelp, pickers]);
   useHotkeys(BOARD_HOTKEYS, handlers, enabled);
 }

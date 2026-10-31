@@ -1,8 +1,7 @@
 import { GRID_SIZE, type Point } from '../../canvas';
-import { t } from '../../i18n';
 import type { SharedItem } from '../workspace';
-import { createNote } from './boardActions';
-import { insertImages, isImageFile } from './images';
+import { createFromText, createNote } from './boardActions';
+import { insertFiles } from './files';
 import type { BoardModel } from './model';
 
 function toFile(item: Extract<SharedItem, { kind: 'file' }>): File {
@@ -10,19 +9,18 @@ function toFile(item: Extract<SharedItem, { kind: 'file' }>): File {
   return new File([bytes], item.name, { type: item.mime });
 }
 
-/** «Поделиться → Доска»: текст — заметками, картинки — элементами, лесенкой от точки. */
+/** «Поделиться → Доска»: ссылки — карточками ссылок, текст — заметками, файлы — элементами. */
 export async function insertShared(
   model: BoardModel,
   items: readonly SharedItem[],
   at: Point,
 ): Promise<void> {
   const files = items.flatMap((item) => (item.kind === 'file' ? [toFile(item)] : []));
-  const images = files.filter(isImageFile);
   items
     .flatMap((item) => (item.kind === 'text' ? [item.text] : []))
     .forEach((text, index) => {
-      createNote(model, { x: at.x + index * GRID_SIZE, y: at.y + index * GRID_SIZE }, text);
+      const point = { x: at.x + index * GRID_SIZE, y: at.y + index * GRID_SIZE };
+      if (!createFromText(model, text, point)) createNote(model, point, text);
     });
-  if (images.length > 0) await insertImages(model, images, { x: at.x, y: at.y + 2 * GRID_SIZE });
-  if (images.length < files.length) model.showNotice(t('board.notice.filesLater'));
+  if (files.length > 0) await insertFiles(model, files, { x: at.x, y: at.y + 2 * GRID_SIZE });
 }

@@ -26,6 +26,12 @@ export interface ElementRuntime {
   readonly ChildView: ComponentType<{ readonly element: BoardElement }>;
   /** Изменить поля data элемента (свернуть колонку, отметить пункт). */
   readonly updateData: (elementId: string, changes: Readonly<Record<string, unknown>>) => void;
+  /** Файл проекта — системной программой; null — нельзя (браузер, нет проекта). */
+  readonly openAsset: ((asset: string, mime: string) => void) | null;
+  /** Ссылка — в браузере системы. */
+  readonly openUrl: (url: string) => void;
+  /** Дополнить данные из сети заново (кнопка «Обновить превью»). */
+  readonly refresh: (elementId: string) => void;
   /** Высота содержимого изменилась (растёт текст): доска решает, записать ли её. */
   readonly reportHeight: (elementId: string, height: number) => void;
 }

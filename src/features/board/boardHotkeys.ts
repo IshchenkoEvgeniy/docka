@@ -59,6 +59,8 @@ export const BOARD_HOTKEYS: readonly HotkeyDefinition[] = [
     label: 'hotkeys.openLibrary',
     group: 'hotkeys.group.edit',
   },
+  { id: 'addShape', combos: ['KeyS'], label: 'hotkeys.addShape', group: 'hotkeys.group.edit' },
+  { id: 'addLink', combos: ['KeyL'], label: 'hotkeys.addLink', group: 'hotkeys.group.edit' },
   { id: 'editText', combos: ['Enter'], label: 'hotkeys.editText', group: 'hotkeys.group.edit' },
   {
     id: 'selectAll',

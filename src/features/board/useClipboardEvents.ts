@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import type { CameraControls, Point } from '../../canvas';
-import { t } from '../../i18n';
 import { isEditableTarget } from '../../ui';
 import { copySelection, createNote, deleteSelection, pastePayload } from './boardActions';
 import {
@@ -10,7 +9,7 @@ import {
   parsePayload,
   serializePayload,
 } from './clipboard';
-import { insertImages, isImageFile } from './images';
+import { insertFiles } from './files';
 import type { BoardModel } from './model';
 import { applyPaste, resolvePaste } from './pasting';
 import { worldPoint } from './view';
@@ -24,20 +23,18 @@ function localPoint(controls: CameraControls, event: { clientX: number; clientY:
     : { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
 
-/** Картинки — элементами «Изображение», текстовые файлы — заметками; прочие — позже (вложения). */
+/** Текстовые файлы — заметками, остальное — картинками, плеерами и карточками файлов. */
 async function dropFiles(model: BoardModel, files: readonly File[], at: Point): Promise<void> {
-  let skipped = false;
-  const images = files.filter(isImageFile);
-  if (images.length > 0) await insertImages(model, images, at);
-  for (const [index, file] of files.filter((item) => !isImageFile(item)).entries()) {
-    if (!file.type.startsWith('text/') && !TEXT_FILE.test(file.name)) {
-      skipped = true;
-      continue;
-    }
+  const isText = (file: File) => file.type.startsWith('text/') || TEXT_FILE.test(file.name);
+  for (const [index, file] of files.filter(isText).entries()) {
     const text = await file.text();
     createNote(model, { x: at.x + index * 24, y: at.y + index * 24 }, text);
   }
-  if (skipped) model.showNotice(t('board.notice.filesLater'));
+  await insertFiles(
+    model,
+    files.filter((file) => !isText(file)),
+    at,
+  );
 }
 
 function attachClipboard(model: BoardModel, controls: CameraControls, pointer: () => Point | null) {

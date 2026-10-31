@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useInteraction } from '../../canvas';
-import { FullscreenEditor, definitionFor, type ElementRuntime } from '../../elements';
+import { FullscreenEditor, type ElementRuntime } from '../../elements';
+import { fullscreenFragment } from './fullscreenText';
 import type { BoardModel } from './model';
 
 /**
@@ -15,14 +16,10 @@ export function FullscreenEditing({
   readonly runtime: ElementRuntime;
 }) {
   const editingId = useInteraction(model.interaction, (state) => state.editingId);
-  const fragment = useMemo(() => {
-    if (editingId === null) return null;
-    const element = model.elements.getSnapshot().get(editingId);
-    if (element === undefined) return null;
-    const initial =
-      definitionFor(element.type).toRichText(element, model.richTextOf(editingId)) ?? [];
-    return runtime.ensureText(editingId, initial);
-  }, [editingId, model, runtime]);
-  if (!runtime.fullscreenEditing || fragment === null) return null;
+  const fragment = useMemo(
+    () => fullscreenFragment(model, runtime, editingId),
+    [editingId, model, runtime],
+  );
+  if (fragment === null) return null;
   return <FullscreenEditor fragment={fragment} runtime={runtime} />;
 }

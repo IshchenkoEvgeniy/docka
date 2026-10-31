@@ -21,6 +21,10 @@
   --radius-lg: 12px;
 
   --touch-target: 44px;
+
+  /* Просмотр на весь экран — тёмный в обеих темах. */
+  --color-viewer: rgb(0 0 0 / 85%);
+  --color-on-viewer: #ffffff;
 }
 
 :root,

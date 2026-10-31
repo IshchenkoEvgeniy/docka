@@ -17,7 +17,13 @@ import {
   type ConnectionStyle,
   type ElementId,
 } from '../../core';
-import { compareInColumn, definitionFor } from '../../elements';
+import {
+  compareInColumn,
+  definitionFor,
+  draftFromPastedText,
+  type ElementDraft,
+} from '../../elements';
+import { enrichElement } from './enrich';
 import { t } from '../../i18n';
 import {
   copyContent,
@@ -223,12 +229,7 @@ export function duplicateSelection(model: BoardModel): void {
  * Новый элемент центром в точке (кнопка, горячая клавиша, вставка текста).
  * Пустой элемент с текстом сразу открывается на правку.
  */
-export function createTextElement(
-  model: BoardModel,
-  type: 'note' | 'title' | 'column' | 'checklist',
-  center: Point,
-  text = '',
-): void {
+export function createElementAt(model: BoardModel, type: string, center: Point, text = ''): void {
   const definition = definitionFor(type);
   const { width, height } = definition.defaultSize;
   const result = model.run({
@@ -241,13 +242,12 @@ export function createTextElement(
       height,
     },
     data: definition.createData(),
-    richText: plainToRichText(text),
+    ...(definition.richText ? { richText: plainToRichText(text) } : {}),
   });
   const id = result?.createdId;
   if (id === undefined) return;
   model.markForMeasure([id]);
-  // У чек-листа сначала пишут пункты, а не заголовок.
-  if (text === '' && type !== 'checklist') startEditing(model, id);
+  if (text === '' && definition.editOnCreate) startEditing(model, id);
   else select(model, [id]);
 }
 
@@ -277,7 +277,39 @@ export function createBoardCard(model: BoardModel, center: Point): void {
 }
 
 export function createNote(model: BoardModel, center: Point, text = ''): void {
-  createTextElement(model, 'note', center, text);
+  createElementAt(model, 'note', center, text);
+}
+
+/** Элемент из распознанного текста (таблица из Excel) центром в точке. */
+export function createDraft(
+  model: BoardModel,
+  type: string,
+  draft: ElementDraft,
+  center: Point,
+): void {
+  const result = model.run({
+    kind: 'createElement',
+    type,
+    placement: {
+      x: Math.round(center.x - draft.width / 2),
+      y: Math.round(center.y - draft.height / 2),
+      width: draft.width,
+      height: draft.height,
+    },
+    data: draft.data,
+  });
+  if (result?.createdId === undefined) return;
+  model.markForMeasure([result.createdId]);
+  select(model, [result.createdId]);
+  if (definitionFor(type).enrich !== null) void enrichElement(model, result.createdId);
+}
+
+/** Элемент из текста, если его узнаёт какой-то тип (ссылка, таблица); false — не узнал. */
+export function createFromText(model: BoardModel, text: string, center: Point): boolean {
+  const recognized = draftFromPastedText(text);
+  if (recognized === null) return false;
+  createDraft(model, recognized.type, recognized.draft, center);
+  return true;
 }
 
 /** Библиотека сущностей проекта (там сущность создают и кладут на доску). */

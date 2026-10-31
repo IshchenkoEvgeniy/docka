@@ -1,2 +1,2 @@
-export { image, imageAsset } from './image';
+export { image } from './image';
 export { useAsset, useAssetIn } from './useAsset';

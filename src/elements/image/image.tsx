@@ -25,6 +25,20 @@ function ImageView({ data }: ElementViewProps<ImageData>) {
   );
 }
 
+/** На весь экран: картинка целиком по центру. */
+function ImageFullView({ data }: ElementViewProps<ImageData>) {
+  const asset = useAsset(data.asset);
+  if (asset.status !== 'ready')
+    return <p className={styles.viewerMessage}>{t('elements.image.syncing')}</p>;
+  return (
+    <img
+      className={styles.viewerImage}
+      src={asset.url}
+      alt={data.name ?? t('elements.image.alt')}
+    />
+  );
+}
+
 export const image = defineElement<ImageData>({
   type: 'image',
   dataSchema: ImageDataSchema,
@@ -35,11 +49,6 @@ export const image = defineElement<ImageData>({
   activate: 'view',
   createData: () => ({ asset: '', naturalWidth: 1, naturalHeight: 1 }),
   View: ImageView,
+  Viewer: ImageFullView,
   toPlainText: (data) => data.name ?? '',
 });
-
-/** Файл картинки элемента (для просмотра на весь экран). */
-export function imageAsset(data: Readonly<Record<string, unknown>>): string | null {
-  const parsed = ImageDataSchema.safeParse(data);
-  return parsed.success ? parsed.data.asset : null;
-}

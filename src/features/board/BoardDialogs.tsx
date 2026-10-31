@@ -1,9 +1,10 @@
 import { useState, type SyntheticEvent } from 'react';
+import type { Point } from '../../canvas';
 import { useStore } from 'zustand';
 import { BOARD_BACKGROUNDS, COLOR_NAMES, type BoardBackground, type ColorName } from '../../core';
 import { t } from '../../i18n';
 import { Button, ColorPalette, Dialog, Segmented, TextField, cardColor, inkColor } from '../../ui';
-import { selectedElements, updateConnection } from './boardActions';
+import { createFromText, selectedElements, updateConnection } from './boardActions';
 import type { BoardModel } from './model';
 import { placeElements, placeWithCopies } from './references';
 import styles from './Board.module.css';
@@ -86,6 +87,48 @@ function ReferencesChoice({
   );
 }
 
+/** Адрес новой ссылки: карточка встаёт в центр экрана, превью подтягивается из сети. */
+function LinkForm({
+  model,
+  at,
+  onClose,
+}: {
+  readonly model: BoardModel;
+  readonly at: Point;
+  readonly onClose: () => void;
+}) {
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const submit = (event: SyntheticEvent): void => {
+    event.preventDefault();
+    if (!createFromText(model, url.trim(), at)) {
+      setError(t('board.dialog.notLink'));
+      return;
+    }
+    onClose();
+  };
+  return (
+    <form className={styles.form} onSubmit={submit}>
+      <TextField
+        label={t('board.dialog.linkField')}
+        value={url}
+        autoFocus
+        inputMode="url"
+        placeholder={t('board.dialog.linkPlaceholder')}
+        error={error}
+        maxLength={2000}
+        onChange={(event) => {
+          setUrl(event.target.value);
+          setError(null);
+        }}
+      />
+      <Button type="submit" variant="primary" disabled={url.trim() === ''}>
+        {t('board.dialog.addLink')}
+      </Button>
+    </form>
+  );
+}
+
 /** Окна доски: цвет элементов и стрелок, подпись стрелки, фон доски, вставка сущностей. */
 export function BoardDialogs({
   model,
@@ -103,6 +146,12 @@ export function BoardDialogs({
     return (
       <Dialog title={t('board.dialog.label')} closeLabel={t('common.cancel')} onClose={close}>
         <LabelForm model={model} connectionId={dialog.connectionId} onClose={close} />
+      </Dialog>
+    );
+  if (dialog.kind === 'link')
+    return (
+      <Dialog title={t('board.dialog.link')} closeLabel={t('common.cancel')} onClose={close}>
+        <LinkForm model={model} at={dialog.at} onClose={close} />
       </Dialog>
     );
   if (dialog.kind === 'references')

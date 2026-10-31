@@ -6,7 +6,8 @@ import { err, ok, type FileSystem, type Result } from '../core';
  * Для показа файл читается и превращается в blob-URL (одинаково в Tauri и в браузере).
  */
 export const ASSETS_DIR = 'assets';
-export const MAX_ASSET_BYTES = 30 * 1024 * 1024;
+/** Предел файла (ADR 0005): на Android файл идёт в Rust строкой base64 целиком. */
+export const MAX_ASSET_BYTES = 50 * 1024 * 1024;
 
 export const IMAGE_TYPES: Readonly<Record<string, string>> = {
   'image/png': 'png',
@@ -16,10 +17,40 @@ export const IMAGE_TYPES: Readonly<Record<string, string>> = {
   'image/avif': 'avif',
   'image/bmp': 'bmp',
   'image/svg+xml': 'svg',
+  'image/x-icon': 'ico',
+  'image/vnd.microsoft.icon': 'ico',
 };
 
-const MIME_BY_EXTENSION = new Map(Object.entries(IMAGE_TYPES).map(([mime, ext]) => [ext, mime]));
-const ASSET_NAME = /^[0-9a-f]{64}\.[a-z0-9]{2,5}$/;
+/** Видео, звук и документы, у которых расширение важно для показа и открытия в системе. */
+export const MEDIA_TYPES: Readonly<Record<string, string>> = {
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'video/ogg': 'ogv',
+  'audio/mpeg': 'mp3',
+  'audio/mp4': 'm4a',
+  'audio/wav': 'wav',
+  'audio/x-wav': 'wav',
+  'audio/ogg': 'ogg',
+  'audio/webm': 'weba',
+  'application/pdf': 'pdf',
+};
+
+const KNOWN_TYPES: Readonly<Record<string, string>> = { ...IMAGE_TYPES, ...MEDIA_TYPES };
+const MIME_BY_EXTENSION = new Map(Object.entries(KNOWN_TYPES).map(([mime, ext]) => [ext, mime]));
+const ASSET_NAME = /^[0-9a-f]{64}\.[a-z0-9]{1,5}$/;
+
+/** Расширение файла в assets/: по типу, иначе из имени файла (латиница и цифры), иначе bin. */
+export function assetExtension(mime: string, fileName = ''): string {
+  const known = KNOWN_TYPES[mime];
+  if (known !== undefined) return known;
+  const match = /\.([A-Za-z0-9]{1,5})$/.exec(fileName);
+  return match?.[1]?.toLowerCase() ?? 'bin';
+}
+
+/** Тип MIME файла из assets/ по расширению (для показа через blob-URL). */
+export function assetMime(name: string): string {
+  return MIME_BY_EXTENSION.get(name.slice(name.lastIndexOf('.') + 1)) ?? 'application/octet-stream';
+}
 
 export function isAssetName(name: string): boolean {
   return ASSET_NAME.test(name);
@@ -32,8 +63,8 @@ export type AssetState =
   | { readonly status: 'ready'; readonly url: string };
 
 export interface AssetStore {
-  /** Кладёт файл в проект и возвращает его имя. */
-  readonly put: (bytes: Uint8Array, mime: string) => Promise<Result<string>>;
+  /** Кладёт файл в проект и возвращает его имя; fileName — для расширения неизвестных типов. */
+  readonly put: (bytes: Uint8Array, mime: string, fileName?: string) => Promise<Result<string>>;
   /** Состояние файла; первое обращение запускает чтение. */
   readonly get: (name: string) => AssetState;
   readonly subscribe: (listener: () => void) => () => void;
@@ -55,10 +86,10 @@ async function writeAsset(
   fs: FileSystem,
   bytes: Uint8Array,
   mime: string,
+  fileName: string,
 ): Promise<Result<string>> {
-  const extension = IMAGE_TYPES[mime];
-  if (extension === undefined) return err('Этот тип файла пока не поддерживается');
-  if (bytes.length > MAX_ASSET_BYTES) return err('Файл больше 30 МБ');
+  const extension = assetExtension(mime, fileName);
+  if (bytes.length > MAX_ASSET_BYTES) return err('Файл больше 50 МБ');
   const name = `${await sha256(bytes)}.${extension}`;
   const path = `${ASSETS_DIR}/${name}`;
   if ((await fs.readFile(path)) === null) await fs.writeFileAtomic(path, bytes);
@@ -72,8 +103,7 @@ function revokeAll(states: Map<string, AssetState>): void {
 
 function toState(name: string, bytes: Uint8Array | null): AssetState {
   if (bytes === null) return MISSING;
-  const extension = name.slice(name.lastIndexOf('.') + 1);
-  const type = MIME_BY_EXTENSION.get(extension) ?? 'application/octet-stream';
+  const type = assetMime(name);
   return { status: 'ready', url: URL.createObjectURL(new Blob([bytes.slice().buffer], { type })) };
 }
 
@@ -100,8 +130,8 @@ export function createAssetStore(fs: FileSystem): AssetStore {
     );
   };
   return {
-    put: async (bytes, mime) => {
-      const stored = await writeAsset(fs, bytes, mime);
+    put: async (bytes, mime, fileName = '') => {
+      const stored = await writeAsset(fs, bytes, mime, fileName);
       if (stored.ok && states.get(stored.value)?.status !== 'ready') load(stored.value);
       return stored;
     },

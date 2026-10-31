@@ -1,7 +1,8 @@
 import type { ComponentType } from 'react';
 import type { z } from 'zod';
 import type { ResizeMode, Size } from '../canvas';
-import type { BoardElement, RichNode } from '../core';
+import type { BoardElement, Network, RichNode } from '../core';
+import type { AssetStore } from '../data';
 
 export type ElementActivation = 'edit' | 'view' | 'open' | null;
 
@@ -26,6 +27,27 @@ export interface ElementMenuAction {
 export interface EntityReference<D> {
   readonly entityId: (data: D) => string;
   readonly withEntity: (data: D, entityId: string) => D;
+}
+
+/** Элемент, созданный из вставленного текста или файла: данные и размер. */
+export interface ElementDraft {
+  readonly data: Readonly<Record<string, unknown>>;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** Сведения о файле, уже положенном в assets/ проекта. */
+export interface StoredFile {
+  readonly asset: string;
+  readonly name: string;
+  readonly mime: string;
+  readonly size: number;
+}
+
+/** Что нужно типу, чтобы дополнить данные из сети (превью ссылки). */
+export interface EnrichTools {
+  readonly network: Network;
+  readonly assets: AssetStore | null;
 }
 
 export interface ElementViewProps<D extends ElementData> {
@@ -53,6 +75,8 @@ export interface ElementDefinition<D extends ElementData> {
   readonly activate: ElementActivation;
   /** Контейнер: в него можно положить другие элементы (колонка). */
   readonly container?: boolean;
+  /** Новый пустой элемент сразу открывается на правку (по умолчанию — если activate = 'edit'). */
+  readonly editOnCreate?: boolean;
   readonly createData: () => D;
   readonly View: ComponentType<ElementViewProps<D>>;
   /** Текст элемента для буфера обмена, поиска и Markdown; rich — текст из Yjs, если есть. */
@@ -62,6 +86,17 @@ export interface ElementDefinition<D extends ElementData> {
   readonly target?: (data: D) => OpenTarget;
   readonly reference?: EntityReference<D>;
   readonly menuActions?: (data: D) => readonly ElementMenuAction[];
+  /** Просмотр на весь экран (activate = 'view'): картинка, PDF. */
+  readonly Viewer?: ComponentType<ElementViewProps<D>>;
+  /** Распознать вставленный текст (таблица из Excel); null — не этот тип. */
+  readonly fromPastedText?: (text: string) => ElementDraft | null;
+  /** Дополнить данные из сети (превью ссылки); null — нечего добавить. */
+  readonly enrich?: (data: D, tools: EnrichTools) => Promise<Partial<D> | null>;
+  /** Файлы, которые кладутся на доску этим типом (видео, любой файл). */
+  readonly fromFile?: {
+    readonly accepts: (mime: string) => boolean;
+    readonly create: (file: StoredFile) => ElementDraft;
+  };
 }
 
 /** Тип элемента после регистрации: данные проверяются внутри, наружу — без дженериков. */
@@ -73,6 +108,7 @@ export interface RegisteredElement {
   readonly richText: boolean;
   readonly activate: ElementActivation;
   readonly container: boolean;
+  readonly editOnCreate: boolean;
   readonly createData: () => ElementData;
   /** Содержимое элемента (memo: перерисовывается только при изменении самого элемента). */
   readonly Render: ComponentType<{ readonly element: BoardElement; readonly editing: boolean }>;
@@ -92,4 +128,11 @@ export interface RegisteredElement {
     entityId: string,
   ) => Readonly<Record<string, unknown>> | null;
   readonly menuActions: (element: BoardElement) => readonly ElementMenuAction[];
+  /** Просмотр на весь экран; null — у типа его нет или данные битые. */
+  readonly Viewer: ComponentType<{ readonly element: BoardElement }> | null;
+  readonly fromPastedText: ((text: string) => ElementDraft | null) | null;
+  readonly fromFile: NonNullable<ElementDefinition<ElementData>['fromFile']> | null;
+  readonly enrich:
+    | ((data: Readonly<Record<string, unknown>>, tools: EnrichTools) => Promise<ElementData | null>)
+    | null;
 }

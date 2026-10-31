@@ -1,6 +1,6 @@
 import type { Point } from '../../canvas';
 import { t } from '../../i18n';
-import { createNote, pastePayload } from './boardActions';
+import { createFromText, createNote, pastePayload } from './boardActions';
 import { appClipboard, parsePayload, type ClipboardContent } from './clipboard';
 import type { BoardModel } from './model';
 
@@ -28,7 +28,8 @@ export function applyPaste(
 ): void {
   if (resolved === null) model.showNotice(t('board.notice.nothingToPaste'));
   else if (resolved.kind === 'elements') pastePayload(model, resolved.content, at);
-  else createNote(model, at, resolved.text);
+  // Ссылка — карточкой ссылки, текст из Excel — таблицей, остальное — заметкой.
+  else if (!createFromText(model, resolved.text, at)) createNote(model, at, resolved.text);
 }
 
 /**

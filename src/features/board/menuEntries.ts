@@ -3,12 +3,9 @@ import { t, type TranslationKey } from '../../i18n';
 import type { MenuEntry } from '../../ui';
 import { formatCombo, isMacPlatform, parseCombo } from '../hotkeys';
 import {
-  openLibrary,
   alignSelection,
   copySelection,
-  createBoardCard,
   createNote,
-  createTextElement,
   deleteSelection,
   distributeSelection,
   duplicateSelection,
@@ -32,12 +29,12 @@ export interface MenuContext {
   readonly fitAll: () => void;
 }
 
-function hint(id: string): string | undefined {
+export function hint(id: string): string | undefined {
   const combo = BOARD_HOTKEYS.find((hotkey) => hotkey.id === id)?.combos[0];
   return combo === undefined ? undefined : formatCombo(parseCombo(combo), isMacPlatform());
 }
 
-function action(
+export function action(
   id: string,
   label: TranslationKey,
   onSelect: () => void,
@@ -193,38 +190,6 @@ function backgroundEntries({ model, at, fitAll }: MenuContext): MenuEntry[] {
     action('background', 'board.menu.background', () => {
       model.overlay.setState({ dialog: { kind: 'background' } });
     }),
-  ];
-}
-
-/** «Добавить»: все виды элементов (на телефоне — единственный способ их создать). */
-export function addMenuEntries(model: BoardModel, at: Point, pickImages: () => void): MenuEntry[] {
-  const text = (type: 'note' | 'title' | 'column' | 'checklist') => () => {
-    createTextElement(model, type, at);
-  };
-  return [
-    action('add-note', 'board.toolbar.addNote', text('note'), { hotkey: 'addNote' }),
-    action('add-title', 'board.toolbar.addTitle', text('title'), { hotkey: 'addTitle' }),
-    action('add-image', 'board.toolbar.addImage', pickImages, { hotkey: 'addImage' }),
-    action(
-      'add-board',
-      'board.toolbar.addBoard',
-      () => {
-        createBoardCard(model, at);
-      },
-      { hotkey: 'addBoard' },
-    ),
-    action('add-column', 'board.toolbar.addColumn', text('column'), { hotkey: 'addColumn' }),
-    action('add-checklist', 'board.toolbar.addChecklist', text('checklist'), {
-      hotkey: 'addChecklist',
-    }),
-    action(
-      'add-entity',
-      'board.toolbar.addEntity',
-      () => {
-        openLibrary(model);
-      },
-      { hotkey: 'openLibrary', disabled: model.host.entities === null },
-    ),
   ];
 }
 

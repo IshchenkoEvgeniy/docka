@@ -9,7 +9,11 @@ import {
 import { createProjectIn, executeBoardCommand } from '../data';
 import type { AppServices, OpenedFolder } from '../features';
 import {
+  androidFileOpener,
   androidStorage,
+  createTauriNetwork,
+  openFileInSystem,
+  openUrlInSystem,
   createTauriFileSystem,
   createTauriFolderWatcher,
   isMobileDevice,
@@ -46,9 +50,29 @@ async function openProjects(custom: string | null) {
   return { root: await openAppFolder('projects'), error: null };
 }
 
+/**
+ * Открытие файла папки системной программой: на компьютере — команда Rust (путь проверяется
+ * внутри открытой папки), на Android — мост с FileProvider (ADR 0005).
+ */
+function systemOpener(root: string) {
+  const android = androidFileOpener();
+  return async (relativePath: string, mime: string): Promise<void> => {
+    if (android === null) {
+      await openFileInSystem(root, relativePath);
+      return;
+    }
+    if (!android(`${root}/${relativePath}`, mime)) throw new Error('Нет программы для этого файла');
+  };
+}
+
 async function openTauriFolder(path: string): Promise<OpenedFolder> {
   const root = await openProjectFolder(path);
-  return { path: root, fs: createTauriFileSystem(root), watcher: createTauriFolderWatcher(root) };
+  return {
+    path: root,
+    fs: createTauriFileSystem(root),
+    watcher: createTauriFolderWatcher(root),
+    open: systemOpener(root),
+  };
 }
 
 async function createTauriPlatform(): Promise<Platform> {
@@ -75,6 +99,9 @@ async function createTauriPlatform(): Promise<Platform> {
         ids,
         deviceKind,
         openFolder: openTauriFolder,
+        network: createTauriNetwork(),
+        openUrl: (url) => openUrlInSystem(url),
+        projectsOpen: systemOpener(projects.root),
         pickFolder: deviceKind === 'desktop' ? pickFolder : null,
         storage: androidStorage(),
         takeShared: takeSharedItems,
@@ -111,7 +138,12 @@ function browserDisk(): Pick<AppServices, 'openFolder' | 'pickFolder'> {
   return {
     openFolder: (path) => {
       const relative = path.replace(/^[\\/]+|[\\/]+$/g, '').replace(/\\/g, '/');
-      return Promise.resolve({ path, fs: scopedFileSystem(disk, relative), watcher: null });
+      return Promise.resolve({
+        path,
+        fs: scopedFileSystem(disk, relative),
+        watcher: null,
+        open: null,
+      });
     },
     pickFolder: (title) => Promise.resolve(window.prompt(title, '/Игры')),
   };
@@ -143,6 +175,13 @@ function createBrowserPlatform(): Platform {
         ids,
         deviceKind,
         ...browserDisk(),
+        // В браузере чужие сайты не читаются (CORS): превью ссылок только в приложении.
+        network: null,
+        openUrl: (url) => {
+          window.open(url, '_blank', 'noopener');
+          return Promise.resolve();
+        },
+        projectsOpen: null,
         storage: null,
         takeShared: () => [],
         onShared: () => () => undefined,

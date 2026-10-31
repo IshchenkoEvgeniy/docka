@@ -6,10 +6,16 @@ import { boardLink } from './boardLink';
 import { checklist } from './checklist';
 import { column } from './column';
 import { entity } from './entity';
+import { file } from './file';
+import { link } from './link';
+import { audio, video } from './media';
+import { shape } from './shape';
+import { swatch } from './swatch';
+import { table } from './table';
 import { image } from './image';
 import { note } from './note';
 import { title } from './title';
-import type { RegisteredElement } from './types';
+import type { ElementDraft, RegisteredElement } from './types';
 
 /** Все типы элементов. Новый тип добавляется сюда одной строкой. */
 const ELEMENTS: readonly RegisteredElement[] = [
@@ -20,6 +26,14 @@ const ELEMENTS: readonly RegisteredElement[] = [
   column,
   checklist,
   entity,
+  swatch,
+  shape,
+  table,
+  link,
+  video,
+  audio,
+  // «Любой файл» — последним: definitionForFile берёт первый подходящий тип.
+  file,
 ];
 
 const BY_TYPE = new Map(ELEMENTS.map((element) => [element.type, element]));
@@ -47,3 +61,19 @@ export function isKnownType(type: string): boolean {
 }
 
 export const elementTypes: readonly string[] = ELEMENTS.map((element) => element.type);
+
+/** Первый тип, который узнаёт вставленный текст (таблица из Excel); null — обычная заметка. */
+export function draftFromPastedText(
+  text: string,
+): { readonly type: string; readonly draft: ElementDraft } | null {
+  for (const element of ELEMENTS) {
+    const draft = element.fromPastedText?.(text) ?? null;
+    if (draft !== null) return { type: element.type, draft };
+  }
+  return null;
+}
+
+/** Тип элемента для файла по его MIME: видео и звук — плеер, остальное — карточка файла. */
+export function definitionForFile(mime: string): RegisteredElement | null {
+  return ELEMENTS.find((element) => element.fromFile?.accepts(mime) === true) ?? null;
+}

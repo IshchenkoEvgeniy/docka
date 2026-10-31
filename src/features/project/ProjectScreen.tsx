@@ -130,6 +130,7 @@ interface ProjectBodyProps {
   readonly folder: string;
   readonly boardId: BoardId | null;
   readonly assets: AssetStore | null;
+  readonly openAsset: ((asset: string, mime: string) => Promise<void>) | null;
   readonly environment: CommandEnvironment;
   readonly session: ProjectEntitiesSession;
 }
@@ -145,15 +146,16 @@ function ProjectView({
   readonly boardId: BoardId | null;
 }) {
   const { services } = useWorkspace();
-  const assets = useProjectAssets(services, folder);
+  const { assets, openAsset } = useProjectAssets(services, folder);
   const environment = useMemo(() => ({ clock: services.clock, ids: services.ids }), [services]);
   const session = useProjectEntities(project, environment, assets);
   if (session === null) return <Message text={t('project.loading')} />;
-  const props = { project, folder, boardId, assets, environment, session };
+  const props = { project, folder, boardId, assets, openAsset, environment, session };
   return <ProjectBody {...props} />;
 }
 
-function ProjectBody({ project, folder, boardId, assets, environment, session }: ProjectBodyProps) {
+function ProjectBody(props: ProjectBodyProps) {
+  const { project, folder, boardId, assets, openAsset, environment, session } = props;
   const workspace = useWorkspace();
   const boards = useBoards(project.projectDoc.doc);
   const rootId = project.meta.rootBoardId;
@@ -173,6 +175,7 @@ function ProjectBody({ project, folder, boardId, assets, environment, session }:
     currentId,
     session,
     renameBoard: setRenaming,
+    openAsset,
   });
   if (board === undefined || tree === null) return <Message text={t('project.noBoard')} />;
 

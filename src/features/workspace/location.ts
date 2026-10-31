@@ -8,11 +8,12 @@ import type { AppServices, OpenedFolder } from './services';
  */
 export async function projectLocation(services: AppServices, key: string): Promise<OpenedFolder> {
   if (!isProjectPath(key)) {
-    const watcher = services.projectsWatcher;
+    const { projectsWatcher: watcher, projectsOpen: open } = services;
     return {
       path: key,
       fs: scopedFileSystem(services.projectsFs, key),
       watcher: watcher === null ? null : scopedFolderWatcher(watcher, key),
+      open: open === null ? null : (relativePath, mime) => open(`${key}/${relativePath}`, mime),
     };
   }
   if (services.openFolder === null) throw new Error('Папки вне папки проектов здесь недоступны');

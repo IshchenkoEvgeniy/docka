@@ -1,6 +1,7 @@
 import type { CameraControls, Point, PointerTarget } from '../../canvas';
 import type { MenuEntry } from '../../ui';
-import { addMenuEntries, boardMenuEntries } from './menuEntries';
+import { addMenuEntries, type AddPickers } from './addMenu';
+import { boardMenuEntries } from './menuEntries';
 import type { BoardModel } from './model';
 import { fitAll, viewSize, worldPoint } from './view';
 
@@ -27,7 +28,7 @@ export function menuContent(
   state: MenuState,
   model: BoardModel,
   controls: CameraControls,
-  pickImages: () => void,
+  pickers: AddPickers,
 ): { readonly position: Point; readonly entries: MenuEntry[] } {
   const fit = (): void => {
     fitAll(model, controls);
@@ -49,7 +50,7 @@ export function menuContent(
     size === null ? null : { x: size.width / 2, y: size.height / 2 },
   );
   if (state.kind === 'add')
-    return { position: state.client, entries: addMenuEntries(model, center, pickImages) };
+    return { position: state.client, entries: addMenuEntries(model, center, pickers) };
   return {
     position: state.client,
     entries: boardMenuEntries({ model, target: selectionTarget(model), at: center, fitAll: fit }),

@@ -239,3 +239,27 @@ export function executeBoardCommand(
       return executeBoardTrashCommand(doc, command, now);
   }
 }
+
+/**
+ * Данные, полученные не действием пользователя (превью ссылки из сети): проверяются схемой,
+ * пишутся в журнал, но не становятся шагом отмены.
+ */
+export const FETCHED_ORIGIN = Symbol('fetched');
+
+export function fillElementData(
+  doc: Y.Doc,
+  elementId: string,
+  data: Readonly<Record<string, unknown>>,
+  now: number,
+): Result<CommandResult> {
+  const prepared = prepareRecordPatch(
+    elementsOf(doc),
+    elementId,
+    ElementSchema,
+    { data, updatedAt: now },
+    NOT_FOUND,
+  );
+  if (!prepared.ok) return prepared;
+  doc.transact(prepared.value, FETCHED_ORIGIN);
+  return ok({});
+}

@@ -23,8 +23,8 @@ import { BoardOverview, ElementLayer } from './ElementLayer';
 import { createGestureHandlers } from './gestureHandlers';
 import type { BoardHost } from './host';
 import { FullscreenEditing } from './FullscreenEditing';
-import { ImageViewer } from './ImageViewer';
-import { insertImages } from './images';
+import { ElementViewer } from './ElementViewer';
+import { useBoardPickers } from './pickers';
 import { insertShared } from './shared';
 import { createElementRuntime } from './runtime';
 import { menuContent, type MenuState } from './boardMenus';
@@ -146,11 +146,8 @@ function BoardSurface({
   const closeMenu = useCallback(() => {
     setMenu(null);
   }, []);
-  const imageInput = useRef<HTMLInputElement>(null);
-  const pickImages = useCallback(() => {
-    imageInput.current?.click();
-  }, []);
-  useBoardHotkeys({ model, controls, pointer, openHelp, pickImages }, menu === null && !help);
+  const { pickers, inputs } = useBoardPickers(model, controls);
+  useBoardHotkeys({ model, controls, pointer, openHelp, pickers }, menu === null && !help);
   useClipboardEvents(model, controls, pointer);
 
   useCameraMemory(model, controls, camera);
@@ -176,7 +173,7 @@ function BoardSurface({
           <ElementLayer model={model} controls={controls} />
           <InteractionOverlay store={model.interaction} />
         </Viewport>
-        <ImageViewer model={model} />
+        <ElementViewer model={model} />
         <FullscreenEditing model={model} runtime={runtime} />
         <BoardDialogs model={model} background={background} />
       </ElementRuntimeContext.Provider>
@@ -189,20 +186,9 @@ function BoardSurface({
         }}
       />
       <BoardNotice model={model} />
-      <input
-        ref={imageInput}
-        className={styles.fileInput}
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={(event) => {
-          const files = [...(event.target.files ?? [])];
-          event.target.value = '';
-          void insertImages(model, files, worldPoint(controls, null));
-        }}
-      />
+      {inputs}
       {menu !== null && (
-        <Menu {...menuContent(menu, model, controls, pickImages)} onClose={closeMenu} />
+        <Menu {...menuContent(menu, model, controls, pickers)} onClose={closeMenu} />
       )}
       {help && (
         <Dialog title={t('hotkeys.title')} closeLabel={t('common.close')} onClose={closeHelp}>

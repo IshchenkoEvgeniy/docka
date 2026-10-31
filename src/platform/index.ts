@@ -12,6 +12,7 @@ export {
 } from './tauriStorage';
 export type { AppFolder, TauriBridge } from './tauriStorage';
 export { isMobileDevice, isTauriRuntime } from './runtime';
-export { androidStorage, onShared, takeSharedItems } from './android';
+export { androidFileOpener, androidStorage, onShared, takeSharedItems } from './android';
 export type { AndroidStorage, SharedItem } from './android';
 export { pickFolder } from './dialogs';
+export { createTauriNetwork, openFileInSystem, openUrlInSystem } from './system';

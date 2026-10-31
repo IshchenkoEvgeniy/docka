@@ -1,10 +1,30 @@
 import { describe, expect, it } from 'vitest';
 import { createMemoryFileSystem } from '../core';
-import { ASSETS_DIR, createAssetStore, isAssetName } from './assetStore';
+import {
+  ASSETS_DIR,
+  MAX_ASSET_BYTES,
+  assetMime,
+  createAssetStore,
+  isAssetName,
+} from './assetStore';
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('файлы проекта', () => {
+  it('любой тип: расширение по типу или из имени файла, иначе bin; предел 50 МБ', async () => {
+    const store = createAssetStore(createMemoryFileSystem());
+    const put = async (mime: string, name?: string) => {
+      const stored = await store.put(new Uint8Array([9]), mime, name);
+      return stored.ok ? stored.value.split('.')[1] : stored.error;
+    };
+    expect(await put('application/pdf')).toBe('pdf');
+    expect(await put('application/vnd.openxmlformats', 'План.DOCX')).toBe('docx');
+    expect(await put('application/octet-stream', 'без-расширения')).toBe('bin');
+    expect(assetMime(`${'0'.repeat(64)}.mp4`)).toBe('video/mp4');
+    expect(isAssetName(`${'0'.repeat(64)}.7z`)).toBe(true);
+    expect(isAssetName(`${'0'.repeat(64)}.exe/../x`)).toBe(false);
+  });
+
   it('имя — хэш содержимого: одинаковый файл хранится один раз', async () => {
     const fs = createMemoryFileSystem();
     const store = createAssetStore(fs);
@@ -39,9 +59,10 @@ describe('файлы проекта', () => {
     store.dispose();
   });
 
-  it('чужие имена и неподдерживаемые типы отклоняются', async () => {
+  it('чужие имена не читаются, слишком большие файлы не кладутся', async () => {
     const store = createAssetStore(createMemoryFileSystem());
     expect(store.get('../project.json').status).toBe('missing');
-    expect((await store.put(new Uint8Array([1]), 'application/x-msdownload')).ok).toBe(false);
+    const huge = new Uint8Array(MAX_ASSET_BYTES + 1);
+    expect((await store.put(huge, 'application/octet-stream')).ok).toBe(false);
   });
 });

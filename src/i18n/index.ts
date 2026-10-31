@@ -61,3 +61,18 @@ export function formatDate(isoDate: string): string {
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat(instance.language).format(value);
 }
+
+/** Размер файла по правилам языка: «820 КБ», «1,2 МБ». */
+export function formatFileSize(bytes: number): string {
+  const [unit, value] =
+    bytes >= 1024 * 1024
+      ? (['megabyte', bytes / (1024 * 1024)] as const)
+      : bytes >= 1024
+        ? (['kilobyte', bytes / 1024] as const)
+        : (['byte', bytes] as const);
+  return new Intl.NumberFormat(instance.language, {
+    style: 'unit',
+    unit,
+    maximumFractionDigits: value < 10 ? 1 : 0,
+  }).format(value);
+}

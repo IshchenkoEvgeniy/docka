@@ -5,6 +5,7 @@ import { richTextToPlain } from '../../core';
 import { t } from '../../i18n';
 import { cardColor, cx } from '../../ui';
 import { defineElement } from '../defineElement';
+import { newLocalId } from '../localId';
 import { useElementRuntime } from '../runtime';
 import { TextBlock, useMeasuredHeight } from '../text';
 import type { ElementViewProps } from '../types';
@@ -33,10 +34,6 @@ function liveItems(data: ChecklistData): Item[] {
     .sort((a, b) => a.order - b.order || (a.id < b.id ? -1 : 1));
 }
 
-function newItemId(): string {
-  return crypto.randomUUID().replaceAll('-', '').slice(0, 16);
-}
-
 function ItemRow({
   elementId,
   item,
@@ -62,7 +59,7 @@ function ItemRow({
     if (event.key === 'Enter') {
       event.preventDefault();
       commit();
-      const id = newItemId();
+      const id = newLocalId();
       const order = next === undefined ? item.order + 1 : (item.order + next.order) / 2;
       runtime.updateData(elementId, { items: { [id]: { text: '', done: false, order } } });
       onFocused(id);
@@ -112,7 +109,7 @@ function ChecklistView({ element, data, editing }: ElementViewProps<ChecklistDat
   const items = liveItems(data);
   const done = items.filter((item) => item.done).length;
   const add = (): void => {
-    const id = newItemId();
+    const id = newLocalId();
     const order = (items.at(-1)?.order ?? 0) + 1;
     runtime.updateData(element.id, { items: { [id]: { text: '', done: false, order } } });
     setFocusId(id);
@@ -157,7 +154,8 @@ export const checklist = defineElement<ChecklistData>({
   resize: 'width',
   richText: true,
   activate: 'edit',
-  createData: () => ({ items: { [newItemId()]: { text: '', done: false, order: 1 } } }),
+  editOnCreate: false,
+  createData: () => ({ items: { [newLocalId()]: { text: '', done: false, order: 1 } } }),
   View: ChecklistView,
   toPlainText: (data, rich) => {
     const title = rich === null ? '' : richTextToPlain(rich);

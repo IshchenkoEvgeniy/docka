@@ -8,3 +8,4 @@ export type { IdGenerator } from './idGenerator';
 export { createMemoryFileSystem } from './memoryFileSystem';
 export type { MemoryFileSystem } from './memoryFileSystem';
 export { scopedFileSystem, scopedFolderWatcher } from './scopedFileSystem';
+export type { FetchedResource, Network } from './network';

@@ -23,7 +23,9 @@ export {
   UNDO_LIMIT,
   combineUndoHistories,
   createUndoHistory,
+  FETCHED_ORIGIN,
   executeBoardCommand,
+  fillElementData,
   executeProjectCommand,
 } from './commands';
 export type { CombinedUndoHistory, UndoHistory, UndoOptions } from './commands';
@@ -93,6 +95,9 @@ export {
   ASSETS_DIR,
   IMAGE_TYPES,
   MAX_ASSET_BYTES,
+  MEDIA_TYPES,
+  assetExtension,
+  assetMime,
   createAssetStore,
   isAssetName,
 } from './assetStore';

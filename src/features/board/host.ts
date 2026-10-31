@@ -1,4 +1,4 @@
-import type { BoardBackground, BoardId } from '../../core';
+import type { BoardBackground, BoardId, Network } from '../../core';
 import type { AssetStore, UndoHistory } from '../../data';
 import type { BoardDirectory } from '../../elements';
 import type { SharedItem } from '../workspace';
@@ -37,6 +37,11 @@ export interface BoardHost {
   /** Предложить название только что созданной доски. */
   readonly renameBoard: (boardId: BoardId) => void;
   readonly setBackground: (background: BoardBackground) => void;
+  /** Сеть для превью ссылок; null — недоступна. */
+  readonly network: Network | null;
+  /** Файл проекта — системной программой; null — нельзя. */
+  readonly openAsset: ((asset: string, mime: string) => Promise<void>) | null;
+  readonly openUrl: (url: string) => Promise<void>;
   /** Полученное через «Поделиться»: открытая доска забирает его себе. */
   readonly inbox: BoardFeed<SharedItem> | null;
 }
@@ -51,5 +56,8 @@ export const NO_HOST: BoardHost = {
   createBoard: () => null,
   renameBoard: () => undefined,
   setBackground: () => undefined,
+  network: null,
+  openAsset: null,
+  openUrl: () => Promise.resolve(),
   inbox: null,
 };

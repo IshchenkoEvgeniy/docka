@@ -1,0 +1,68 @@
+.swatch {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.sample {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  min-height: 48px;
+  padding: var(--space-2) var(--space-3);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Подпись на тёмном образце: светлый текст той же палитры, что и в просмотре на весь экран. */
+.dark {
+  color: var(--color-on-viewer);
+}
+
+.codes,
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+}
+
+.code {
+  padding: 2px var(--space-1);
+  font-family: ui-monospace, monospace;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  text-align: left;
+  cursor: copy;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.code:hover {
+  background: var(--color-overlay);
+}
+
+.picker {
+  width: 100%;
+  height: 28px;
+  padding: 0;
+  border: none;
+}
+
+.input {
+  min-width: 0;
+  padding: 2px var(--space-1);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}

@@ -1,0 +1,1 @@
+export { swatch } from './swatch';
