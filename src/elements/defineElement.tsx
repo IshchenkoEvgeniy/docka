@@ -7,7 +7,11 @@ import type { ElementData, ElementDefinition, RegisteredElement } from './types'
 export function defineElement<D extends ElementData>(
   definition: ElementDefinition<D>,
 ): RegisteredElement {
-  const { View, dataSchema, toRichText } = definition;
+  const { View, dataSchema, toRichText, reference } = definition;
+  const parse = (data: Readonly<Record<string, unknown>>): D | null => {
+    const parsed = dataSchema.safeParse(data);
+    return parsed.success ? parsed.data : null;
+  };
   const Render = memo(function Render({
     element,
     editing,
@@ -37,6 +41,24 @@ export function defineElement<D extends ElementData>(
       if (toRichText === undefined) return null;
       const parsed = dataSchema.safeParse(element.data);
       return parsed.success ? toRichText(parsed.data, rich) : rich;
+    },
+    target: (element) => {
+      const data = parse(element.data);
+      return data === null || definition.target === undefined ? null : definition.target(data);
+    },
+    entityOf: (raw) => {
+      const data = parse(raw);
+      return data === null || reference === undefined ? null : reference.entityId(data);
+    },
+    withEntity: (raw, entityId) => {
+      const data = parse(raw);
+      return data === null || reference === undefined ? null : reference.withEntity(data, entityId);
+    },
+    menuActions: (element) => {
+      const data = parse(element.data);
+      return data === null || definition.menuActions === undefined
+        ? []
+        : definition.menuActions(data);
     },
   };
 }

@@ -1,6 +1,15 @@
-import type * as Y from 'yjs';
-import { isTrashExpired, type BoardId, type Timestamp } from '../core';
-import { readBoards, readConnections, readElements } from './projectDocument';
+import * as Y from 'yjs';
+import { fieldsOf, isTrashExpired, type BoardId, type Timestamp } from '../core';
+import { ENTITY_TEXTS_FIELD } from './entityText';
+import {
+  ENTITIES_MAP,
+  ENTITY_TYPES_MAP,
+  readBoards,
+  readConnections,
+  readElements,
+  readEntities,
+  readEntityTypes,
+} from './projectDocument';
 
 /**
  * Окончательное удаление из корзины того, что лежит дольше 30 дней. Не отменяется «Отменить»
@@ -56,4 +65,59 @@ export function purgeProjectDocument(doc: Y.Doc, now: Timestamp): BoardId[] {
     });
   }, PURGE_ORIGIN);
   return [...purged];
+}
+
+function mapOf(parent: Y.Map<unknown>, key: string): Y.Map<unknown> | null {
+  const value = parent.get(key);
+  return value instanceof Y.Map ? (value as Y.Map<unknown>) : null; // вложенные карты записей
+}
+
+/** Скрытые поля старше 30 дней: из типа и из значений и текстов его сущностей. */
+function purgeExpiredFields(doc: Y.Doc, now: Timestamp): number {
+  let count = 0;
+  const entities = doc.getMap<unknown>(ENTITIES_MAP);
+  for (const type of readEntityTypes(doc).items) {
+    const expired = fieldsOf(type, true)
+      .filter((field) => isTrashExpired(field.deletedAt, now))
+      .map((field) => field.id);
+    if (expired.length === 0) continue;
+    const record = mapOf(doc.getMap<unknown>(ENTITY_TYPES_MAP), type.id);
+    const fields = record === null ? null : mapOf(record, 'fields');
+    expired.forEach((id) => fields?.delete(id));
+    entities.forEach((value) => {
+      if (!(value instanceof Y.Map) || value.get('typeId') !== type.id) return;
+      const entity = value as Y.Map<unknown>; // записи — Y.Map
+      for (const id of expired) {
+        mapOf(entity, 'values')?.delete(id);
+        mapOf(entity, ENTITY_TEXTS_FIELD)?.delete(id);
+      }
+    });
+    count += expired.length;
+  }
+  return count;
+}
+
+/**
+ * Сущности, типы и скрытые поля старше 30 дней (ADR 0004). Тип удаляется, только когда
+ * у него не осталось ни одной сущности, даже в корзине.
+ */
+export function purgeEntities(doc: Y.Doc, now: Timestamp): number {
+  const entities = readEntities(doc).items;
+  const expired = entities.filter((entity) => isTrashExpired(entity.deletedAt, now));
+  const gone = new Set(expired.map((entity) => entity.id));
+  const typesInUse = new Set(entities.filter((e) => !gone.has(e.id)).map((e) => e.typeId));
+  const expiredTypes = readEntityTypes(doc).items.filter(
+    (type) => isTrashExpired(type.deletedAt, now) && !typesInUse.has(type.id),
+  );
+  let count = 0;
+  doc.transact(() => {
+    gone.forEach((id) => {
+      doc.getMap(ENTITIES_MAP).delete(id);
+    });
+    expiredTypes.forEach((type) => {
+      doc.getMap(ENTITY_TYPES_MAP).delete(type.id);
+    });
+    count = gone.size + expiredTypes.length + purgeExpiredFields(doc, now);
+  }, PURGE_ORIGIN);
+  return count;
 }

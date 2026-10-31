@@ -15,6 +15,8 @@ import { definitionFor } from '../../elements';
  * в том числе на другую доску) и обычный текст (вставка в другие программы).
  */
 export const CLIPBOARD_MIME = 'application/x-doska+json';
+/** Перетаскивание из библиотеки: те же элементы, но кладутся как есть (ссылка на сущность). */
+export const PLACE_MIME = 'application/x-doska-place+json';
 
 const ClipboardElementSchema = ElementSchema.pick({
   type: true,

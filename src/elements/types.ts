@@ -8,6 +8,26 @@ export type ElementActivation = 'edit' | 'view' | 'open' | null;
 /** Данные типа элемента: то, что лежит в `element.data`. */
 export type ElementData = Record<string, unknown>;
 
+/** Что открывает элемент с activate = 'open': доску или сущность проекта. */
+export type OpenTarget =
+  | { readonly kind: 'board'; readonly id: string }
+  | { readonly kind: 'entity'; readonly id: string };
+
+/** Пункт меню элемента, меняющий его data (например, вид карточки сущности). */
+export interface ElementMenuAction {
+  readonly id: string;
+  readonly label: string;
+  /** Отметка у выбранного варианта. */
+  readonly checked: boolean;
+  readonly changes: Readonly<Record<string, unknown>>;
+}
+
+/** Элемент — представление сущности проекта: для подсчёта мест и выбора «ссылка или копия». */
+export interface EntityReference<D> {
+  readonly entityId: (data: D) => string;
+  readonly withEntity: (data: D, entityId: string) => D;
+}
+
 export interface ElementViewProps<D extends ElementData> {
   readonly element: BoardElement;
   /** `element.data`, уже проверенные схемой типа. */
@@ -39,6 +59,9 @@ export interface ElementDefinition<D extends ElementData> {
   readonly toPlainText: (data: D, rich: readonly RichNode[] | null) => string;
   /** Форматированный текст для копирования (у старых заметок — из data). */
   readonly toRichText?: (data: D, rich: readonly RichNode[] | null) => readonly RichNode[];
+  readonly target?: (data: D) => OpenTarget;
+  readonly reference?: EntityReference<D>;
+  readonly menuActions?: (data: D) => readonly ElementMenuAction[];
 }
 
 /** Тип элемента после регистрации: данные проверяются внутри, наружу — без дженериков. */
@@ -59,4 +82,14 @@ export interface RegisteredElement {
     element: BoardElement,
     rich: readonly RichNode[] | null,
   ) => readonly RichNode[] | null;
+  /** Что открыть двойным щелчком (activate = 'open'); null — нечего. */
+  readonly target: (element: BoardElement) => OpenTarget | null;
+  /** Id сущности, представлением которой служит элемент; null — не сущность. */
+  readonly entityOf: (data: Readonly<Record<string, unknown>>) => string | null;
+  /** data того же элемента со ссылкой на другую сущность (независимая копия). */
+  readonly withEntity: (
+    data: Readonly<Record<string, unknown>>,
+    entityId: string,
+  ) => Readonly<Record<string, unknown>> | null;
+  readonly menuActions: (element: BoardElement) => readonly ElementMenuAction[];
 }

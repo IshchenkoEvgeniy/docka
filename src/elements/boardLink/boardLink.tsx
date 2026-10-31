@@ -60,4 +60,5 @@ export const boardLink = defineElement<BoardLinkData>({
   createData: () => ({ boardId: BoardIdSchema.parse('00000000') }),
   View: BoardLinkView,
   toPlainText: () => '',
+  target: (data) => ({ kind: 'board', id: data.boardId }),
 });

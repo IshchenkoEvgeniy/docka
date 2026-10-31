@@ -3,10 +3,15 @@ import type { z } from 'zod';
 import {
   ConnectionSchema,
   ElementSchema,
+  EntitySchema,
+  EntityTypeSchema,
   validate,
   type BoardElement,
   type Connection,
+  type Entity,
+  type EntityType,
 } from '../core';
+import { ENTITIES_MAP, ENTITY_TYPES_MAP } from './projectDocument';
 
 /**
  * Живой снимок элементов доски для интерфейса. После каждой транзакции перечитываются
@@ -106,4 +111,24 @@ export function createBoardElementsStore(doc: Y.Doc): BoardElementsStore {
 /** Стрелки доски — так же, как элементы: перечитываются только изменённые. */
 export function createBoardConnectionsStore(doc: Y.Doc): BoardConnectionsStore {
   return createLiveRecords(doc.getMap<unknown>('connections'), ConnectionSchema);
+}
+
+/** Типы и сущности проекта для досок и библиотеки: перечитываются только изменённые записи. */
+export interface EntityStores {
+  readonly types: LiveRecords<EntityType>;
+  readonly entities: LiveRecords<Entity>;
+  readonly destroy: () => void;
+}
+
+export function createEntityStores(projectDoc: Y.Doc): EntityStores {
+  const types = createLiveRecords(projectDoc.getMap<unknown>(ENTITY_TYPES_MAP), EntityTypeSchema);
+  const entities = createLiveRecords(projectDoc.getMap<unknown>(ENTITIES_MAP), EntitySchema);
+  return {
+    types,
+    entities,
+    destroy: () => {
+      types.destroy();
+      entities.destroy();
+    },
+  };
 }

@@ -10,6 +10,7 @@ import {
   editSelection,
   duplicateSelection,
   nudgeSelection,
+  openLibrary,
   reorderSelection,
   selectAll,
   toggleLockSelection,
@@ -91,6 +92,7 @@ function editHandlers({ model, controls, pointer, pickImages }: HotkeyContext): 
       createBoardCard(model, worldPoint(controls, pointer()));
     },
     selectAll: on(selectAll),
+    openLibrary: on(openLibrary),
     // Esc сначала отменяет начатый жест, потом снимает выделение.
     escape: () => {
       if (!controls.gestures.cancel()) clearSelection(model);

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { BoardIdSchema, ProjectIdSchema, TimestampSchema } from './ids';
 
 /** Текущая версия формата папки проекта (docs/format.md). */
-export const FORMAT_VERSION = 1;
+export const FORMAT_VERSION = 2;
 
 /** project.json в корне папки проекта: читается до открытия документов. */
 export const ProjectMetaSchema = z.object({

@@ -26,7 +26,7 @@ import {
   type ProjectFormat,
 } from './projectMeta';
 import { PROJECT_DOC_ID, insertBoard } from './projectDocument';
-import { purgeBoardDocument, purgeProjectDocument } from './trashPurge';
+import { purgeBoardDocument, purgeEntities, purgeProjectDocument } from './trashPurge';
 
 /**
  * Проект на диске: project.json + документ проекта + документы досок, открываемые по требованию.
@@ -152,6 +152,8 @@ async function openProjectDocument(context: ProjectContext): Promise<Result<Stor
     return err(NEWER_VERSION);
   }
   const purgedBoards = purgeProjectDocument(projectDoc.doc, context.clock.now());
+  const purgedEntities = purgeEntities(projectDoc.doc, context.clock.now());
+  if (purgedEntities > 0 && purgedBoards.length === 0) await projectDoc.flush();
   if (purgedBoards.length > 0) {
     await projectDoc.flush();
     await removeOwnBoardFiles(context, purgedBoards);

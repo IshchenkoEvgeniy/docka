@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FORMAT_VERSION,
   createManualClock,
   createMemoryFileSystem,
   createSequentialIdGenerator,
@@ -55,7 +56,7 @@ describe('создание проекта', () => {
     const fs = createMemoryFileSystem();
     const project = unwrap(await createProject(context(fs, 'pc'), 'Моя игра'));
     expect(JSON.parse(text(fs, 'project.json'))).toMatchObject({
-      formatVersion: 1,
+      formatVersion: FORMAT_VERSION,
       name: 'Моя игра',
     });
     expect(text(fs, '.stignore')).toBe('*.doska-tmp\n');

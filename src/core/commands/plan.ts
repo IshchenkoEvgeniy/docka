@@ -12,18 +12,13 @@ import {
   type Connection,
   type Tag,
 } from '../model';
-import type { Clock, IdGenerator } from '../ports';
+import type { CommandEnvironment } from './environment';
 import type { BoardCommand, NewElement, ProjectCommand } from './types';
 
 /**
  * Чистое планирование команд: из входа и текущего состояния — новая запись, проверенная схемой.
  * Без Yjs: слой data только записывает то, что здесь проверено.
  */
-
-export interface CommandEnvironment {
-  readonly clock: Clock;
-  readonly ids: IdGenerator;
-}
 
 type Extract<U, K> = U extends { readonly kind: K } ? U : never;
 

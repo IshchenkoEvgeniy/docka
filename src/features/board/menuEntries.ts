@@ -3,6 +3,7 @@ import { t, type TranslationKey } from '../../i18n';
 import type { MenuEntry } from '../../ui';
 import { formatCombo, isMacPlatform, parseCombo } from '../hotkeys';
 import {
+  openLibrary,
   alignSelection,
   copySelection,
   createBoardCard,
@@ -20,6 +21,7 @@ import { BOARD_HOTKEYS } from './boardHotkeys';
 import { appClipboard } from './clipboard';
 import type { BoardModel } from './model';
 import { connectionMenuEntries } from './connectionMenu';
+import { elementTypeEntries } from './elementMenu';
 import { pasteFromApp } from './pasting';
 
 export interface MenuContext {
@@ -100,12 +102,7 @@ function arrangeEntries(model: BoardModel, count: number): MenuEntry[] {
   ];
 }
 
-function elementEntries({ model, at }: MenuContext): MenuEntry[] {
-  const selected = selectedElements(model);
-  const allLocked = selected.every((element) => element.locked);
-  const run = (fn: (target: BoardModel) => void) => () => {
-    fn(model);
-  };
+function clipboardEntries(model: BoardModel, at: Point): MenuEntry[] {
   const copy = (): void => {
     appClipboard.setState({ content: copySelection(model) });
   };
@@ -116,13 +113,26 @@ function elementEntries({ model, at }: MenuContext): MenuEntry[] {
   const paste = (): void => {
     void pasteFromApp(model, at);
   };
-  const openColor = (): void => {
-    model.overlay.setState({ dialog: { kind: 'elementColor' } });
-  };
   return [
     action('copy', 'board.menu.copy', copy, { hotkey: 'copy' }),
     action('cut', 'board.menu.cut', cut, { hotkey: 'cut' }),
     action('paste', 'board.menu.paste', paste, { hotkey: 'paste' }),
+  ];
+}
+
+function elementEntries({ model, at }: MenuContext): MenuEntry[] {
+  const selected = selectedElements(model);
+  const allLocked = selected.every((element) => element.locked);
+  const run = (fn: (target: BoardModel) => void) => () => {
+    fn(model);
+  };
+  const openColor = (): void => {
+    model.overlay.setState({ dialog: { kind: 'elementColor' } });
+  };
+  const [only] = selected;
+  return [
+    ...(only !== undefined && selected.length === 1 ? elementTypeEntries(model, only) : []),
+    ...clipboardEntries(model, at),
     action('duplicate', 'board.menu.duplicate', run(duplicateSelection), { hotkey: 'duplicate' }),
     separator('s1'),
     action(
@@ -207,6 +217,14 @@ export function addMenuEntries(model: BoardModel, at: Point, pickImages: () => v
     action('add-checklist', 'board.toolbar.addChecklist', text('checklist'), {
       hotkey: 'addChecklist',
     }),
+    action(
+      'add-entity',
+      'board.toolbar.addEntity',
+      () => {
+        openLibrary(model);
+      },
+      { hotkey: 'openLibrary', disabled: model.host.entities === null },
+    ),
   ];
 }
 

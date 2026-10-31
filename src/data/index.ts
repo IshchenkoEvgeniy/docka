@@ -11,18 +11,33 @@ export {
   restoreBackup,
   writeBackup,
 } from './backup';
-export { PURGE_ORIGIN, purgeBoardDocument, purgeProjectDocument } from './trashPurge';
+export {
+  PURGE_ORIGIN,
+  purgeBoardDocument,
+  purgeEntities,
+  purgeProjectDocument,
+} from './trashPurge';
 export {
   LOCAL_ORIGIN,
   TYPING_MERGE_MS,
   UNDO_LIMIT,
+  combineUndoHistories,
   createUndoHistory,
   executeBoardCommand,
   executeProjectCommand,
 } from './commands';
-export type { UndoHistory, UndoOptions } from './commands';
-export { createBoardConnectionsStore, createBoardElementsStore } from './boardElements';
-export type { BoardConnectionsStore, BoardElementsStore, LiveRecords } from './boardElements';
+export type { CombinedUndoHistory, UndoHistory, UndoOptions } from './commands';
+export {
+  createBoardConnectionsStore,
+  createBoardElementsStore,
+  createEntityStores,
+} from './boardElements';
+export type {
+  BoardConnectionsStore,
+  BoardElementsStore,
+  EntityStores,
+  LiveRecords,
+} from './boardElements';
 export { openDocument } from './documentStore';
 export type { DocumentStoreOptions, RefreshReport, StoredDocument } from './documentStore';
 export { startLiveSync } from './liveSync';
@@ -34,7 +49,11 @@ export { MIGRATIONS, checkMigrationChain, documentFormatVersion } from './migrat
 export type { Migration } from './migrations';
 export type { OpenProject, ProjectContext } from './project';
 export {
+  ENTITIES_MAP,
+  ENTITY_TYPES_MAP,
   insertBoard,
+  readEntities,
+  readEntityTypes,
   readBoards,
   readConnections,
   readElements,
@@ -80,3 +99,4 @@ export {
 export type { AssetState, AssetStore } from './assetStore';
 export { listProjectDevices, recordDeviceName } from './devices';
 export type { ProjectDevice } from './devices';
+export { ENTITY_TEXTS_FIELD, ensureEntityText, entityTextOf, entityTexts } from './entityText';

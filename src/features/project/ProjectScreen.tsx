@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { boardPath, type Board, type BoardId } from '../../core';
-import type { OpenProject } from '../../data';
+import { boardPath, type Board, type BoardId, type CommandEnvironment } from '../../core';
+import type { AssetStore, OpenProject } from '../../data';
 import { t } from '../../i18n';
 import { Button } from '../../ui';
+import { EntityContext } from '../../elements';
 import { BoardCanvas, type BoardCameraMemory, type BoardHost } from '../board';
+import { EntityOverlays, useProjectEntities, type ProjectEntitiesSession } from '../entities';
 import { useWorkspace, useWorkspaceState } from '../workspace';
 import { createBoardDirectory } from './boardDirectory';
 import { BoardTree } from './BoardTree';
@@ -14,6 +16,7 @@ import { SyncStatus } from './SyncStatus';
 import { useBoardDocument, useOpenProject } from './useOpenProject';
 import { createProjectActions } from './projectActions';
 import { useBoards } from './useBoards';
+import { useProjectHost } from './useProjectHost';
 import { useProjectAssets } from './useProjectAssets';
 import styles from './Project.module.css';
 
@@ -122,6 +125,16 @@ function useBoardDirectory(project: OpenProject) {
   return directory;
 }
 
+interface ProjectBodyProps {
+  readonly project: OpenProject;
+  readonly folder: string;
+  readonly boardId: BoardId | null;
+  readonly assets: AssetStore | null;
+  readonly environment: CommandEnvironment;
+  readonly session: ProjectEntitiesSession;
+}
+
+/** Сущности создаются в эффекте — до тех пор показывается «Открываю…». */
 function ProjectView({
   project,
   folder,
@@ -131,39 +144,36 @@ function ProjectView({
   readonly folder: string;
   readonly boardId: BoardId | null;
 }) {
+  const { services } = useWorkspace();
+  const assets = useProjectAssets(services, folder);
+  const environment = useMemo(() => ({ clock: services.clock, ids: services.ids }), [services]);
+  const session = useProjectEntities(project, environment, assets);
+  if (session === null) return <Message text={t('project.loading')} />;
+  const props = { project, folder, boardId, assets, environment, session };
+  return <ProjectBody {...props} />;
+}
+
+function ProjectBody({ project, folder, boardId, assets, environment, session }: ProjectBodyProps) {
   const workspace = useWorkspace();
-  const { services } = workspace;
   const boards = useBoards(project.projectDoc.doc);
   const rootId = project.meta.rootBoardId;
   const tree = useMemo(() => buildBoardTree(boards, rootId), [boards, rootId]);
   const [treeOpen, setTreeOpen] = useState(() => !window.matchMedia(NARROW_SCREEN).matches);
   const [renaming, setRenaming] = useState<BoardId | null>(null);
-  const assets = useProjectAssets(services, folder);
   const directory = useBoardDirectory(project);
-  const actions = useMemo(
-    () => createProjectActions(project, { clock: services.clock, ids: services.ids }),
-    [project, services],
-  );
+  const actions = useMemo(() => createProjectActions(project, environment), [project, environment]);
   const board =
     boards.find((item) => item.id === boardId) ?? boards.find((item) => item.id === rootId);
   const currentId = board?.id ?? rootId;
-  const host = useMemo<BoardHost>(
-    () => ({
-      assets,
-      boards: directory,
-      openBoard: workspace.openBoard,
-      createBoard: () => actions.createChildBoard(currentId),
-      renameBoard: setRenaming,
-      setBackground: (background) => {
-        actions.run({ kind: 'updateBoard', boardId: currentId, changes: { background } });
-      },
-      inbox: {
-        take: workspace.takeInbox,
-        subscribe: (listener) => workspace.store.subscribe(listener),
-      },
-    }),
-    [assets, directory, workspace, actions, currentId],
-  );
+  const host = useProjectHost({
+    assets,
+    directory,
+    workspace,
+    actions,
+    currentId,
+    session,
+    renameBoard: setRenaming,
+  });
   if (board === undefined || tree === null) return <Message text={t('project.noBoard')} />;
 
   const open = (id: BoardId): void => {
@@ -181,7 +191,7 @@ function ProjectView({
   const renamed = renaming === null ? undefined : boards.find((item) => item.id === renaming);
 
   return (
-    <>
+    <EntityContext.Provider value={session.links}>
       <header className={styles.header}>
         <Button
           variant="ghost"
@@ -202,6 +212,9 @@ function ProjectView({
             setRenaming(board.id);
           }}
         />
+        <Button variant="ghost" onClick={session.ui.openLibrary} title={t('project.entities')}>
+          {t('project.entitiesButton')}
+        </Button>
         <SyncStatus folder={folder} />
         <FavoriteButton project={project} folder={folder} board={board} />
       </header>
@@ -219,6 +232,7 @@ function ProjectView({
         )}
         <div className={styles.board}>
           <BoardArea key={board.id} project={project} board={board} host={host} />
+          <EntityOverlays session={session} project={project} assets={assets} onOpenBoard={open} />
         </div>
       </div>
       {renamed !== undefined && (
@@ -231,7 +245,7 @@ function ProjectView({
           }}
         />
       )}
-    </>
+    </EntityContext.Provider>
   );
 }
 

@@ -1,5 +1,7 @@
 import type * as Y from 'yjs';
-import { err, ok, type Result } from '../core';
+import { builtinEntityTypes, err, ok, type Result } from '../core';
+import { ENTITY_TYPES_MAP } from './projectDocument';
+import { createRecord } from './yjsRecords';
 
 /**
  * Миграции формата проекта (docs/format.md, раздел «Версии и миграции»).
@@ -18,8 +20,25 @@ export interface Migration {
   readonly migrateBoardDoc?: (doc: Y.Doc) => void;
 }
 
-/** Миграции приложения по порядку. Формат 1 — первый, миграций пока нет. */
-export const MIGRATIONS: readonly Migration[] = [];
+/**
+ * Встроенные типы сущностей (ADR 0004). Время создания — 0, а не «сейчас»: два устройства,
+ * мигрирующие одновременно, создают одинаковые записи. Существующие записи не трогаются.
+ */
+function seedBuiltinEntityTypes(doc: Y.Doc): void {
+  const types = doc.getMap<unknown>(ENTITY_TYPES_MAP);
+  for (const type of builtinEntityTypes(0)) {
+    if (!types.has(type.id)) types.set(type.id, createRecord(type));
+  }
+}
+
+/** Миграции приложения по порядку (docs/format.md, «Версии и миграции»). */
+export const MIGRATIONS: readonly Migration[] = [
+  {
+    version: 2,
+    description: 'Сущности: карты entityTypes и entities, встроенные типы НПС, Локация, Предмет',
+    migrateProjectDoc: seedBuiltinEntityTypes,
+  },
+];
 
 /** Метка транзакций миграции: пишутся в журнал, не отменяются «Отменить». */
 export const MIGRATION_ORIGIN = Symbol('migration');

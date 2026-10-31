@@ -46,3 +46,18 @@ export function formatDateTime(milliseconds: number): string {
     minute: '2-digit',
   }).format(milliseconds);
 }
+
+/** Дата из поля «дата» (ГГГГ-ММ-ДД): «31 октября 2026». */
+export function formatDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  if (year === undefined || month === undefined || day === undefined) return isoDate;
+  return new Intl.DateTimeFormat(instance.language, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(year, month - 1, day));
+}
+
+export function formatNumber(value: number): string {
+  return new Intl.NumberFormat(instance.language).format(value);
+}

@@ -13,7 +13,6 @@ import {
   plainToRichText,
   type BoardElement,
   type BoardId,
-  type CommandResult,
   type ConnectionId,
   type ConnectionStyle,
   type ElementId,
@@ -27,6 +26,7 @@ import {
   type ClipboardPayload,
 } from './clipboard';
 import type { BoardModel } from './model';
+import { placeElements } from './references';
 
 /**
  * Действия над доской. Одно действие = одна команда = один шаг отмены.
@@ -52,10 +52,6 @@ function select(model: BoardModel, selection: Iterable<string>): void {
   model.interaction.setState({ selection: new Set(selection) });
 }
 
-function selectCreated(model: BoardModel, result: CommandResult | null): void {
-  if (result?.createdIds !== undefined) select(model, result.createdIds);
-}
-
 /** Правка текста элемента. */
 export function startEditing(model: BoardModel, elementId: string): void {
   const element = model.elements.getSnapshot().get(elementId);
@@ -74,8 +70,15 @@ export function activateElement(model: BoardModel, elementId: string): void {
   const activation = definitionFor(element.type).activate;
   if (activation === 'edit') startEditing(model, elementId);
   else if (activation === 'view') model.overlay.setState({ viewingId: elementId });
-  else if (activation === 'open' && typeof element.data.boardId === 'string')
-    model.host.openBoard(element.data.boardId as BoardId); // id доски проверен схемой элемента
+  else if (activation === 'open') openTarget(model, element);
+}
+
+/** Войти в доску или открыть сущность — что задаёт тип элемента. */
+export function openTarget(model: BoardModel, element: BoardElement): void {
+  const target = definitionFor(element.type).target(element);
+  if (target?.kind === 'board')
+    model.host.openBoard(target.id as BoardId); // id проверен схемой элемента
+  else if (target?.kind === 'entity') model.host.openEntity(target.id);
 }
 
 export function stopEditing(model: BoardModel): void {
@@ -185,9 +188,14 @@ export function copySelection(model: BoardModel): ClipboardContent | null {
   return copyContent(withChildren(model, selectedElements(model)), model.richTextOf);
 }
 
-export function pastePayload(model: BoardModel, payload: ClipboardPayload, center: Point): void {
-  const elements = placePayload(payload, center);
-  if (elements.length > 0) selectCreated(model, model.run({ kind: 'createElements', elements }));
+/** ask — спросить «ссылка или копия», если вставляются представления сущностей. */
+export function pastePayload(
+  model: BoardModel,
+  payload: ClipboardPayload,
+  center: Point,
+  ask = true,
+): void {
+  placeElements(model, placePayload(payload, center), ask);
 }
 
 /** Копия выделенного со сдвигом на шаг сетки — поверх остальных. */
@@ -208,7 +216,7 @@ export function duplicateSelection(model: BoardModel): void {
     ...(element.richText === undefined ? {} : { richText: element.richText }),
     ...(element.parentIndex === undefined ? {} : { parentIndex: element.parentIndex }),
   }));
-  selectCreated(model, model.run({ kind: 'createElements', elements }));
+  placeElements(model, elements, true);
 }
 
 /**
@@ -270,4 +278,11 @@ export function createBoardCard(model: BoardModel, center: Point): void {
 
 export function createNote(model: BoardModel, center: Point, text = ''): void {
   createTextElement(model, 'note', center, text);
+}
+
+/** Библиотека сущностей проекта (там сущность создают и кладут на доску). */
+export function openLibrary(model: BoardModel): void {
+  const entities = model.host.entities;
+  if (entities === null) model.showNotice(t('board.notice.noProjectEntities'));
+  else entities.openLibrary();
 }

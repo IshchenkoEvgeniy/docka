@@ -14,6 +14,7 @@ import {
   type Result,
 } from '../../core';
 import { createRecord } from '../yjsRecords';
+import { executeEntityCommand, isEntityCommand } from './entityCommands';
 import { commit, prepareRecordPatch } from './recordPatch';
 import { deleteBoard, deleteTag, restoreBoard } from './trashCommands';
 
@@ -96,6 +97,7 @@ export function executeProjectCommand(
   command: ProjectCommand,
   environment: CommandEnvironment,
 ): Result<CommandResult> {
+  if (isEntityCommand(command)) return executeEntityCommand(doc, command, environment);
   switch (command.kind) {
     case 'renameProject':
       return renameProject(doc, command);

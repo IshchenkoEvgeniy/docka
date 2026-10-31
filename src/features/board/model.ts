@@ -6,9 +6,11 @@ import type {
   BoardId,
   CommandEnvironment,
   CommandResult,
+  NewElement,
   RichNode,
 } from '../../core';
 import {
+  combineUndoHistories,
   createBoardConnectionsStore,
   createBoardElementsStore,
   createUndoHistory,
@@ -17,7 +19,7 @@ import {
   textOf,
   type BoardConnectionsStore,
   type BoardElementsStore,
-  type UndoHistory,
+  type CombinedUndoHistory,
 } from '../../data';
 import { TEXT_EDIT_ORIGIN } from '../../elements';
 import { NO_HOST, type BoardHost } from './host';
@@ -36,7 +38,9 @@ export type BoardDialog =
   | { readonly kind: 'elementColor' }
   | { readonly kind: 'connectionColor'; readonly connectionId: string }
   | { readonly kind: 'label'; readonly connectionId: string }
-  | { readonly kind: 'background' };
+  | { readonly kind: 'background' }
+  /** Вставка элементов-ссылок на сущности: ссылка на те же или независимые копии. */
+  | { readonly kind: 'references'; readonly elements: readonly NewElement[] };
 
 /** Поверх доски: картинка на весь экран или окно настройки. */
 export interface BoardOverlay {
@@ -52,7 +56,8 @@ export interface BoardModel {
   readonly overlay: StoreApi<BoardOverlay>;
   readonly elements: BoardElementsStore;
   readonly connections: BoardConnectionsStore;
-  readonly undo: UndoHistory;
+  /** batch — несколько команд разных документов одним шагом отмены. */
+  readonly undo: CombinedUndoHistory;
   readonly interaction: InteractionStore;
   readonly settings: StoreApi<BoardSettings>;
   readonly notice: StoreApi<BoardNotice>;
@@ -119,6 +124,24 @@ function pruneSelection(elements: BoardElementsStore, interaction: InteractionSt
   if (kept.length !== selection.size) interaction.setState({ selection: new Set(kept) });
 }
 
+/** История доски; правки сущностей с этой доски отменяются той же историей (ADR 0004). */
+function boardHistory(doc: Y.Doc, host: BoardHost) {
+  const boardUndo = createUndoHistory(doc, ['elements', 'connections'], {
+    mergeOrigins: [TEXT_EDIT_ORIGIN],
+  });
+  const projectUndo = host.entities?.history;
+  const undo = combineUndoHistories(
+    projectUndo === undefined ? [boardUndo] : [boardUndo, projectUndo],
+  );
+  return {
+    undo,
+    destroyHistory: () => {
+      undo.destroy();
+      boardUndo.destroy();
+    },
+  };
+}
+
 export function createBoardModel(
   doc: Y.Doc,
   boardId: BoardId,
@@ -127,9 +150,7 @@ export function createBoardModel(
 ): BoardModel {
   const elements = createBoardElementsStore(doc);
   const connections = createBoardConnectionsStore(doc);
-  const undo = createUndoHistory(doc, ['elements', 'connections'], {
-    mergeOrigins: [TEXT_EDIT_ORIGIN],
-  });
+  const { undo, destroyHistory } = boardHistory(doc, host);
   const interaction = createInteractionStore();
   const measure = createMeasureTracker(interaction);
   const settings = createStore<BoardSettings>(() => ({ gridSnap: false }));
@@ -163,7 +184,7 @@ export function createBoardModel(
     destroy: () => {
       stopNotices();
       unsubscribe();
-      undo.destroy();
+      destroyHistory();
       elements.destroy();
       connections.destroy();
     },

@@ -5,6 +5,7 @@ import { t } from '../../i18n';
 import { Button, ColorPalette, Dialog, Segmented, TextField, cardColor, inkColor } from '../../ui';
 import { selectedElements, updateConnection } from './boardActions';
 import type { BoardModel } from './model';
+import { placeElements, placeWithCopies } from './references';
 import styles from './Board.module.css';
 
 function palette(swatch: (color: ColorName) => string) {
@@ -50,7 +51,42 @@ function LabelForm({
   );
 }
 
-/** Окна доски: цвет элементов и стрелок, подпись стрелки, фон доски. */
+/** Вставка карточек сущностей: ссылки на те же сущности или независимые копии (ТЗ, раздел 6). */
+function ReferencesChoice({
+  model,
+  elements,
+  onClose,
+}: {
+  readonly model: BoardModel;
+  readonly elements: Parameters<typeof placeElements>[1];
+  readonly onClose: () => void;
+}) {
+  return (
+    <div className={styles.form}>
+      <p className={styles.hint}>{t('board.dialog.referencesHint')}</p>
+      <Button
+        variant="primary"
+        autoFocus
+        onClick={() => {
+          onClose();
+          placeElements(model, elements, false);
+        }}
+      >
+        {t('board.dialog.asLinks')}
+      </Button>
+      <Button
+        onClick={() => {
+          onClose();
+          placeWithCopies(model, elements);
+        }}
+      >
+        {t('board.dialog.asCopies')}
+      </Button>
+    </div>
+  );
+}
+
+/** Окна доски: цвет элементов и стрелок, подпись стрелки, фон доски, вставка сущностей. */
 export function BoardDialogs({
   model,
   background,
@@ -67,6 +103,12 @@ export function BoardDialogs({
     return (
       <Dialog title={t('board.dialog.label')} closeLabel={t('common.cancel')} onClose={close}>
         <LabelForm model={model} connectionId={dialog.connectionId} onClose={close} />
+      </Dialog>
+    );
+  if (dialog.kind === 'references')
+    return (
+      <Dialog title={t('board.dialog.references')} closeLabel={t('common.cancel')} onClose={close}>
+        <ReferencesChoice model={model} elements={dialog.elements} onClose={close} />
       </Dialog>
     );
   if (dialog.kind === 'background')

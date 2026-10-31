@@ -11,7 +11,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 /** Слияние как в updateRecord: вложенные объекты — по полям, кроме ключей replace — их целиком. */
-function merge(
+export function merge(
   current: unknown,
   changes: Readonly<Record<string, unknown>>,
   replace: readonly string[] = [],

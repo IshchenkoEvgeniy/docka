@@ -2,16 +2,24 @@ import { Extension } from '@tiptap/core';
 import type { Plugin } from '@tiptap/pm/state';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { useRef, useState } from 'react';
 import { ySyncPlugin, ySyncPluginKey } from 'y-prosemirror';
 import type * as Y from 'yjs';
 import { t } from '../../i18n';
+import { useEntityLinks, type EntityLinks } from '../entityLinks';
+import { entityName, typeName } from '../entityLabels';
 import type { ElementRuntime } from '../runtime';
+import { MentionPopupView } from './MentionPopupView';
+import { createMentionPopup, mentionExtension, type MentionSource } from './mentions';
 import styles from './Text.module.css';
+
+/** Что редактору нужно от места, где он открыт (доска или панель сущности). */
+export type TextEditorHost = Pick<ElementRuntime, 'undo' | 'redo' | 'stopEditing'>;
 
 /** Источник правок редактора в Yjs: история доски склеивает их в шаги по паузам. */
 export const TEXT_EDIT_ORIGIN: unknown = ySyncPluginKey;
 
-function boardBindings(fragment: Y.XmlFragment, runtime: ElementRuntime) {
+function boardBindings(fragment: Y.XmlFragment, runtime: TextEditorHost) {
   return Extension.create({
     name: 'doskaBoard',
     addProseMirrorPlugins: () => [ySyncPlugin(fragment) as Plugin],
@@ -39,8 +47,34 @@ function boardBindings(fragment: Y.XmlFragment, runtime: ElementRuntime) {
 
 interface TextEditorProps {
   readonly fragment: Y.XmlFragment;
-  readonly runtime: ElementRuntime;
-  readonly placeholder?: string;
+  readonly runtime: TextEditorHost;
+}
+
+/** Сущности для списка упоминаний: берутся в момент набора, поэтому всегда свежие. */
+function mentionSource(links: { readonly current: EntityLinks | null }): MentionSource {
+  return {
+    find: (query) => {
+      const directory = links.current?.directory;
+      if (directory === undefined) return [];
+      const types = directory.types.getSnapshot();
+      const needle = query.trim().toLocaleLowerCase();
+      return [...directory.entities.getSnapshot().values()]
+        .filter((entity) => entity.name.toLocaleLowerCase().includes(needle))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((entity) => {
+          const type = types.get(entity.typeId);
+          return {
+            id: entity.id,
+            label: entityName(entity.name),
+            hint: type === undefined ? '' : typeName(type),
+          };
+        });
+    },
+    labelOf: (id) => {
+      const entity = links.current?.directory.entities.getSnapshot().get(id);
+      return entity === undefined ? null : entityName(entity.name);
+    },
+  };
 }
 
 /** Телефон: правка на весь экран с кнопкой «Готово»; клавиатура не закрывает текст. */
@@ -61,6 +95,12 @@ export function FullscreenEditor({ fragment, runtime }: TextEditorProps) {
 
 /** Редактор форматированного текста поверх Yjs (TipTap + y-prosemirror). */
 export function TextEditor({ fragment, runtime }: TextEditorProps) {
+  const links = useRef<EntityLinks | null>(null);
+  links.current = useEntityLinks();
+  const [popup] = useState(createMentionPopup);
+  const [mentions] = useState(() =>
+    mentionExtension(mentionSource(links), popup, styles.mention ?? ''),
+  );
   const editor = useEditor(
     {
       extensions: [
@@ -70,11 +110,17 @@ export function TextEditor({ fragment, runtime }: TextEditorProps) {
           link: { openOnClick: false, autolink: true },
         }),
         boardBindings(fragment, runtime),
+        mentions,
       ],
       autofocus: 'end',
       editorProps: { attributes: { class: styles.editor ?? '' } },
     },
     [fragment, runtime],
   );
-  return <EditorContent editor={editor} className={styles.editorHost} />;
+  return (
+    <>
+      <EditorContent editor={editor} className={styles.editorHost} />
+      <MentionPopupView popup={popup} />
+    </>
+  );
 }

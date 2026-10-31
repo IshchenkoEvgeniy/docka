@@ -14,6 +14,7 @@ import { t } from '../../i18n';
 import { ElementRuntimeContext } from '../../elements';
 import { Dialog, Menu } from '../../ui';
 import { HotkeyList } from '../hotkeys';
+import { pastePayload } from './boardActions';
 import { BOARD_HOTKEYS } from './boardHotkeys';
 import { BoardNotice, BoardToolbar } from './BoardToolbar';
 import { BoardDialogs } from './BoardDialogs';
@@ -44,6 +45,24 @@ function useSharedInbox(model: BoardModel, controls: CameraControls): void {
     };
     const frame = requestAnimationFrame(consume);
     const unsubscribe = inbox.subscribe(consume);
+    return () => {
+      cancelAnimationFrame(frame);
+      unsubscribe();
+    };
+  }, [model, controls]);
+}
+
+/** «На доску» из библиотеки (телефон): элементы ложатся в центр экрана как есть. */
+function usePlacements(model: BoardModel, controls: CameraControls): void {
+  useEffect(() => {
+    const feed = model.host.placements;
+    if (feed === null) return undefined;
+    const consume = (): void => {
+      for (const payload of feed.take())
+        pastePayload(model, payload, worldPoint(controls, null), false);
+    };
+    const frame = requestAnimationFrame(consume);
+    const unsubscribe = feed.subscribe(consume);
     return () => {
       cancelAnimationFrame(frame);
       unsubscribe();
@@ -136,6 +155,7 @@ function BoardSurface({
 
   useCameraMemory(model, controls, camera);
   useSharedInbox(model, controls);
+  usePlacements(model, controls);
 
   return (
     <div

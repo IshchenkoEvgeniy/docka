@@ -11,7 +11,7 @@ const STYLES: readonly (readonly [LineStyle, TranslationKey])[] = [
   ['elbow', 'board.connection.elbow'],
 ];
 
-const mark = (on: boolean, label: string) => `${on ? '✓ ' : '   '}${label}`;
+export const mark = (on: boolean, label: string) => `${on ? '✓ ' : '   '}${label}`;
 
 /** Меню стрелки: вид линии, наконечники, подпись, цвет, удаление. */
 export function connectionMenuEntries(model: BoardModel, connection: Connection): MenuEntry[] {

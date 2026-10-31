@@ -5,13 +5,22 @@ import { ElementPlaceholder } from './ElementPlaceholder';
 import { boardLink } from './boardLink';
 import { checklist } from './checklist';
 import { column } from './column';
+import { entity } from './entity';
 import { image } from './image';
 import { note } from './note';
 import { title } from './title';
 import type { RegisteredElement } from './types';
 
 /** Все типы элементов. Новый тип добавляется сюда одной строкой. */
-const ELEMENTS: readonly RegisteredElement[] = [note, title, image, boardLink, column, checklist];
+const ELEMENTS: readonly RegisteredElement[] = [
+  note,
+  title,
+  image,
+  boardLink,
+  column,
+  checklist,
+  entity,
+];
 
 const BY_TYPE = new Map(ELEMENTS.map((element) => [element.type, element]));
 

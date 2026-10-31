@@ -9,6 +9,7 @@ import type {
 } from '../model';
 import type { BOARD_BACKGROUNDS } from '../model/board';
 import type { LINE_STYLES, MARKERS } from '../model/connection';
+import type { EntityCommand } from './entityCommands';
 
 /**
  * Команды — единственный способ менять данные (CLAUDE.md). Здесь — их описания,
@@ -19,8 +20,9 @@ type Background = (typeof BOARD_BACKGROUNDS)[number];
 type LineStyle = (typeof LINE_STYLES)[number];
 type Marker = (typeof MARKERS)[number];
 
-/** Команды документа проекта: дерево досок, теги, название. */
+/** Команды документа проекта: дерево досок, теги, название, сущности. */
 export type ProjectCommand =
+  | EntityCommand
   | { readonly kind: 'renameProject'; readonly name: string }
   | { readonly kind: 'createBoard'; readonly parentId: BoardId; readonly title: string }
   | {

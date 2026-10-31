@@ -1,0 +1,356 @@
+/* Панели сущностей поверх доски: библиотека слева, сущность справа. На телефоне — на весь экран. */
+
+.library,
+.panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow: auto;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-menu);
+}
+
+.library {
+  left: 0;
+  width: min(760px, 100%);
+  padding-bottom: var(--space-4);
+}
+
+.panel {
+  right: 0;
+  z-index: 26;
+  width: min(420px, 100%);
+}
+
+.panelHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.panelIcon {
+  font-size: var(--font-size-xl);
+}
+
+.panelTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panelBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.nameInput,
+.input,
+.iconInput {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-3);
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.input {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.nameInput {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
+
+.iconInput {
+  width: 64px;
+  text-align: center;
+}
+
+.nameInput:focus,
+.input:focus,
+.iconInput:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+.check {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-accent);
+}
+
+.fieldList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.fieldRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fieldLabel,
+.sectionTitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.longText {
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-3);
+  cursor: text;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.placeholder,
+.muted {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.library > .muted {
+  padding: 0 var(--space-4);
+}
+
+.options,
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.optionLabel {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: var(--touch-target);
+}
+
+.relation,
+.chosen,
+.imageField,
+.inline,
+.actions,
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.fileInput {
+  display: none;
+}
+
+.usage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.usageRow {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.libraryBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: 0 var(--space-4);
+}
+
+.tableWrap {
+  padding: 0 var(--space-4);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: var(--space-2);
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table tbody tr {
+  cursor: grab;
+}
+
+.table tbody tr:hover {
+  background: var(--color-overlay);
+}
+
+.sortButton,
+.nameButton {
+  min-height: var(--touch-target);
+  padding: 0;
+  font: inherit;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.sortButton {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.nameButton {
+  font-weight: 600;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  cursor: grab;
+}
+
+.tileCard {
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.danger {
+  color: var(--color-danger);
+}
+
+.dangerButton {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.error {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.typeEditor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.typeList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.typeForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.typeFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.typeField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.newField {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-3);
+  background: var(--color-overlay);
+  border-radius: var(--radius-md);
+}
+
+.notice {
+  position: absolute;
+  bottom: var(--space-4);
+  left: 50%;
+  z-index: 30;
+  padding: var(--space-2) var(--space-4);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-menu);
+  transform: translateX(-50%);
+}
+
+@media (max-width: 640px) {
+  .library,
+  .panel {
+    width: 100%;
+    border: none;
+  }
+}

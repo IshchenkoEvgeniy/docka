@@ -1,4 +1,5 @@
 import * as Y from 'yjs';
+import { createEmitter } from './emitter';
 import { LOCAL_ORIGIN } from './recordPatch';
 
 /**
@@ -14,6 +15,8 @@ export interface UndoHistory {
   readonly canRedo: () => boolean;
   /** Подписка на изменение доступности отмены/повтора. */
   readonly subscribe: (listener: () => void) => () => void;
+  /** Новый шаг: в стек отмены (новая правка или повтор) или в стек повтора (после отмены). */
+  readonly onStepAdded: (listener: (stack: 'undo' | 'redo') => void) => () => void;
   readonly destroy: () => void;
 }
 
@@ -45,17 +48,17 @@ export function createUndoHistory(
   };
   doc.on('beforeTransaction', separate);
   doc.on('afterTransaction', separate);
-  const listeners = new Set<() => void>();
+  const changed = createEmitter();
+  const steps = createEmitter<'undo' | 'redo'>();
   const notify = (): void => {
-    listeners.forEach((listener) => {
-      listener();
-    });
+    changed.emit();
   };
   const trim = (): void => {
     while (manager.undoStack.length > UNDO_LIMIT) manager.undoStack.shift();
   };
-  manager.on('stack-item-added', () => {
+  manager.on('stack-item-added', (event: { type: 'undo' | 'redo' }) => {
     trim();
+    steps.emit(event.type);
     notify();
   });
   manager.on('stack-item-popped', notify);
@@ -66,15 +69,14 @@ export function createUndoHistory(
     redo: () => manager.redo() !== null,
     canUndo: () => manager.canUndo(),
     canRedo: () => manager.canRedo(),
-    subscribe: (listener) => {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
+    subscribe: changed.subscribe,
+    onStepAdded: steps.subscribe,
     destroy: () => {
       doc.off('beforeTransaction', separate);
       doc.off('afterTransaction', separate);
       manager.destroy();
-      listeners.clear();
+      changed.clear();
+      steps.clear();
     },
   };
 }

@@ -1,5 +1,6 @@
 import { Fragment, createElement, type ReactNode } from 'react';
-import type { RichNode } from '../../core';
+import { MENTION_NODE, type RichNode } from '../../core';
+import { MentionChip } from './MentionChip';
 import styles from './Text.module.css';
 
 /**
@@ -42,6 +43,14 @@ function renderText(node: Extract<RichNode, { type: 'text' }>, key: number): Rea
 function renderNodes(nodes: readonly RichNode[]): ReactNode[] {
   return nodes.map((node, index) => {
     if (node.type === 'text') return renderText(node, index);
+    if (node.name === MENTION_NODE) {
+      const { id, label } = node.attrs ?? {};
+      return createElement(MentionChip, {
+        key: index,
+        id: typeof id === 'string' ? id : '',
+        label: typeof label === 'string' ? label : '',
+      });
+    }
     const tag = node.name === 'heading' ? headingTag(node.attrs) : BLOCK_TAGS[node.name];
     if (tag === undefined)
       return createElement(Fragment, { key: index }, renderNodes(node.children));

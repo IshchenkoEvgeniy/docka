@@ -9,3 +9,6 @@ export * from './trash';
 export { validate } from './validate';
 export * from './settings';
 export * from './richText';
+export * from './entity';
+export * from './entityBuiltinKeys';
+export * from './entityBuiltins';

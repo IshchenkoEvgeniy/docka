@@ -2,8 +2,14 @@ import { useEffect } from 'react';
 import type { CameraControls, Point } from '../../canvas';
 import { t } from '../../i18n';
 import { isEditableTarget } from '../../ui';
-import { copySelection, createNote, deleteSelection } from './boardActions';
-import { CLIPBOARD_MIME, appClipboard, serializePayload } from './clipboard';
+import { copySelection, createNote, deleteSelection, pastePayload } from './boardActions';
+import {
+  CLIPBOARD_MIME,
+  PLACE_MIME,
+  appClipboard,
+  parsePayload,
+  serializePayload,
+} from './clipboard';
 import { insertImages, isImageFile } from './images';
 import type { BoardModel } from './model';
 import { applyPaste, resolvePaste } from './pasting';
@@ -88,6 +94,11 @@ function attachDrop(model: BoardModel, controls: CameraControls, container: HTML
     const data = event.dataTransfer;
     if (data === null) return;
     const at = worldPoint(controls, localPoint(controls, event));
+    const placed = parsePayload(data.getData(PLACE_MIME));
+    if (placed !== null) {
+      pastePayload(model, placed, at, false);
+      return;
+    }
     const files = [...data.files];
     if (files.length > 0) void dropFiles(model, files, at);
     else applyPaste(model, resolvePaste('', data.getData('text/plain'), null), at);

@@ -10,7 +10,7 @@ import {
 import { executeBoardCommand, executeProjectCommand } from './commands';
 import { checkMigrationChain, documentFormatVersion, type Migration } from './migrations';
 import { createProject, openProject, type ProjectContext } from './project';
-import { readElements } from './projectDocument';
+import { readElements, readEntityTypes } from './projectDocument';
 
 /** Тестовые миграции «будущих» версий 2 и 3: помечают элементы досок и документ проекта. */
 function futureMigrations() {
@@ -50,9 +50,11 @@ function context(
   };
 }
 
+const FORMAT_1 = { version: 1, migrations: [] };
+
 /** Проект формата 1 с доской и одним элементом на ней. */
 async function oldProject(fs: MemoryFileSystem) {
-  const ctx = context(fs);
+  const ctx = context(fs, 'pc', FORMAT_1);
   const created = await createProject(ctx, 'Игра');
   if (!created.ok) throw new Error(created.error);
   const project = created.value;
@@ -174,6 +176,31 @@ describe('миграция проекта', () => {
       readElements((await project.openBoard(boardId)).doc).items.map((e) => e.data);
     expect(await state(pc)).toEqual(await state(phone));
     expect(await state(pc)).toEqual([{ text: 'Трактирщик', v2: true, v3: true }]);
+  });
+
+  it('формат 2: встроенные типы сущностей, одинаковые после одновременной миграции', async () => {
+    const pcFs = createMemoryFileSystem();
+    await oldProject(pcFs);
+    const phoneFs = createMemoryFileSystem();
+    for (const [path, data] of pcFs.snapshot()) phoneFs.putExternal(path, data);
+    const open = async (fs: MemoryFileSystem, device: string) => {
+      const opened = await openProject(context(fs, device));
+      if (!opened.ok) throw new Error(opened.error);
+      await opened.value.flushAll();
+      return opened.value;
+    };
+    const pc = await open(pcFs, 'pc');
+    const phone = await open(phoneFs, 'phone');
+    for (const [path, data] of phoneFs.snapshot())
+      if (path.startsWith('data/phone/')) pcFs.putExternal(path, data);
+    await pc.refreshAll();
+    const types = readEntityTypes(pc.projectDoc.doc);
+    expect(types.invalid).toEqual([]);
+    expect(types.items.map((type) => type.builtin).sort()).toEqual(['item', 'location', 'npc']);
+    expect(readEntityTypes(phone.projectDoc.doc).items).toEqual(
+      expect.arrayContaining(types.items),
+    );
+    expect(projectJson(pcFs).formatVersion).toBe(2);
   });
 
   it('версия документа при слиянии только растёт', () => {
