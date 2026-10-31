@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { boardPath, type Board, type BoardId, type CommandEnvironment } from '../../core';
+import { type Board, type BoardId, type CommandEnvironment } from '../../core';
 import type { AssetStore, OpenProject } from '../../data';
 import { t } from '../../i18n';
 import { Button } from '../../ui';
@@ -17,64 +17,15 @@ import { useBoardDocument, useOpenProject } from './useOpenProject';
 import { createProjectActions } from './projectActions';
 import { useBoards } from './useBoards';
 import { useProjectHost } from './useProjectHost';
+import { ProjectOverlays } from './ProjectOverlays';
+import { useProjectSearch } from './useProjectSearch';
+import { BackButton, FavoriteButton, Message, pathTo } from './ProjectParts';
+import { createProjectUi, type ProjectUi } from './projectUi';
+import { useProjectTags, useTagLinks, type ProjectTags } from '../tags';
 import { useProjectAssets } from './useProjectAssets';
 import styles from './Project.module.css';
 
 const NARROW_SCREEN = '(max-width: 640px)';
-
-function Message({ text }: { readonly text: string }) {
-  return <div className={styles.message}>{text}</div>;
-}
-
-function BackButton() {
-  const workspace = useWorkspace();
-  return (
-    <Button variant="ghost" onClick={workspace.goHome}>
-      {t('project.backToProjects')}
-    </Button>
-  );
-}
-
-/** Путь от корня до доски по данным проекта. */
-function pathTo(board: Board, boards: readonly Board[]): Board[] {
-  const byId = new Map(boards.map((item) => [item.id, item]));
-  return boardPath(board.id, (id) => byId.get(id)?.parentId ?? null)
-    .map((id) => byId.get(id))
-    .filter((item): item is Board => item !== undefined);
-}
-
-function FavoriteButton({
-  project,
-  folder,
-  board,
-}: {
-  readonly project: OpenProject;
-  readonly folder: string;
-  readonly board: Board;
-}) {
-  const workspace = useWorkspace();
-  useWorkspaceState((state) => state.settings.favorites); // перерисовка при смене избранного
-  const favorite = workspace.isFavorite(folder, board.id);
-  const label = favorite ? t('project.unfavorite') : t('project.favorite');
-  return (
-    <Button
-      variant="ghost"
-      pressed={favorite}
-      aria-label={label}
-      title={label}
-      onClick={() => {
-        workspace.toggleFavorite({
-          projectId: project.meta.id,
-          projectFolder: folder,
-          boardId: board.id,
-          title: board.title,
-        });
-      }}
-    >
-      {favorite ? '★' : '☆'}
-    </Button>
-  );
-}
 
 function BoardArea({
   project,
@@ -133,6 +84,8 @@ interface ProjectBodyProps {
   readonly openAsset: ((asset: string, mime: string) => Promise<void>) | null;
   readonly environment: CommandEnvironment;
   readonly session: ProjectEntitiesSession;
+  readonly tags: ProjectTags;
+  readonly ui: ProjectUi;
 }
 
 /** Сущности создаются в эффекте — до тех пор показывается «Открываю…». */
@@ -148,14 +101,16 @@ function ProjectView({
   const { services } = useWorkspace();
   const { assets, openAsset } = useProjectAssets(services, folder);
   const environment = useMemo(() => ({ clock: services.clock, ids: services.ids }), [services]);
-  const session = useProjectEntities(project, environment, assets);
-  if (session === null) return <Message text={t('project.loading')} />;
-  const props = { project, folder, boardId, assets, openAsset, environment, session };
+  const tags = useProjectTags(project, environment);
+  const session = useProjectEntities(project, environment, assets, useTagLinks(tags));
+  const [ui] = useState(createProjectUi);
+  if (session === null || tags === null) return <Message text={t('project.loading')} />;
+  const props = { project, folder, boardId, assets, openAsset, environment, session, tags, ui };
   return <ProjectBody {...props} />;
 }
 
 function ProjectBody(props: ProjectBodyProps) {
-  const { project, folder, boardId, assets, openAsset, environment, session } = props;
+  const { project, folder, boardId, assets, openAsset, environment, session, tags, ui } = props;
   const workspace = useWorkspace();
   const boards = useBoards(project.projectDoc.doc);
   const rootId = project.meta.rootBoardId;
@@ -167,6 +122,29 @@ function ProjectBody(props: ProjectBodyProps) {
   const board =
     boards.find((item) => item.id === boardId) ?? boards.find((item) => item.id === rootId);
   const currentId = board?.id ?? rootId;
+  const open = (id: BoardId): void => {
+    workspace.openBoard(id);
+    if (window.matchMedia(NARROW_SCREEN).matches) setTreeOpen(false);
+  };
+  const createFromTree = (): void => {
+    const created = actions.createChildBoard(currentId);
+    if (created === null) return;
+    void actions.addBoardCard(currentId, created).then(() => {
+      open(created);
+      setRenaming(created);
+    });
+  };
+  const search = useProjectSearch({
+    project,
+    workspace,
+    ui,
+    boards,
+    currentId,
+    open,
+    openEntity: session.ui.openEntity,
+    openLibrary: session.ui.openLibrary,
+    createBoard: createFromTree,
+  });
   const host = useProjectHost({
     assets,
     directory,
@@ -176,21 +154,12 @@ function ProjectBody(props: ProjectBodyProps) {
     session,
     renameBoard: setRenaming,
     openAsset,
+    tags,
+    ui,
+    focus: search.focus,
   });
   if (board === undefined || tree === null) return <Message text={t('project.noBoard')} />;
 
-  const open = (id: BoardId): void => {
-    workspace.openBoard(id);
-    if (window.matchMedia(NARROW_SCREEN).matches) setTreeOpen(false);
-  };
-  const createFromTree = (): void => {
-    const created = actions.createChildBoard(board.id);
-    if (created === null) return;
-    void actions.addBoardCard(board.id, created).then(() => {
-      open(created);
-      setRenaming(created);
-    });
-  };
   const renamed = renaming === null ? undefined : boards.find((item) => item.id === renaming);
 
   return (
@@ -215,6 +184,15 @@ function ProjectBody(props: ProjectBodyProps) {
             setRenaming(board.id);
           }}
         />
+        <Button
+          variant="ghost"
+          onClick={() => {
+            ui.setState({ search: true });
+          }}
+          title={t('project.search')}
+        >
+          {t('project.searchButton')}
+        </Button>
         <Button variant="ghost" onClick={session.ui.openLibrary} title={t('project.entities')}>
           {t('project.entitiesButton')}
         </Button>
@@ -230,12 +208,44 @@ function ProjectBody(props: ProjectBodyProps) {
                 setTreeOpen(false);
               }}
             />
-            <BoardTree tree={tree} currentId={board.id} onOpen={open} onCreate={createFromTree} />
+            <BoardTree
+              tree={tree}
+              currentId={board.id}
+              onOpen={open}
+              onCreate={createFromTree}
+              onCreateFromTemplate={() => {
+                ui.setState({ templates: 'pick' });
+              }}
+            />
           </>
         )}
         <div className={styles.board}>
           <BoardArea key={board.id} project={project} board={board} host={host} />
-          <EntityOverlays session={session} project={project} assets={assets} onOpenBoard={open} />
+          <EntityOverlays
+            session={session}
+            project={project}
+            assets={assets}
+            onOpenBoard={open}
+            tags={tags}
+          />
+          <ProjectOverlays
+            ui={ui}
+            tags={tags}
+            actions={actions}
+            boards={boards}
+            search={search}
+            now={workspace.services.clock.now}
+            templates={{
+              project,
+              environment,
+              currentId,
+              onCreated: (created) => {
+                void actions.addBoardCard(currentId, created).then(() => {
+                  open(created);
+                });
+              },
+            }}
+          />
         </div>
       </div>
       {renamed !== undefined && (

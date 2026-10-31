@@ -2,13 +2,15 @@ import type { CameraControls, Point, PointerTarget } from '../../canvas';
 import type { MenuEntry } from '../../ui';
 import { addMenuEntries, type AddPickers } from './addMenu';
 import { boardMenuEntries } from './menuEntries';
+import { tagFilterEntries } from './tagMenu';
+import type { Tag } from '../../core';
 import type { BoardModel } from './model';
 import { fitAll, viewSize, worldPoint } from './view';
 
 /** Открытое меню: по правой кнопке/долгому нажатию на холсте или с кнопки панели. */
 export type MenuState =
   | { readonly kind: 'context'; readonly target: PointerTarget; readonly screen: Point }
-  | { readonly kind: 'add' | 'actions'; readonly client: Point };
+  | { readonly kind: 'add' | 'actions' | 'tags'; readonly client: Point };
 
 function clientPoint(controls: CameraControls, point: Point): Point {
   const rect = controls.containerRef.current?.getBoundingClientRect();
@@ -29,6 +31,7 @@ export function menuContent(
   model: BoardModel,
   controls: CameraControls,
   pickers: AddPickers,
+  tags: ReadonlyMap<string, Tag>,
 ): { readonly position: Point; readonly entries: MenuEntry[] } {
   const fit = (): void => {
     fitAll(model, controls);
@@ -49,6 +52,8 @@ export function menuContent(
     controls,
     size === null ? null : { x: size.width / 2, y: size.height / 2 },
   );
+  if (state.kind === 'tags')
+    return { position: state.client, entries: tagFilterEntries(model, tags) };
   if (state.kind === 'add')
     return { position: state.client, entries: addMenuEntries(model, center, pickers) };
   return {

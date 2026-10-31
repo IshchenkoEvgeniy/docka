@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { EntityId } from '../../core';
-import { typeName, useEntities, useEntityTypes } from '../../elements';
+import { typeName, useEntities, useEntityTypes, useTags } from '../../elements';
+import { tagRows } from '../tags';
 import { t } from '../../i18n';
 import { Button, Segmented } from '../../ui';
 import { filterAndSort, type LibrarySort } from './librarySort';
@@ -28,10 +29,23 @@ export function Library({ onClose, onOpenTypes, onCreate, actions }: LibraryProp
   const [query, setQuery] = useState('');
   const [view, setView] = useState<LibraryView>('table');
   const [sort, setSort] = useState<LibrarySort>({ key: 'name', descending: false });
+  const allTags = useTags();
+  const [tagName, setTagName] = useState<string | null>(null);
   const type = typeId === null ? null : (types.get(typeId) ?? null);
   const items = useMemo(
-    () => filterAndSort(entities, types, { typeId: type?.id ?? null, query, sort }, typeName),
-    [entities, types, type, query, sort],
+    () =>
+      filterAndSort(
+        entities,
+        types,
+        {
+          typeId: type?.id ?? null,
+          query,
+          sort,
+          tag: tagName === null ? null : { name: tagName, all: allTags },
+        },
+        typeName,
+      ),
+    [entities, types, type, query, sort, tagName, allTags],
   );
   const sortedTypes = [...types.values()].sort((a, b) => typeName(a).localeCompare(typeName(b)));
   const createType = type ?? sortedTypes[0];
@@ -60,6 +74,21 @@ export function Library({ onClose, onOpenTypes, onCreate, actions }: LibraryProp
           {sortedTypes.map((item) => (
             <option key={item.id} value={item.id}>
               {`${item.icon} ${typeName(item)}`}
+            </option>
+          ))}
+        </select>
+        <select
+          className={styles.input}
+          aria-label={t('entities.library.filterTag')}
+          value={tagName ?? ''}
+          onChange={(event) => {
+            setTagName(event.target.value === '' ? null : event.target.value);
+          }}
+        >
+          <option value="">{t('entities.library.allTags')}</option>
+          {tagRows(allTags).map(({ name }) => (
+            <option key={name} value={name}>
+              {name}
             </option>
           ))}
         </select>

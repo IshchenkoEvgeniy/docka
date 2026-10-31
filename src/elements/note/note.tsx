@@ -27,6 +27,7 @@ function NoteView({ element, data, editing }: ElementViewProps<NoteData>) {
 
 export const note = defineElement<NoteData>({
   type: 'note',
+  label: () => t('elementTypes.note'),
   dataSchema: NoteDataSchema,
   defaultSize: { width: 240, height: 48 },
   minSize: { width: 80, height: 40 },

@@ -11,7 +11,7 @@ import {
 } from '../../canvas';
 import type { BoardBackground, BoardId, CommandEnvironment } from '../../core';
 import { t } from '../../i18n';
-import { ElementRuntimeContext } from '../../elements';
+import { ElementRuntimeContext, useTags } from '../../elements';
 import { Dialog, Menu } from '../../ui';
 import { HotkeyList } from '../hotkeys';
 import { pastePayload } from './boardActions';
@@ -24,6 +24,9 @@ import { createGestureHandlers } from './gestureHandlers';
 import type { BoardHost } from './host';
 import { FullscreenEditing } from './FullscreenEditing';
 import { ElementViewer } from './ElementViewer';
+import { HighlightSync } from './HighlightSync';
+import { FindBar } from './FindBar';
+import { useFocusFeed } from './useFocusFeed';
 import { useBoardPickers } from './pickers';
 import { insertShared } from './shared';
 import { createElementRuntime } from './runtime';
@@ -147,12 +150,14 @@ function BoardSurface({
     setMenu(null);
   }, []);
   const { pickers, inputs } = useBoardPickers(model, controls);
+  const tags = useTags();
   useBoardHotkeys({ model, controls, pointer, openHelp, pickers }, menu === null && !help);
   useClipboardEvents(model, controls, pointer);
 
   useCameraMemory(model, controls, camera);
   useSharedInbox(model, controls);
   usePlacements(model, controls);
+  useFocusFeed(model, controls);
 
   return (
     <div
@@ -173,6 +178,7 @@ function BoardSurface({
           <ElementLayer model={model} controls={controls} />
           <InteractionOverlay store={model.interaction} />
         </Viewport>
+        <HighlightSync model={model} />
         <ElementViewer model={model} />
         <FullscreenEditing model={model} runtime={runtime} />
         <BoardDialogs model={model} background={background} />
@@ -186,9 +192,10 @@ function BoardSurface({
         }}
       />
       <BoardNotice model={model} />
+      <FindBar model={model} controls={controls} />
       {inputs}
       {menu !== null && (
-        <Menu {...menuContent(menu, model, controls, pickers)} onClose={closeMenu} />
+        <Menu {...menuContent(menu, model, controls, pickers, tags)} onClose={closeMenu} />
       )}
       {help && (
         <Dialog title={t('hotkeys.title')} closeLabel={t('common.close')} onClose={closeHelp}>

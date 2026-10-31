@@ -149,6 +149,14 @@ function elementEntries({ model, at }: MenuContext): MenuEntry[] {
       { hotkey: 'back' },
     ),
     action('color', 'board.menu.color', openColor),
+    action(
+      'tags',
+      'board.menu.tags',
+      () => {
+        model.overlay.setState({ dialog: { kind: 'tags' } });
+      },
+      { disabled: model.host.tags === null },
+    ),
     action('lock', allLocked ? 'board.menu.unlock' : 'board.menu.lock', run(toggleLockSelection), {
       hotkey: 'lock',
     }),
@@ -189,6 +197,12 @@ function backgroundEntries({ model, at, fitAll }: MenuContext): MenuEntry[] {
     action('fitAll', 'board.menu.fitAll', fitAll, { hotkey: 'fitAll' }),
     action('background', 'board.menu.background', () => {
       model.overlay.setState({ dialog: { kind: 'background' } });
+    }),
+    action('boardTags', 'board.menu.boardTags', model.host.editBoardTags, {
+      disabled: model.host.tags === null,
+    }),
+    action('saveTemplate', 'board.menu.saveTemplate', model.host.saveAsTemplate, {
+      disabled: model.host.tags === null,
     }),
   ];
 }

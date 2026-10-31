@@ -4,6 +4,9 @@ import { boundsOf, type Point } from '../../canvas';
 import {
   ElementSchema,
   RichTextSchema,
+  TagIdSchema,
+  tagIdsOf,
+  type TagId,
   type BoardElement,
   type NewElement,
   type RichNode,
@@ -25,9 +28,10 @@ const ClipboardElementSchema = ElementSchema.pick({
   width: true,
   height: true,
   color: true,
-  tagIds: true,
   data: true,
 }).extend({
+  /** Теги — списком id: формат буфера не зависит от хранения в Yjs. */
+  tagIds: z.array(TagIdSchema),
   richText: RichTextSchema.optional(),
   /** Карточка колонки: номер колонки в этом же списке (координаты — порядок внутри неё). */
   parentIndex: z.number().int().nonnegative().optional(),
@@ -56,7 +60,11 @@ export function copyContent(
   const texts: string[] = [];
   const indexOf = new Map(elements.map((element, index) => [element.id as string, index]));
   const copied = elements.map((element) => {
-    const { type, x, y, width, height, color, tagIds, data } = element;
+    const { type, x, y, width, height, color, data } = element;
+    const tagIds = tagIdsOf(element.tags).flatMap((id): TagId[] => {
+      const parsed = TagIdSchema.safeParse(id);
+      return parsed.success ? [parsed.data] : [];
+    });
     const definition = definitionFor(type);
     const stored = richTextOf(element.id);
     const richText = definition.toRichText(element, stored);

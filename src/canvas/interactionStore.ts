@@ -34,6 +34,11 @@ export interface InteractionState {
   readonly editingId: string | null;
   /** Выделенные стрелки (отдельно от элементов). */
   readonly connectionSelection: ReadonlySet<string>;
+  /**
+   * Подсвеченные элементы (фильтр по тегу, поиск по доске): остальные приглушаются.
+   * null — подсветки нет. Холст не знает, почему элемент подсвечен.
+   */
+  readonly highlight: ReadonlySet<string> | null;
   /** Проводимая стрелка: от элемента к точке, над каким элементом указатель. */
   readonly connecting: {
     readonly from: string;
@@ -55,6 +60,7 @@ export function createInteractionStore(): InteractionStore {
     guides: [],
     editingId: null,
     connectionSelection: EMPTY_SELECTION,
+    highlight: null,
     connecting: null,
   }));
 }

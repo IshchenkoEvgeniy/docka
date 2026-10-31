@@ -10,6 +10,7 @@ import {
   optionsOf,
   richTextToPlain,
   selectedIds,
+  taggedIds,
   valueSchema,
   type Entity,
   type EntityType,
@@ -127,6 +128,17 @@ describe('упоминания', () => {
   ];
   it('находятся в тексте и выводятся в простой текст названием', () => {
     expect([...mentionedIds(nodes)]).toEqual(['innkeeper']);
+    const tagged: RichNode[] = [
+      {
+        type: 'element',
+        name: 'mention',
+        attrs: { id: 'tag-bug-01', label: 'баг', mentionSuggestionChar: '#' },
+        children: [],
+      },
+    ];
+    expect([...mentionedIds(tagged)]).toEqual([]);
+    expect([...taggedIds(tagged)]).toEqual(['tag-bug-01']);
+    expect(richTextToPlain(tagged)).toBe('#баг');
     expect(richTextToPlain(nodes)).toBe('Спроси @Борис');
   });
 });

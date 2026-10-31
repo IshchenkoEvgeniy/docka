@@ -77,6 +77,7 @@ function ColumnView({ element, data, editing }: ElementViewProps<ColumnData>) {
 
 export const column = defineElement<ColumnData>({
   type: 'column',
+  label: () => t('elementTypes.column'),
   dataSchema: ColumnDataSchema,
   defaultSize: { width: 280, height: 120 },
   minSize: { width: 200, height: 60 },

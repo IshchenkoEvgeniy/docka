@@ -135,6 +135,7 @@ function SwatchView({ element, data, editing }: ElementViewProps<SwatchData>) {
 
 export const swatch = defineElement<SwatchData>({
   type: 'swatch',
+  label: () => t('elementTypes.swatch'),
   dataSchema: SwatchDataSchema,
   defaultSize: { width: 180, height: 200 },
   minSize: { width: 120, height: 140 },

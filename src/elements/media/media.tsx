@@ -67,6 +67,7 @@ const stored = (file: StoredFile): MediaData => ({
 
 export const video = defineElement<MediaData>({
   type: 'video',
+  label: () => t('elementTypes.video'),
   dataSchema: MediaDataSchema,
   defaultSize: { width: 480, height: 300 },
   minSize: { width: 200, height: 140 },
@@ -85,6 +86,7 @@ export const video = defineElement<MediaData>({
 
 export const audio = defineElement<MediaData>({
   type: 'audio',
+  label: () => t('elementTypes.audio'),
   dataSchema: MediaDataSchema,
   defaultSize: { width: 320, height: 96 },
   minSize: { width: 220, height: 80 },

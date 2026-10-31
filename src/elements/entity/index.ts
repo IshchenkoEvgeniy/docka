@@ -5,8 +5,9 @@ export {
   useEntity,
   useEntityLinks,
   useEntityTypes,
+  useTags,
 } from '../entityLinks';
-export type { EntityDirectory, EntityLinks } from '../entityLinks';
+export type { EntityDirectory, EntityLinks, Live } from '../entityLinks';
 export { EntityChips, FieldImage, FieldValue } from './FieldValue';
 export { EntityCard } from './EntityView';
 export {

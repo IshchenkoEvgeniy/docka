@@ -36,6 +36,7 @@ function projectDoc() {
     icon: null,
     color: 'default',
     background: 'dots',
+    tags: {},
     createdAt: 0,
     updatedAt: 0,
     deletedAt: null,

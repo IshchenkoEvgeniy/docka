@@ -1,6 +1,7 @@
 import type { BoardBackground, BoardId, Network } from '../../core';
 import type { AssetStore, UndoHistory } from '../../data';
 import type { BoardDirectory } from '../../elements';
+import type { ProjectTags } from '../tags';
 import type { SharedItem } from '../workspace';
 import type { ClipboardPayload } from './clipboard';
 
@@ -42,6 +43,20 @@ export interface BoardHost {
   /** Файл проекта — системной программой; null — нельзя. */
   readonly openAsset: ((asset: string, mime: string) => Promise<void>) | null;
   readonly openUrl: (url: string) => Promise<void>;
+  /** Теги проекта; null — доска без проекта. */
+  readonly tags: ProjectTags | null;
+  readonly openTagManager: () => void;
+  /** Теги самой доски (окно выбора тегов проекта). */
+  readonly editBoardTags: () => void;
+  /** «Сохранить доску как шаблон». */
+  readonly saveAsTemplate: () => void;
+  /** Окно поиска по проекту (Ctrl+K). */
+  readonly openSearch: () => void;
+  /** Элемент, к которому перейти после открытия доски (результат поиска). */
+  readonly focus: {
+    readonly take: (boardId: string) => string | null;
+    readonly subscribe: (listener: () => void) => () => void;
+  } | null;
   /** Полученное через «Поделиться»: открытая доска забирает его себе. */
   readonly inbox: BoardFeed<SharedItem> | null;
 }
@@ -59,5 +74,11 @@ export const NO_HOST: BoardHost = {
   network: null,
   openAsset: null,
   openUrl: () => Promise.resolve(),
+  openSearch: () => undefined,
+  saveAsTemplate: () => undefined,
+  focus: null,
+  tags: null,
+  openTagManager: () => undefined,
+  editBoardTags: () => undefined,
   inbox: null,
 };

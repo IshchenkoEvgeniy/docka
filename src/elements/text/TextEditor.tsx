@@ -7,10 +7,10 @@ import { ySyncPlugin, ySyncPluginKey } from 'y-prosemirror';
 import type * as Y from 'yjs';
 import { t } from '../../i18n';
 import { useEntityLinks, type EntityLinks } from '../entityLinks';
-import { entityName, typeName } from '../entityLabels';
 import type { ElementRuntime } from '../runtime';
 import { MentionPopupView } from './MentionPopupView';
-import { createMentionPopup, mentionExtension, type MentionSource } from './mentions';
+import { createMentionPopup, mentionExtension } from './mentions';
+import { entitySource, tagSource } from './mentionSources';
 import styles from './Text.module.css';
 
 /** Что редактору нужно от места, где он открыт (доска или панель сущности). */
@@ -50,33 +50,6 @@ interface TextEditorProps {
   readonly runtime: TextEditorHost;
 }
 
-/** Сущности для списка упоминаний: берутся в момент набора, поэтому всегда свежие. */
-function mentionSource(links: { readonly current: EntityLinks | null }): MentionSource {
-  return {
-    find: (query) => {
-      const directory = links.current?.directory;
-      if (directory === undefined) return [];
-      const types = directory.types.getSnapshot();
-      const needle = query.trim().toLocaleLowerCase();
-      return [...directory.entities.getSnapshot().values()]
-        .filter((entity) => entity.name.toLocaleLowerCase().includes(needle))
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map((entity) => {
-          const type = types.get(entity.typeId);
-          return {
-            id: entity.id,
-            label: entityName(entity.name),
-            hint: type === undefined ? '' : typeName(type),
-          };
-        });
-    },
-    labelOf: (id) => {
-      const entity = links.current?.directory.entities.getSnapshot().get(id);
-      return entity === undefined ? null : entityName(entity.name);
-    },
-  };
-}
-
 /** Телефон: правка на весь экран с кнопкой «Готово»; клавиатура не закрывает текст. */
 export function FullscreenEditor({ fragment, runtime }: TextEditorProps) {
   return (
@@ -99,7 +72,11 @@ export function TextEditor({ fragment, runtime }: TextEditorProps) {
   links.current = useEntityLinks();
   const [popup] = useState(createMentionPopup);
   const [mentions] = useState(() =>
-    mentionExtension(mentionSource(links), popup, styles.mention ?? ''),
+    mentionExtension(
+      { entities: entitySource(links), tags: tagSource(links) },
+      popup,
+      styles.mention ?? '',
+    ),
   );
   const editor = useEditor(
     {

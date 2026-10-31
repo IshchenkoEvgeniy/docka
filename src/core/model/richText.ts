@@ -48,17 +48,34 @@ function mentionLabel(node: Extract<RichNode, { type: 'element' }>): string {
   return typeof label === 'string' ? label : '';
 }
 
-/** Id сущностей, упомянутых в тексте. */
-export function mentionedIds(nodes: readonly RichNode[]): Set<string> {
+/** Тег в тексте — тот же узел упоминания с символом «#» (ADR 0006). */
+export const TAG_MENTION_CHAR = '#';
+
+function isTagNode(node: Extract<RichNode, { type: 'element' }>): boolean {
+  return node.attrs?.mentionSuggestionChar === TAG_MENTION_CHAR;
+}
+
+function collectIds(nodes: readonly RichNode[], tags: boolean): Set<string> {
   const ids = new Set<string>();
   const visit = (node: RichNode): void => {
     if (node.type === 'text') return;
     const id = node.attrs?.id;
-    if (node.name === MENTION_NODE && typeof id === 'string') ids.add(id);
+    if (node.name === MENTION_NODE && typeof id === 'string' && isTagNode(node) === tags)
+      ids.add(id);
     node.children.forEach(visit);
   };
   nodes.forEach(visit);
   return ids;
+}
+
+/** Id сущностей, упомянутых в тексте. */
+export function mentionedIds(nodes: readonly RichNode[]): Set<string> {
+  return collectIds(nodes, false);
+}
+
+/** Id тегов, поставленных в тексте через «#». */
+export function taggedIds(nodes: readonly RichNode[]): Set<string> {
+  return collectIds(nodes, true);
 }
 
 /** Узлы, после которых в простом тексте начинается новая строка. */
@@ -74,7 +91,8 @@ function plainOf(node: RichNode, lines: string[]): void {
     return;
   }
   if (node.name === MENTION_NODE) {
-    lines[lines.length - 1] = `${lines.at(-1) ?? ''}@${mentionLabel(node)}`;
+    const sign = isTagNode(node) ? TAG_MENTION_CHAR : '@';
+    lines[lines.length - 1] = `${lines.at(-1) ?? ''}${sign}${mentionLabel(node)}`;
     return;
   }
   const block = BLOCKS.has(node.name);

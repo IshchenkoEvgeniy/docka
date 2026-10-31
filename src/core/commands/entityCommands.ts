@@ -92,6 +92,8 @@ export type EntityCommand =
         readonly name?: string;
         /** По id поля; null — очистить. Множества — `{ id: true/false }`, сливаются по ключам. */
         readonly values?: Readonly<Record<string, unknown>>;
+        /** Отметки тегов: `{ id тега: true/false }`. */
+        readonly tags?: Readonly<Record<string, boolean>>;
       };
     }
   | { readonly kind: 'deleteEntity'; readonly entityId: EntityId }
@@ -185,6 +187,7 @@ export function planEntity(
     typeId: type.id,
     name: command.name.trim(),
     values: { ...Object.fromEntries(flags), ...values.value },
+    tags: {},
     createdAt: now,
     updatedAt: now,
     deletedAt: null,

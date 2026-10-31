@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 import {
+  FORMAT_VERSION,
   createManualClock,
   createMemoryFileSystem,
   createSequentialIdGenerator,
@@ -8,9 +9,14 @@ import {
   type MemoryFileSystem,
 } from '../core';
 import { executeBoardCommand, executeProjectCommand } from './commands';
-import { checkMigrationChain, documentFormatVersion, type Migration } from './migrations';
+import {
+  MIGRATIONS,
+  checkMigrationChain,
+  documentFormatVersion,
+  type Migration,
+} from './migrations';
 import { createProject, openProject, type ProjectContext } from './project';
-import { readElements, readEntityTypes } from './projectDocument';
+import { readBoards, readElements, readEntityTypes } from './projectDocument';
 
 /** Тестовые миграции «будущих» версий 2 и 3: помечают элементы досок и документ проекта. */
 function futureMigrations() {
@@ -128,7 +134,11 @@ describe('миграция проекта', () => {
   it('старое приложение не открывает и не меняет обновлённый проект', async () => {
     const fs = createMemoryFileSystem();
     await oldProject(fs);
-    const upgraded = await openProject(context(fs, 'pc', futureMigrations().format));
+    const newer = {
+      version: FORMAT_VERSION + 1,
+      migrations: [...MIGRATIONS, { version: FORMAT_VERSION + 1, description: 'тест' }],
+    };
+    const upgraded = await openProject(context(fs, 'pc', newer));
     if (!upgraded.ok) throw new Error(upgraded.error);
     await upgraded.value.close();
     const writes = fs.writtenPaths().length;
@@ -200,7 +210,28 @@ describe('миграция проекта', () => {
     expect(readEntityTypes(phone.projectDoc.doc).items).toEqual(
       expect.arrayContaining(types.items),
     );
-    expect(projectJson(pcFs).formatVersion).toBe(2);
+    expect(projectJson(pcFs).formatVersion).toBe(FORMAT_VERSION);
+  });
+
+  it('формат 3: теги элементов — множество вместо массива, у досок — пустое множество', async () => {
+    const fs = createMemoryFileSystem();
+    const boardId = await oldProject(fs);
+    const before = await openProject(context(fs, 'pc', FORMAT_1));
+    if (!before.ok) throw new Error(before.error);
+    const old = await before.value.openBoard(boardId);
+    old.doc.transact(() => {
+      old.doc.getMap('elements').forEach((record) => {
+        const map = record as Y.Map<unknown>; // запись создана выше
+        map.delete('tags');
+        map.set('tagIds', ['tag-npc-01', 'tag-npc-01']);
+      });
+    });
+    await before.value.close();
+    const opened = await openProject(context(fs));
+    if (!opened.ok) throw new Error(opened.error);
+    const board = await opened.value.openBoard(boardId);
+    expect(readElements(board.doc).items[0]?.tags).toEqual({ 'tag-npc-01': true });
+    expect(readBoards(opened.value.projectDoc.doc).invalid).toEqual([]);
   });
 
   it('версия документа при слиянии только растёт', () => {

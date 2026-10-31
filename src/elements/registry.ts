@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import { createElement } from 'react';
 import { z } from 'zod';
 import { defineElement } from './defineElement';
@@ -41,6 +42,7 @@ const BY_TYPE = new Map(ELEMENTS.map((element) => [element.type, element]));
 /** Тип, которого нет в этой версии (элемент создан более новой): показывается заглушкой и не теряется. */
 const unknownElement = defineElement({
   type: 'unknown',
+  label: () => t('elementTypes.unknown'),
   dataSchema: z.record(z.string(), z.unknown()),
   defaultSize: { width: 200, height: 100 },
   minSize: { width: 40, height: 40 },

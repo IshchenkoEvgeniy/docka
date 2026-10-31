@@ -1,9 +1,9 @@
 import { createContext, useContext, useSyncExternalStore } from 'react';
 import type * as Y from 'yjs';
-import type { Entity, EntityType } from '../core';
+import type { Entity, EntityType, Tag } from '../core';
 import type { AssetStore, LiveRecords } from '../data';
 
-type Live<T> = Pick<LiveRecords<T>, 'subscribe' | 'getSnapshot'>;
+export type Live<T> = Pick<LiveRecords<T>, 'subscribe' | 'getSnapshot'>;
 
 /** Сущности открытого проекта: живые снимки типов и сущностей и тексты полей. */
 export interface EntityDirectory {
@@ -17,6 +17,10 @@ export interface EntityLinks {
   readonly directory: EntityDirectory;
   readonly assets: AssetStore | null;
   readonly openEntity: (entityId: string) => void;
+  /** Теги проекта (ADR 0006): для «#» в тексте и чипов тегов. */
+  readonly tags: Live<Tag>;
+  /** Новый тег по имени из текста («#новый»); null — не создан. */
+  readonly createTag: (name: string) => string | null;
 }
 
 export const EntityContext = createContext<EntityLinks | null>(null);
@@ -29,19 +33,24 @@ const EMPTY = new Map<string, never>();
 const noop = () => () => undefined;
 const empty = () => EMPTY;
 
-function useLive<T>(pick: (directory: EntityDirectory) => Live<T>): ReadonlyMap<string, T> {
+function useLive<T>(pick: (links: EntityLinks) => Live<T>): ReadonlyMap<string, T> {
   const links = useEntityLinks();
-  const live = links === null ? null : pick(links.directory);
+  const live = links === null ? null : pick(links);
   return useSyncExternalStore(live?.subscribe ?? noop, live?.getSnapshot ?? empty);
 }
 
 /** Сущности проекта без корзины. */
 export function useEntities(): ReadonlyMap<string, Entity> {
-  return useLive((directory) => directory.entities);
+  return useLive((links) => links.directory.entities);
 }
 
 export function useEntityTypes(): ReadonlyMap<string, EntityType> {
-  return useLive((directory) => directory.types);
+  return useLive((links) => links.directory.types);
+}
+
+/** Теги проекта по id (вне проекта — пусто). */
+export function useTags(): ReadonlyMap<string, Tag> {
+  return useLive((links) => links.tags);
 }
 
 /** Сущность с её типом; null — удалена, не найдена или тип недоступен. */

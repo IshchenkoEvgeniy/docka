@@ -26,6 +26,7 @@ function TitleView({ element, editing }: ElementViewProps<TitleData>) {
 
 export const title = defineElement<TitleData>({
   type: 'title',
+  label: () => t('elementTypes.title'),
   dataSchema: TitleDataSchema,
   defaultSize: { width: 420, height: 56 },
   minSize: { width: 80, height: 32 },

@@ -1,6 +1,7 @@
 import { useState, type SyntheticEvent } from 'react';
 import { t } from '../../i18n';
-import { Button, Dialog, TextField } from '../../ui';
+import { Button, Dialog, Segmented, TextField } from '../../ui';
+import { builtinTemplates } from '../templates';
 import { useWorkspace } from '../workspace';
 import { createProjectAt } from './placement';
 import styles from './Home.module.css';
@@ -53,12 +54,15 @@ export function NewProjectDialog({ onClose }: { readonly onClose: () => void }) 
   const [parent, setParent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [templateId, setTemplateId] = useState('');
+  const projects = builtinTemplates().projects;
 
   const submit = (event: SyntheticEvent): void => {
     event.preventDefault();
     if (busy) return;
     setBusy(true);
-    createProjectAt(workspace, parent, name)
+    const template = projects.find((item) => item.id === templateId) ?? null;
+    createProjectAt(workspace, parent, name, template)
       .then((placed) => {
         if (placed.ok) {
           workspace.openProject(placed.key);
@@ -86,6 +90,15 @@ export function NewProjectDialog({ onClose }: { readonly onClose: () => void }) 
             setName(event.target.value);
             setError(null);
           }}
+        />
+        <Segmented<string>
+          label={t('templates.project')}
+          value={templateId}
+          options={[
+            { value: '', label: t('templates.empty') },
+            ...projects.map((template) => ({ value: template.id, label: template.name })),
+          ]}
+          onChange={setTemplateId}
         />
         <LocationPicker
           parent={parent}

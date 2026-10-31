@@ -1,5 +1,8 @@
 import {
   fieldValue,
+  hasTag,
+  tagIdsOf,
+  type Tag,
   fieldsOf,
   optionsOf,
   selectedIds,
@@ -54,7 +57,13 @@ function compareSorted(a: string | number, b: string | number, sign: number): nu
 export function filterAndSort(
   entities: ReadonlyMap<string, Entity>,
   types: ReadonlyMap<string, EntityType>,
-  options: { readonly typeId: string | null; readonly query: string; readonly sort: LibrarySort },
+  options: {
+    readonly typeId: string | null;
+    readonly query: string;
+    readonly sort: LibrarySort;
+    /** Тег (с вложенными); null — без фильтра. */
+    readonly tag?: { readonly name: string; readonly all: ReadonlyMap<string, Tag> } | null;
+  },
   typeLabel: (type: EntityType) => string,
 ): Entity[] {
   const needle = options.query.trim().toLocaleLowerCase();
@@ -74,5 +83,9 @@ export function filterAndSort(
     .filter((entity) => types.has(entity.typeId))
     .filter((entity) => options.typeId === null || entity.typeId === options.typeId)
     .filter((entity) => needle === '' || entity.name.toLocaleLowerCase().includes(needle))
+    .filter((entity) => {
+      const filter = options.tag ?? null;
+      return filter === null || hasTag(tagIdsOf(entity.tags), filter.name, filter.all);
+    })
     .sort((a, b) => compareSorted(key(a), key(b), sign) || compare(a.name, b.name));
 }

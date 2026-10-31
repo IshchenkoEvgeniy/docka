@@ -1,6 +1,6 @@
-import type * as Y from 'yjs';
+import * as Y from 'yjs';
 import { builtinEntityTypes, err, ok, type Result } from '../core';
-import { ENTITY_TYPES_MAP } from './projectDocument';
+import { ENTITIES_MAP, ENTITY_TYPES_MAP } from './projectDocument';
 import { createRecord } from './yjsRecords';
 
 /**
@@ -31,12 +31,51 @@ function seedBuiltinEntityTypes(doc: Y.Doc): void {
   }
 }
 
+function recordsOf(doc: Y.Doc, name: string): Y.Map<unknown>[] {
+  const records: Y.Map<unknown>[] = [];
+  doc.getMap<unknown>(name).forEach((value) => {
+    if (value instanceof Y.Map) records.push(value as Y.Map<unknown>); // записи — Y.Map
+  });
+  return records;
+}
+
+/** Пустое множество тегов там, где его ещё нет (идемпотентно). */
+function ensureTagSet(record: Y.Map<unknown>): void {
+  if (!(record.get('tags') instanceof Y.Map)) record.set('tags', new Y.Map<unknown>());
+}
+
+/**
+ * Формат 3 (ADR 0006): теги — множество. У элементов массив `tagIds` переносится в `tags`,
+ * у досок и сущностей появляется пустое `tags`.
+ */
+function tagSetsForBoards(doc: Y.Doc): void {
+  for (const record of recordsOf(doc, 'elements')) {
+    if (record.get('tags') instanceof Y.Map) continue;
+    const tags = new Y.Map<unknown>();
+    const old: unknown = record.get('tagIds');
+    if (Array.isArray(old)) for (const id of old) if (typeof id === 'string') tags.set(id, true);
+    record.set('tags', tags);
+    record.delete('tagIds');
+  }
+}
+
+function tagSetsForProject(doc: Y.Doc): void {
+  recordsOf(doc, 'boards').forEach(ensureTagSet);
+  recordsOf(doc, ENTITIES_MAP).forEach(ensureTagSet);
+}
+
 /** Миграции приложения по порядку (docs/format.md, «Версии и миграции»). */
 export const MIGRATIONS: readonly Migration[] = [
   {
     version: 2,
     description: 'Сущности: карты entityTypes и entities, встроенные типы НПС, Локация, Предмет',
     migrateProjectDoc: seedBuiltinEntityTypes,
+  },
+  {
+    version: 3,
+    description: 'Теги — множество: tags у элементов, досок и сущностей вместо массива tagIds',
+    migrateProjectDoc: tagSetsForProject,
+    migrateBoardDoc: tagSetsForBoards,
   },
 ];
 

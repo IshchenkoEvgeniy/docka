@@ -51,6 +51,7 @@ function BoardLinkView({ element, data }: ElementViewProps<BoardLinkData>) {
 
 export const boardLink = defineElement<BoardLinkData>({
   type: 'board',
+  label: () => t('elementTypes.board'),
   dataSchema: BoardLinkDataSchema,
   defaultSize: { width: 160, height: 150 },
   minSize: { width: 160, height: 150 },
@@ -61,4 +62,5 @@ export const boardLink = defineElement<BoardLinkData>({
   View: BoardLinkView,
   toPlainText: () => '',
   target: (data) => ({ kind: 'board', id: data.boardId }),
+  withTarget: (_data, boardId) => BoardLinkDataSchema.parse({ boardId }),
 });

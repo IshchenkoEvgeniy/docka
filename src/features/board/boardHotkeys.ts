@@ -68,6 +68,13 @@ export const BOARD_HOTKEYS: readonly HotkeyDefinition[] = [
     label: 'hotkeys.selectAll',
     group: 'hotkeys.group.selection',
   },
+  {
+    id: 'search',
+    combos: ['Mod+KeyK'],
+    label: 'hotkeys.search',
+    group: 'hotkeys.group.selection',
+  },
+  { id: 'find', combos: ['Mod+KeyF'], label: 'hotkeys.find', group: 'hotkeys.group.selection' },
   { id: 'escape', combos: ['Escape'], label: 'hotkeys.escape', group: 'hotkeys.group.selection' },
   {
     id: 'lock',

@@ -10,10 +10,29 @@ import {
   type CameraControls,
   type InteractionStore,
 } from '../../canvas';
-import { compareStacking, type BoardElement } from '../../core';
+import { compareStacking, tagIdsOf, type BoardElement } from '../../core';
 import { definitionFor } from '../../elements';
 import { cardColorToken } from '../../ui';
+import { TagChips } from '../tags';
 import type { BoardModel } from './model';
+import styles from './Board.module.css';
+
+/** Теги элемента метками под карточкой (не меняют её высоту). */
+export function ElementTags({
+  element,
+  inline = false,
+}: {
+  readonly element: BoardElement;
+  /** В колонке метки идут в потоке, а не поверх следующей карточки. */
+  readonly inline?: boolean;
+}) {
+  if (tagIdsOf(element.tags).length === 0) return null;
+  return (
+    <div className={inline ? styles.tagInline : styles.tagStrip}>
+      <TagChips tags={element.tags} />
+    </div>
+  );
+}
 
 /** Элементы прямо на доске; карточки колонок рисует сама колонка. */
 function topLevel(elements: ReadonlyMap<string, BoardElement>): BoardElement[] {
@@ -45,6 +64,7 @@ const BoardItem = memo(function BoardItem({
       store={store}
     >
       <Render element={element} editing={editing} />
+      <ElementTags element={element} />
     </ElementFrame>
   );
 });

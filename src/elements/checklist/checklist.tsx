@@ -148,6 +148,7 @@ function ChecklistView({ element, data, editing }: ElementViewProps<ChecklistDat
 
 export const checklist = defineElement<ChecklistData>({
   type: 'checklist',
+  label: () => t('elementTypes.checklist'),
   dataSchema: ChecklistDataSchema,
   defaultSize: { width: 280, height: 140 },
   minSize: { width: 180, height: 80 },
@@ -157,6 +158,8 @@ export const checklist = defineElement<ChecklistData>({
   editOnCreate: false,
   createData: () => ({ items: { [newLocalId()]: { text: '', done: false, order: 1 } } }),
   View: ChecklistView,
+  openTasks: (data) =>
+    liveItems(data).filter((item) => !item.done && item.text.trim() !== '').length,
   toPlainText: (data, rich) => {
     const title = rich === null ? '' : richTextToPlain(rich);
     const lines = liveItems(data).map((item) => `${item.done ? '[x]' : '[ ]'} ${item.text}`);

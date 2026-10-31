@@ -1,7 +1,6 @@
 import * as Y from 'yjs';
 import {
   BoardSchema,
-  TagSchema,
   checkBoardMove,
   err,
   ok,
@@ -16,6 +15,7 @@ import {
 import { createRecord } from '../yjsRecords';
 import { executeEntityCommand, isEntityCommand } from './entityCommands';
 import { commit, prepareRecordPatch } from './recordPatch';
+import { mergeTags, removeTemplate, updateTag } from './tagCommands';
 import { deleteBoard, deleteTag, restoreBoard } from './trashCommands';
 
 const boardsOf = (doc: Y.Doc) => doc.getMap<unknown>('boards');
@@ -127,9 +127,10 @@ export function executeProjectCommand(
     case 'deleteTag':
       return deleteTag(doc, command);
     case 'updateTag':
-      return patch(
-        doc,
-        prepareRecordPatch(tagsOf(doc), command.tagId, TagSchema, command.changes, 'Тег не найден'),
-      );
+      return updateTag(doc, command);
+    case 'mergeTags':
+      return mergeTags(doc, command);
+    case 'removeTemplate':
+      return removeTemplate(doc, command, environment.clock.now());
   }
 }

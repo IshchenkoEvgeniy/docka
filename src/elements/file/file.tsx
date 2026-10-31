@@ -74,6 +74,7 @@ function FileFullView({ data }: ElementViewProps<FileData>) {
 
 export const file = defineElement<FileData>({
   type: 'file',
+  label: () => t('elementTypes.file'),
   dataSchema: FileDataSchema,
   defaultSize: { width: 280, height: 72 },
   minSize: { width: 180, height: 72 },

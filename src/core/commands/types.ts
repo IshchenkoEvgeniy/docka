@@ -33,6 +33,8 @@ export type ProjectCommand =
         readonly icon?: string | null;
         readonly color?: ColorName;
         readonly background?: Background;
+        /** Отметки тегов: `{ id тега: true/false }` (ADR 0006). */
+        readonly tags?: Readonly<Record<string, boolean>>;
       };
     }
   | { readonly kind: 'moveBoard'; readonly boardId: BoardId; readonly newParentId: BoardId }
@@ -43,11 +45,16 @@ export type ProjectCommand =
   | { readonly kind: 'restoreBoard'; readonly boardId: BoardId }
   /** Тег удаляется сразу (без корзины); отменяется обычной отменой. */
   | { readonly kind: 'deleteTag'; readonly tagId: TagId }
+  /** Переименование меняет и вложенные теги («баг» → «ошибка»: «баг/x» → «ошибка/x»). */
   | {
       readonly kind: 'updateTag';
       readonly tagId: TagId;
       readonly changes: { readonly name?: string; readonly color?: ColorName };
-    };
+    }
+  /** Слияние: ссылки на tagId читаются как ссылки на intoId (ADR 0006). */
+  | { readonly kind: 'mergeTags'; readonly tagId: TagId; readonly intoId: TagId }
+  /** «Удалить шаблон»: файл остаётся, шаблон скрывается во всех устройствах (ADR 0006). */
+  | { readonly kind: 'removeTemplate'; readonly templateId: string };
 
 export interface ElementPlacement {
   readonly x: number;
@@ -82,7 +89,8 @@ export type BoardCommand =
       readonly changes: {
         readonly color?: ColorName;
         readonly locked?: boolean;
-        readonly tagIds?: readonly TagId[];
+        /** Отметки тегов: `{ id тега: true/false }` (ADR 0006). */
+        readonly tags?: Readonly<Record<string, boolean>>;
         readonly parentId?: ElementId | null;
         /** Меняются только перечисленные поля data, остальные сохраняются. */
         readonly data?: Readonly<Record<string, unknown>>;
@@ -92,7 +100,11 @@ export type BoardCommand =
   | {
       readonly kind: 'updateElements';
       readonly elementIds: readonly ElementId[];
-      readonly changes: { readonly color?: ColorName; readonly locked?: boolean };
+      readonly changes: {
+        readonly color?: ColorName;
+        readonly locked?: boolean;
+        readonly tags?: Readonly<Record<string, boolean>>;
+      };
     }
   | {
       readonly kind: 'moveElements';

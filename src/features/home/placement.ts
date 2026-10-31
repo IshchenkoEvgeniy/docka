@@ -1,4 +1,12 @@
-import { createProjectIn, joinPath, readProjectEntry, samePath } from '../../data';
+import type { CommandEnvironment, Template } from '../../core';
+import {
+  createProjectIn,
+  joinPath,
+  readProjectEntry,
+  samePath,
+  type OpenProject,
+} from '../../data';
+import { applyTemplate } from '../templates';
 import { t } from '../../i18n';
 import type { Workspace } from '../workspace';
 
@@ -21,6 +29,21 @@ function remember(workspace: Workspace, path: string): string {
   return path;
 }
 
+/** Шаблон проекта («Игра», «Сайт») — в корень, затем проект сохраняется и закрывается. */
+async function finish(
+  project: OpenProject,
+  environment: CommandEnvironment,
+  template: Template | null,
+): Promise<void> {
+  if (template !== null) {
+    const applied = await applyTemplate(project, environment, template, {
+      boardId: project.meta.rootBoardId,
+    });
+    if (!applied.ok) console.error('Шаблон проекта не применён', applied.error);
+  }
+  await project.close();
+}
+
 export type Placed =
   { readonly ok: true; readonly key: string } | { readonly ok: false; readonly error: string };
 
@@ -29,6 +52,7 @@ export async function createProjectAt(
   workspace: Workspace,
   parent: string | null,
   name: string,
+  template: Template | null = null,
 ): Promise<Placed> {
   const { services } = workspace;
   const { deviceId } = workspace.store.getState().settings;
@@ -37,13 +61,13 @@ export async function createProjectAt(
   if (inLibrary || services.openFolder === null) {
     const created = await createProjectIn(services.projectsFs, context, name);
     if (!created.ok) return created;
-    await created.value.project.close();
+    await finish(created.value.project, context, template);
     return { ok: true, key: created.value.folder };
   }
   const folder = await services.openFolder(parent);
   const created = await createProjectIn(folder.fs, context, name);
   if (!created.ok) return created;
-  await created.value.project.close();
+  await finish(created.value.project, context, template);
   return { ok: true, key: remember(workspace, joinPath(folder.path, created.value.folder)) };
 }
 

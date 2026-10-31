@@ -51,6 +51,7 @@ export function ElementFrame({ id, rect, locked, resize, store, children }: Elem
   const autoHeight = resize === 'width';
   const handles = selected && alone && !locked ? HANDLES[resize] : [];
   const connectTarget = useInteraction(store, (state) => state.connecting?.hoverId === id);
+  const dimmed = useInteraction(store, (state) => state.highlight?.has(id) === false);
   const attributes = { [ELEMENT_ID_ATTRIBUTE]: id };
   return (
     <div
@@ -62,6 +63,7 @@ export function ElementFrame({ id, rect, locked, resize, store, children }: Elem
         locked && styles.locked,
         (drag !== null || raised) && styles.dragging,
         (dropTarget || connectTarget) && styles.dropTarget,
+        dimmed && !selected && styles.dimmed,
       )}
       style={{
         transform: `translate(${String(shown.x)}px, ${String(shown.y)}px)`,

@@ -15,7 +15,7 @@ const note = (x: number, text: string) =>
     parentId: null,
     color: 'yellow',
     locked: true,
-    tagIds: [],
+    tags: {},
     createdAt: 0,
     updatedAt: 0,
     deletedAt: null,

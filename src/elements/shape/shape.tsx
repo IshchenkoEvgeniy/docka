@@ -43,6 +43,7 @@ function ShapeView({ element, data, editing }: ElementViewProps<ShapeData>) {
 
 export const shape = defineElement<ShapeData>({
   type: 'shape',
+  label: () => t('elementTypes.shape'),
   dataSchema: ShapeDataSchema,
   defaultSize: { width: 180, height: 100 },
   minSize: { width: 48, height: 32 },

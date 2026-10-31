@@ -64,6 +64,10 @@ export interface ElementViewProps<D extends ElementData> {
  */
 export interface ElementDefinition<D extends ElementData> {
   readonly type: string;
+  /** Название типа для людей (фильтр поиска, подсказки). */
+  readonly label: () => string;
+  /** Сколько в элементе невыполненных задач (чек-лист); для фильтра поиска. */
+  readonly openTasks?: (data: D) => number;
   readonly dataSchema: z.ZodType<D>;
   readonly defaultSize: Size;
   readonly minSize: Size;
@@ -84,6 +88,8 @@ export interface ElementDefinition<D extends ElementData> {
   /** Форматированный текст для копирования (у старых заметок — из data). */
   readonly toRichText?: (data: D, rich: readonly RichNode[] | null) => readonly RichNode[];
   readonly target?: (data: D) => OpenTarget;
+  /** data того же элемента с другой целью (карточка доски из шаблона — на новую доску). */
+  readonly withTarget?: (data: D, targetId: string) => D;
   readonly reference?: EntityReference<D>;
   readonly menuActions?: (data: D) => readonly ElementMenuAction[];
   /** Просмотр на весь экран (activate = 'view'): картинка, PDF. */
@@ -102,6 +108,8 @@ export interface ElementDefinition<D extends ElementData> {
 /** Тип элемента после регистрации: данные проверяются внутри, наружу — без дженериков. */
 export interface RegisteredElement {
   readonly type: string;
+  readonly label: () => string;
+  readonly openTasks: (element: BoardElement) => number;
   readonly defaultSize: Size;
   readonly minSize: Size;
   readonly resize: ResizeMode;
@@ -120,6 +128,10 @@ export interface RegisteredElement {
   ) => readonly RichNode[] | null;
   /** Что открыть двойным щелчком (activate = 'open'); null — нечего. */
   readonly target: (element: BoardElement) => OpenTarget | null;
+  readonly withTarget: (
+    data: Readonly<Record<string, unknown>>,
+    targetId: string,
+  ) => Readonly<Record<string, unknown>> | null;
   /** Id сущности, представлением которой служит элемент; null — не сущность. */
   readonly entityOf: (data: Readonly<Record<string, unknown>>) => string | null;
   /** data того же элемента со ссылкой на другую сущность (независимая копия). */

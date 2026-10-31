@@ -145,6 +145,7 @@ function TableView({ element, data, editing }: ElementViewProps<TableData>) {
 
 export const table = defineElement<TableData>({
   type: 'table',
+  label: () => t('elementTypes.table'),
   dataSchema: TableDataSchema,
   defaultSize: { width: 2 * COLUMN_WIDTH + 24, height: 4 * ROW_HEIGHT },
   minSize: { width: 160, height: 80 },

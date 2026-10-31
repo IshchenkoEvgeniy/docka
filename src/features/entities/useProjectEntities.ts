@@ -40,6 +40,7 @@ export function useProjectEntities(
   project: OpenProject,
   environment: CommandEnvironment,
   assets: AssetStore | null,
+  tags: Pick<EntityLinks, 'tags' | 'createTag'> | null,
 ): ProjectEntitiesSession | null {
   const [base, setBase] = useState<ReturnType<typeof createSession> | null>(null);
   useEffect(() => {
@@ -51,12 +52,18 @@ export function useProjectEntities(
   }, [project, environment]);
   return useMemo(
     () =>
-      base === null
+      base === null || tags === null
         ? null
         : {
             ...base,
-            links: { directory: base.entities.directory, assets, openEntity: base.ui.openEntity },
+            links: {
+              directory: base.entities.directory,
+              assets,
+              openEntity: base.ui.openEntity,
+              tags: tags.tags,
+              createTag: tags.createTag,
+            },
           },
-    [base, assets],
+    [base, assets, tags],
   );
 }

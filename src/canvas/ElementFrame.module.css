@@ -97,3 +97,9 @@
   background: var(--color-danger);
   pointer-events: none;
 }
+
+/* Подсветка (фильтр по тегу, поиск): не подходящие элементы отходят на второй план. */
+.dimmed {
+  opacity: 0.22;
+  transition: opacity 120ms ease;
+}

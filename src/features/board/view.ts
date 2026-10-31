@@ -46,6 +46,25 @@ export function measureElement(controls: CameraControls, elementId: string): Rec
   return { ...topLeft, width: box.width / camera.zoom, height: box.height / camera.zoom };
 }
 
+/** Показать элемент в центре экрана (карточку в колонке — вместе с колонкой) и выделить. */
+export function focusElement(model: BoardModel, controls: CameraControls, elementId: string): void {
+  const elements = model.elements.getSnapshot();
+  const element = elements.get(elementId);
+  const size = viewSize(controls);
+  if (element === undefined || size === null) return;
+  const shown = (element.parentId === null ? undefined : elements.get(element.parentId)) ?? element;
+  const zoom = Math.max(controls.controller.getCamera().zoom, FOCUS_MIN_ZOOM);
+  controls.controller.setCamera({
+    zoom,
+    offsetX: size.width / 2 - (shown.x + shown.width / 2) * zoom,
+    offsetY: size.height / 2 - (shown.y + shown.height / 2) * zoom,
+  });
+  model.interaction.setState({ selection: new Set([elementId]) });
+}
+
+/** Не мельче этого: на обзорном масштабе элементы рисуются картинкой (ADR 0001). */
+const FOCUS_MIN_ZOOM = 0.75;
+
 export function fitAll(model: BoardModel, controls: CameraControls): void {
   const size = viewSize(controls);
   const bounds = boundsOf(model.elements.getSnapshot().values());

@@ -44,6 +44,7 @@ function addChildBoard(project: OpenProject, id: string, title: string): BoardId
     icon: null,
     color: 'default',
     background: 'plain',
+    tags: {},
     createdAt: 1,
     updatedAt: 1,
     deletedAt: null,

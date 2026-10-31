@@ -45,6 +45,8 @@ const formatOf = (context: ProjectContext): ProjectFormat => context.format ?? A
 
 export interface OpenProject {
   readonly meta: ProjectMeta;
+  /** Папка проекта (свои шаблоны templates/, ADR 0006). */
+  readonly fs: FileSystem;
   readonly projectDoc: StoredDocument;
   /** Документ доски; открывается при первом обращении, дальше берётся из кэша. */
   readonly openBoard: (boardId: BoardId) => Promise<StoredDocument>;
@@ -109,6 +111,7 @@ export async function createProject(
     icon: null,
     color: 'default',
     background: 'dots',
+    tags: {},
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
@@ -213,6 +216,7 @@ async function openWithMeta(
 
   return ok({
     meta,
+    fs: context.fs,
     projectDoc,
     openBoard: cache.open,
     closeBoard: cache.close,

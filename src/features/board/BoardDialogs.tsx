@@ -5,6 +5,7 @@ import { BOARD_BACKGROUNDS, COLOR_NAMES, type BoardBackground, type ColorName } 
 import { t } from '../../i18n';
 import { Button, ColorPalette, Dialog, Segmented, TextField, cardColor, inkColor } from '../../ui';
 import { createFromText, selectedElements, updateConnection } from './boardActions';
+import { TagPicker } from '../tags';
 import type { BoardModel } from './model';
 import { placeElements, placeWithCopies } from './references';
 import styles from './Board.module.css';
@@ -148,6 +149,26 @@ export function BoardDialogs({
         <LabelForm model={model} connectionId={dialog.connectionId} onClose={close} />
       </Dialog>
     );
+  if (dialog.kind === 'tags') {
+    const tags = model.host.tags;
+    if (tags === null) return null;
+    const selected = selectedElements(model);
+    return (
+      <TagPicker
+        title={t('board.dialog.tags')}
+        tags={tags}
+        sets={selected.map((element) => element.tags)}
+        onToggle={(tagId, on) => {
+          model.run({
+            kind: 'updateElements',
+            elementIds: selectedElements(model).map((element) => element.id),
+            changes: { tags: { [tagId]: on } },
+          });
+        }}
+        onClose={close}
+      />
+    );
+  }
   if (dialog.kind === 'link')
     return (
       <Dialog title={t('board.dialog.link')} closeLabel={t('common.cancel')} onClose={close}>

@@ -144,6 +144,7 @@ describe('живое слияние с проектом', () => {
       icon: null,
       color: 'default',
       background: 'plain',
+      tags: {},
       createdAt: 0,
       updatedAt: 0,
       deletedAt: null,

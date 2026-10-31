@@ -27,6 +27,10 @@ import { NO_HOST, type BoardHost } from './host';
 /** Настройки работы с доской (эфемерные; в настройки приложения переедут на этапе 3). */
 export interface BoardSettings {
   readonly gridSnap: boolean;
+  /** Фильтр-подсветка по имени тега (с вложенными); null — без фильтра. */
+  readonly tagFilter: string | null;
+  /** Поиск по доске (Ctrl+F); null — строка поиска закрыта. */
+  readonly find: string | null;
 }
 
 export interface BoardNotice {
@@ -39,6 +43,8 @@ export type BoardDialog =
   | { readonly kind: 'connectionColor'; readonly connectionId: string }
   | { readonly kind: 'label'; readonly connectionId: string }
   | { readonly kind: 'background' }
+  /** Теги выделенных элементов. */
+  | { readonly kind: 'tags' }
   /** Адрес новой ссылки; at — куда положить карточку. */
   | { readonly kind: 'link'; readonly at: Point }
   /** Вставка элементов-ссылок на сущности: ссылка на те же или независимые копии. */
@@ -146,6 +152,8 @@ function boardHistory(doc: Y.Doc, host: BoardHost) {
   };
 }
 
+const INITIAL_SETTINGS: BoardSettings = { gridSnap: false, tagFilter: null, find: null };
+
 export function createBoardModel(
   doc: Y.Doc,
   boardId: BoardId,
@@ -157,7 +165,7 @@ export function createBoardModel(
   const { undo, destroyHistory } = boardHistory(doc, host);
   const interaction = createInteractionStore();
   const measure = createMeasureTracker(interaction);
-  const settings = createStore<BoardSettings>(() => ({ gridSnap: false }));
+  const settings = createStore<BoardSettings>(() => INITIAL_SETTINGS);
   const { notice, showNotice, stopNotices } = createNotices();
   const unsubscribe = elements.subscribe(() => {
     pruneSelection(elements, interaction);

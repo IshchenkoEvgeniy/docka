@@ -70,6 +70,7 @@ function updateEntity(doc: Y.Doc, command: Command<'updateEntity'>, now: number)
   const changes = {
     ...(name === undefined ? {} : { name }),
     ...(command.changes.values === undefined ? {} : { values: values.value }),
+    ...(command.changes.tags === undefined ? {} : { tags: command.changes.tags }),
     updatedAt: now,
   };
   return applyPatch(

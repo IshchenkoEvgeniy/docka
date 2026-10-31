@@ -1,0 +1,1421 @@
+{
+  "boards": [
+    {
+      "id": "builtin-spec",
+      "name": "ТЗ программы",
+      "description": "Цель, пользователи, функции, ограничения и критерии приёмки.",
+      "board": {
+        "title": "ТЗ",
+        "elements": [
+          {
+            "type": "title",
+            "x": 0,
+            "y": 0,
+            "width": 480,
+            "height": 56,
+            "text": "Техническое задание"
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 90,
+            "width": 300,
+            "height": 48,
+            "text": "Цель: какую задачу решает программа и для кого.",
+            "color": "yellow"
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 170,
+            "width": 300,
+            "height": 48,
+            "text": "Пользователи: кто будет работать с программой, их роли.",
+            "color": "blue"
+          },
+          {
+            "type": "checklist",
+            "x": 340,
+            "y": 90,
+            "width": 280,
+            "height": 140,
+            "text": "Функции",
+            "data": {
+              "items": {
+                "i0": {
+                  "text": "Вход и регистрация",
+                  "done": false,
+                  "order": 1
+                },
+                "i1": {
+                  "text": "Главный экран",
+                  "done": false,
+                  "order": 2
+                },
+                "i2": {
+                  "text": "Поиск",
+                  "done": false,
+                  "order": 3
+                },
+                "i3": {
+                  "text": "Настройки",
+                  "done": false,
+                  "order": 4
+                }
+              }
+            }
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 250,
+            "width": 300,
+            "height": 48,
+            "text": "Ограничения: платформы, сроки, бюджет, технологии.",
+            "color": "orange"
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 330,
+            "width": 300,
+            "height": 48,
+            "text": "Нефункциональные требования: скорость, надёжность, безопасность.",
+            "color": "gray"
+          },
+          {
+            "type": "checklist",
+            "x": 340,
+            "y": 270,
+            "width": 280,
+            "height": 140,
+            "text": "Критерии приёмки",
+            "data": {
+              "items": {
+                "i0": {
+                  "text": "Все функции работают на целевых платформах",
+                  "done": false,
+                  "order": 1
+                },
+                "i1": {
+                  "text": "Нет критичных ошибок",
+                  "done": false,
+                  "order": 2
+                }
+              }
+            }
+          }
+        ]
+      },
+      "entityTypes": []
+    },
+    {
+      "id": "builtin-architecture",
+      "name": "Архитектура и схема БД",
+      "description": "Блок-схема компонентов и таблицы базы данных.",
+      "board": {
+        "title": "Архитектура",
+        "elements": [
+          {
+            "type": "title",
+            "x": 0,
+            "y": 0,
+            "width": 480,
+            "height": 56,
+            "text": "Архитектура"
+          },
+          {
+            "type": "shape",
+            "x": 0,
+            "y": 100,
+            "width": 180,
+            "height": 90,
+            "text": "Клиент",
+            "data": {
+              "shape": "rounded"
+            }
+          },
+          {
+            "type": "shape",
+            "x": 260,
+            "y": 100,
+            "width": 180,
+            "height": 90,
+            "text": "API",
+            "data": {
+              "shape": "rectangle"
+            }
+          },
+          {
+            "type": "shape",
+            "x": 520,
+            "y": 100,
+            "width": 180,
+            "height": 90,
+            "text": "Сервис",
+            "data": {
+              "shape": "rectangle"
+            }
+          },
+          {
+            "type": "shape",
+            "x": 780,
+            "y": 90,
+            "width": 180,
+            "height": 110,
+            "text": "База данных",
+            "data": {
+              "shape": "cylinder"
+            },
+            "color": "blue"
+          },
+          {
+            "type": "table",
+            "x": 0,
+            "y": 280,
+            "width": 460,
+            "height": 240,
+            "data": {
+              "columns": {
+                "c0": {
+                  "name": "Поле",
+                  "kind": "text",
+                  "order": 1
+                },
+                "c1": {
+                  "name": "Тип",
+                  "kind": "text",
+                  "order": 2
+                },
+                "c2": {
+                  "name": "Описание",
+                  "kind": "text",
+                  "order": 3
+                }
+              },
+              "rows": {
+                "r0": {
+                  "order": 1,
+                  "cells": {
+                    "c0": "id",
+                    "c1": "uuid",
+                    "c2": "Ключ"
+                  }
+                },
+                "r1": {
+                  "order": 2,
+                  "cells": {
+                    "c0": "name",
+                    "c1": "text",
+                    "c2": "Имя"
+                  }
+                },
+                "r2": {
+                  "order": 3,
+                  "cells": {
+                    "c0": "created_at",
+                    "c1": "timestamp",
+                    "c2": "Создан"
+                  }
+                }
+              },
+              "sort": null
+            }
+          },
+          {
+            "type": "note",
+            "x": 520,
+            "y": 280,
+            "width": 280,
+            "height": 48,
+            "text": "Решения: почему выбраны эти технологии.",
+            "color": "yellow"
+          }
+        ],
+        "connections": [
+          {
+            "from": 1,
+            "to": 2,
+            "label": "HTTP"
+          },
+          {
+            "from": 2,
+            "to": 3
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "label": "SQL"
+          }
+        ]
+      },
+      "entityTypes": []
+    },
+    {
+      "id": "builtin-site-map",
+      "name": "Карта экранов сайта",
+      "description": "Экраны и переходы между ними.",
+      "board": {
+        "title": "Экраны",
+        "elements": [
+          {
+            "type": "title",
+            "x": 0,
+            "y": 0,
+            "width": 480,
+            "height": 56,
+            "text": "Карта экранов"
+          },
+          {
+            "type": "shape",
+            "x": 0,
+            "y": 120,
+            "width": 180,
+            "height": 90,
+            "text": "Главная",
+            "data": {
+              "shape": "rounded"
+            },
+            "color": "blue"
+          },
+          {
+            "type": "shape",
+            "x": 260,
+            "y": 40,
+            "width": 180,
+            "height": 90,
+            "text": "Каталог",
+            "data": {
+              "shape": "rounded"
+            }
+          },
+          {
+            "type": "shape",
+            "x": 520,
+            "y": 40,
+            "width": 180,
+            "height": 90,
+            "text": "Карточка товара",
+            "data": {
+              "shape": "rounded"
+            }
+          },
+          {
+            "type": "shape",
+            "x": 780,
+            "y": 40,
+            "width": 180,
+            "height": 90,
+            "text": "Корзина",
+            "data": {
+              "shape": "rounded"
+            }
+          },
+          {
+            "type": "shape",
+            "x": 1040,
+            "y": 40,
+            "width": 180,
+            "height": 90,
+            "text": "Оформление заказа",
+            "data": {
+              "shape": "rounded"
+            },
+            "color": "green"
+          },
+          {
+            "type": "shape",
+            "x": 260,
+            "y": 220,
+            "width": 180,
+            "height": 90,
+            "text": "Профиль",
+            "data": {
+              "shape": "rounded"
+            }
+          },
+          {
+            "type": "shape",
+            "x": 520,
+            "y": 220,
+            "width": 180,
+            "height": 90,
+            "text": "Вход",
+            "data": {
+              "shape": "rounded"
+            }
+          }
+        ],
+        "connections": [
+          {
+            "from": 1,
+            "to": 2
+          },
+          {
+            "from": 2,
+            "to": 3
+          },
+          {
+            "from": 3,
+            "to": 4
+          },
+          {
+            "from": 4,
+            "to": 5
+          },
+          {
+            "from": 1,
+            "to": 6
+          },
+          {
+            "from": 6,
+            "to": 7,
+            "label": "не вошёл"
+          }
+        ]
+      },
+      "entityTypes": []
+    },
+    {
+      "id": "builtin-gdd",
+      "name": "Гейм-дизайн документ",
+      "description": "Концепция, механики, мир, персонажи, прогрессия.",
+      "board": {
+        "title": "ГДД",
+        "elements": [
+          {
+            "type": "title",
+            "x": 0,
+            "y": 0,
+            "width": 480,
+            "height": 56,
+            "text": "Гейм-дизайн документ"
+          },
+          {
+            "type": "column",
+            "x": 0,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "Концепция",
+            "data": {},
+            "color": "yellow"
+          },
+          {
+            "type": "column",
+            "x": 320,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "Механики",
+            "data": {},
+            "color": "blue"
+          },
+          {
+            "type": "column",
+            "x": 640,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "Мир и сюжет",
+            "data": {},
+            "color": "green"
+          },
+          {
+            "type": "column",
+            "x": 960,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "Персонажи",
+            "data": {},
+            "color": "pink"
+          },
+          {
+            "type": "column",
+            "x": 1280,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "Прогрессия",
+            "data": {},
+            "color": "purple"
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 1,
+            "width": 240,
+            "height": 48,
+            "text": "Жанр, платформа, аудитория",
+            "parentIndex": 1
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 2,
+            "width": 240,
+            "height": 48,
+            "text": "Ключевая фантазия игрока",
+            "parentIndex": 1
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 1,
+            "width": 240,
+            "height": 48,
+            "text": "Основной игровой цикл",
+            "parentIndex": 2
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 2,
+            "width": 240,
+            "height": 48,
+            "text": "Управление",
+            "parentIndex": 2
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 1,
+            "width": 240,
+            "height": 48,
+            "text": "Сеттинг и тон",
+            "parentIndex": 3
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 2,
+            "width": 240,
+            "height": 48,
+            "text": "Главный конфликт",
+            "parentIndex": 3
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 1,
+            "width": 240,
+            "height": 48,
+            "text": "Герой",
+            "parentIndex": 4
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 2,
+            "width": 240,
+            "height": 48,
+            "text": "Противник",
+            "parentIndex": 4
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 1,
+            "width": 240,
+            "height": 48,
+            "text": "Уровни и награды",
+            "parentIndex": 5
+          }
+        ]
+      },
+      "entityTypes": []
+    },
+    {
+      "id": "builtin-characters",
+      "name": "Персонажи и НПС",
+      "description": "Колонки для героев, союзников, противников и торговцев.",
+      "board": {
+        "title": "Персонажи",
+        "elements": [
+          {
+            "type": "title",
+            "x": 0,
+            "y": 0,
+            "width": 480,
+            "height": 56,
+            "text": "Персонажи и НПС"
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 64,
+            "width": 480,
+            "height": 48,
+            "text": "Перетащите НПС из библиотеки сущностей (клавиша E) в нужную колонку или рядом.",
+            "color": "gray"
+          },
+          {
+            "type": "column",
+            "x": 0,
+            "y": 150,
+            "width": 280,
+            "height": 120,
+            "text": "Главные герои",
+            "data": {},
+            "color": "yellow"
+          },
+          {
+            "type": "column",
+            "x": 320,
+            "y": 150,
+            "width": 280,
+            "height": 120,
+            "text": "Союзники",
+            "data": {},
+            "color": "green"
+          },
+          {
+            "type": "column",
+            "x": 640,
+            "y": 150,
+            "width": 280,
+            "height": 120,
+            "text": "Противники",
+            "data": {},
+            "color": "red"
+          },
+          {
+            "type": "column",
+            "x": 960,
+            "y": 150,
+            "width": 280,
+            "height": 120,
+            "text": "Торговцы",
+            "data": {},
+            "color": "blue"
+          }
+        ]
+      },
+      "entityTypes": []
+    },
+    {
+      "id": "builtin-world",
+      "name": "Локации и мир",
+      "description": "Регионы, города, подземелья и лор.",
+      "board": {
+        "title": "Мир",
+        "elements": [
+          {
+            "type": "title",
+            "x": 0,
+            "y": 0,
+            "width": 480,
+            "height": 56,
+            "text": "Локации и мир"
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 80,
+            "width": 400,
+            "height": 120,
+            "text": "Карта мира: вставьте картинку карты сюда.",
+            "color": "gray"
+          },
+          {
+            "type": "column",
+            "x": 440,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "Регионы",
+            "data": {},
+            "color": "green"
+          },
+          {
+            "type": "column",
+            "x": 760,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "Города",
+            "data": {},
+            "color": "yellow"
+          },
+          {
+            "type": "column",
+            "x": 1080,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "Подземелья",
+            "data": {},
+            "color": "purple"
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 240,
+            "width": 400,
+            "height": 48,
+            "text": "Лор: история мира, фракции, легенды.",
+            "color": "blue"
+          }
+        ]
+      },
+      "entityTypes": []
+    },
+    {
+      "id": "builtin-story",
+      "name": "Сюжет и квесты",
+      "description": "Сюжет блок-схемой и список побочных квестов.",
+      "board": {
+        "title": "Сюжет",
+        "elements": [
+          {
+            "type": "title",
+            "x": 0,
+            "y": 0,
+            "width": 480,
+            "height": 56,
+            "text": "Сюжет и квесты"
+          },
+          {
+            "type": "shape",
+            "x": 0,
+            "y": 120,
+            "width": 180,
+            "height": 90,
+            "text": "Завязка",
+            "data": {
+              "shape": "rounded"
+            },
+            "color": "yellow"
+          },
+          {
+            "type": "shape",
+            "x": 260,
+            "y": 120,
+            "width": 180,
+            "height": 90,
+            "text": "Первый квест",
+            "data": {
+              "shape": "rectangle"
+            }
+          },
+          {
+            "type": "shape",
+            "x": 520,
+            "y": 110,
+            "width": 200,
+            "height": 110,
+            "text": "Решение героя",
+            "data": {
+              "shape": "diamond"
+            }
+          },
+          {
+            "type": "shape",
+            "x": 800,
+            "y": 40,
+            "width": 180,
+            "height": 90,
+            "text": "Путь A",
+            "data": {
+              "shape": "rectangle"
+            }
+          },
+          {
+            "type": "shape",
+            "x": 800,
+            "y": 200,
+            "width": 180,
+            "height": 90,
+            "text": "Путь B",
+            "data": {
+              "shape": "rectangle"
+            }
+          },
+          {
+            "type": "shape",
+            "x": 1060,
+            "y": 120,
+            "width": 180,
+            "height": 90,
+            "text": "Финал",
+            "data": {
+              "shape": "rounded"
+            },
+            "color": "green"
+          },
+          {
+            "type": "column",
+            "x": 0,
+            "y": 320,
+            "width": 280,
+            "height": 120,
+            "text": "Побочные квесты",
+            "data": {},
+            "color": "blue"
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 1,
+            "width": 240,
+            "height": 48,
+            "text": "Найти пропавшую козу",
+            "parentIndex": 7
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 2,
+            "width": 240,
+            "height": 48,
+            "text": "Доставить письмо",
+            "parentIndex": 7
+          }
+        ],
+        "connections": [
+          {
+            "from": 1,
+            "to": 2
+          },
+          {
+            "from": 2,
+            "to": 3
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "label": "да"
+          },
+          {
+            "from": 3,
+            "to": 5,
+            "label": "нет"
+          },
+          {
+            "from": 4,
+            "to": 6
+          },
+          {
+            "from": 5,
+            "to": 6
+          }
+        ]
+      },
+      "entityTypes": []
+    },
+    {
+      "id": "builtin-moodboard",
+      "name": "Мудборд",
+      "description": "Палитра, референсы и настроение.",
+      "board": {
+        "title": "Мудборд",
+        "background": "plain",
+        "elements": [
+          {
+            "type": "title",
+            "x": 0,
+            "y": 0,
+            "width": 480,
+            "height": 56,
+            "text": "Мудборд"
+          },
+          {
+            "type": "swatch",
+            "x": 0,
+            "y": 80,
+            "width": 160,
+            "height": 180,
+            "data": {
+              "hex": "#2E4057",
+              "name": "Ночь"
+            }
+          },
+          {
+            "type": "swatch",
+            "x": 180,
+            "y": 80,
+            "width": 160,
+            "height": 180,
+            "data": {
+              "hex": "#D9A441",
+              "name": "Свечи"
+            }
+          },
+          {
+            "type": "swatch",
+            "x": 360,
+            "y": 80,
+            "width": 160,
+            "height": 180,
+            "data": {
+              "hex": "#8C2F39",
+              "name": "Вино"
+            }
+          },
+          {
+            "type": "swatch",
+            "x": 540,
+            "y": 80,
+            "width": 160,
+            "height": 180,
+            "data": {
+              "hex": "#5B8C5A",
+              "name": "Лес"
+            }
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 290,
+            "width": 360,
+            "height": 120,
+            "text": "Референсы: перетащите сюда картинки и ссылки.",
+            "color": "gray"
+          },
+          {
+            "type": "note",
+            "x": 400,
+            "y": 290,
+            "width": 320,
+            "height": 48,
+            "text": "Настроение: три слова о том, что должен чувствовать игрок.",
+            "color": "yellow"
+          }
+        ]
+      },
+      "entityTypes": []
+    },
+    {
+      "id": "builtin-kanban",
+      "name": "Канбан задач",
+      "description": "Идеи, к работе, в работе, готово.",
+      "board": {
+        "title": "Задачи",
+        "elements": [
+          {
+            "type": "title",
+            "x": 0,
+            "y": 0,
+            "width": 480,
+            "height": 56,
+            "text": "Задачи"
+          },
+          {
+            "type": "column",
+            "x": 0,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "Идеи",
+            "data": {},
+            "color": "gray"
+          },
+          {
+            "type": "column",
+            "x": 320,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "К работе",
+            "data": {},
+            "color": "yellow"
+          },
+          {
+            "type": "column",
+            "x": 640,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "В работе",
+            "data": {},
+            "color": "blue"
+          },
+          {
+            "type": "column",
+            "x": 960,
+            "y": 80,
+            "width": 280,
+            "height": 120,
+            "text": "Готово",
+            "data": {},
+            "color": "green"
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 1,
+            "width": 240,
+            "height": 48,
+            "text": "Новая идея",
+            "parentIndex": 1
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 1,
+            "width": 240,
+            "height": 48,
+            "text": "Задача",
+            "parentIndex": 2
+          },
+          {
+            "type": "note",
+            "x": 0,
+            "y": 1,
+            "width": 240,
+            "height": 48,
+            "text": "Задача в работе",
+            "parentIndex": 3
+          }
+        ]
+      },
+      "entityTypes": []
+    },
+    {
+      "id": "builtin-roadmap",
+      "name": "Роадмап",
+      "description": "Сейчас, следующее, позже.",
+      "board": {
+        "title": "Роадмап",
+        "elements": [
+          {
+            "type": "title",
+            "x": 0,
+            "y": 0,
+            "width": 480,
+            "height": 56,
+            "text": "Роадмап"
+          },
+          {
+            "type": "checklist",
+            "x": 0,
+            "y": 80,
+            "width": 280,
+            "height": 140,
+            "text": "Сейчас",
+            "data": {
+              "items": {
+                "i0": {
+                  "text": "Прототип",
+                  "done": false,
+                  "order": 1
+                },
+                "i1": {
+                  "text": "Первый играбельный уровень",
+                  "done": false,
+                  "order": 2
+                }
+              }
+            }
+          },
+          {
+            "type": "checklist",
+            "x": 320,
+            "y": 80,
+            "width": 280,
+            "height": 140,
+            "text": "Следующее",
+            "data": {
+              "items": {
+                "i0": {
+                  "text": "Альфа-версия",
+                  "done": false,
+                  "order": 1
+                },
+                "i1": {
+                  "text": "Тестирование с друзьями",
+                  "done": false,
+                  "order": 2
+                }
+              }
+            }
+          },
+          {
+            "type": "checklist",
+            "x": 640,
+            "y": 80,
+            "width": 280,
+            "height": 140,
+            "text": "Позже",
+            "data": {
+              "items": {
+                "i0": {
+                  "text": "Бета",
+                  "done": false,
+                  "order": 1
+                },
+                "i1": {
+                  "text": "Релиз",
+                  "done": false,
+                  "order": 2
+                }
+              }
+            }
+          }
+        ]
+      },
+      "entityTypes": []
+    }
+  ],
+  "projects": [
+    {
+      "id": "builtin-project-game",
+      "name": "Игра",
+      "description": "НПС, локации, предметы, квесты, ГДД и задачи; типы сущностей НПС, Локация, Предмет и Квест.",
+      "board": {
+        "title": "Игра",
+        "elements": [
+          {
+            "type": "board",
+            "x": 0,
+            "y": 0,
+            "width": 160,
+            "height": 150,
+            "board": 0
+          },
+          {
+            "type": "board",
+            "x": 200,
+            "y": 0,
+            "width": 160,
+            "height": 150,
+            "board": 1
+          },
+          {
+            "type": "board",
+            "x": 400,
+            "y": 0,
+            "width": 160,
+            "height": 150,
+            "board": 2
+          },
+          {
+            "type": "board",
+            "x": 0,
+            "y": 190,
+            "width": 160,
+            "height": 150,
+            "board": 3
+          },
+          {
+            "type": "board",
+            "x": 200,
+            "y": 190,
+            "width": 160,
+            "height": 150,
+            "board": 4
+          },
+          {
+            "type": "board",
+            "x": 400,
+            "y": 190,
+            "width": 160,
+            "height": 150,
+            "board": 5
+          }
+        ],
+        "children": [
+          {
+            "use": "builtin-characters",
+            "title": "НПС"
+          },
+          {
+            "use": "builtin-world",
+            "title": "Локации"
+          },
+          {
+            "title": "Предметы",
+            "elements": [
+              {
+                "type": "title",
+                "x": 0,
+                "y": 0,
+                "width": 480,
+                "height": 56,
+                "text": "Предметы"
+              },
+              {
+                "type": "column",
+                "x": 0,
+                "y": 80,
+                "width": 280,
+                "height": 120,
+                "text": "Оружие",
+                "data": {},
+                "color": "red"
+              },
+              {
+                "type": "column",
+                "x": 320,
+                "y": 80,
+                "width": 280,
+                "height": 120,
+                "text": "Броня",
+                "data": {},
+                "color": "blue"
+              },
+              {
+                "type": "column",
+                "x": 640,
+                "y": 80,
+                "width": 280,
+                "height": 120,
+                "text": "Расходники",
+                "data": {},
+                "color": "green"
+              }
+            ]
+          },
+          {
+            "use": "builtin-story",
+            "title": "Квесты"
+          },
+          {
+            "use": "builtin-gdd",
+            "title": "ГДД"
+          },
+          {
+            "use": "builtin-kanban",
+            "title": "Задачи"
+          }
+        ]
+      },
+      "entityTypes": [
+        {
+          "key": "npc",
+          "builtin": "npc",
+          "name": "",
+          "icon": "🧙",
+          "color": "yellow",
+          "fields": []
+        },
+        {
+          "key": "location",
+          "builtin": "location",
+          "name": "",
+          "icon": "🏰",
+          "color": "green",
+          "fields": []
+        },
+        {
+          "key": "item",
+          "builtin": "item",
+          "name": "",
+          "icon": "🗡️",
+          "color": "blue",
+          "fields": []
+        },
+        {
+          "key": "quest",
+          "name": "Квест",
+          "icon": "📜",
+          "color": "orange",
+          "fields": [
+            {
+              "name": "Описание",
+              "kind": "longText",
+              "onCard": true
+            },
+            {
+              "name": "Статус",
+              "kind": "select",
+              "onCard": true,
+              "options": ["Идея", "В работе", "Готов"]
+            },
+            {
+              "name": "Награда",
+              "kind": "text",
+              "onCard": true
+            },
+            {
+              "name": "Выдаёт",
+              "kind": "relation",
+              "target": "npc",
+              "onCard": true,
+              "backName": "Выдаёт квесты"
+            },
+            {
+              "name": "Где",
+              "kind": "relation",
+              "target": "location",
+              "backName": "Квесты здесь"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "builtin-project-site",
+      "name": "Сайт",
+      "description": "ТЗ, экраны, API, база данных и задачи; типы Экран, API-метод, Таблица БД.",
+      "board": {
+        "title": "Сайт",
+        "elements": [
+          {
+            "type": "board",
+            "x": 0,
+            "y": 0,
+            "width": 160,
+            "height": 150,
+            "board": 0
+          },
+          {
+            "type": "board",
+            "x": 200,
+            "y": 0,
+            "width": 160,
+            "height": 150,
+            "board": 1
+          },
+          {
+            "type": "board",
+            "x": 400,
+            "y": 0,
+            "width": 160,
+            "height": 150,
+            "board": 2
+          },
+          {
+            "type": "board",
+            "x": 0,
+            "y": 190,
+            "width": 160,
+            "height": 150,
+            "board": 3
+          },
+          {
+            "type": "board",
+            "x": 200,
+            "y": 190,
+            "width": 160,
+            "height": 150,
+            "board": 4
+          }
+        ],
+        "children": [
+          {
+            "use": "builtin-spec",
+            "title": "ТЗ"
+          },
+          {
+            "use": "builtin-site-map",
+            "title": "Экраны"
+          },
+          {
+            "title": "API",
+            "elements": [
+              {
+                "type": "title",
+                "x": 0,
+                "y": 0,
+                "width": 480,
+                "height": 56,
+                "text": "API"
+              },
+              {
+                "type": "note",
+                "x": 0,
+                "y": 80,
+                "width": 420,
+                "height": 48,
+                "text": "Перетащите методы API из библиотеки сущностей (E).",
+                "color": "gray"
+              }
+            ]
+          },
+          {
+            "use": "builtin-architecture",
+            "title": "БД"
+          },
+          {
+            "use": "builtin-kanban",
+            "title": "Задачи"
+          }
+        ]
+      },
+      "entityTypes": [
+        {
+          "key": "screen",
+          "name": "Экран",
+          "icon": "🖥️",
+          "color": "blue",
+          "fields": [
+            {
+              "name": "Описание",
+              "kind": "longText",
+              "onCard": true
+            },
+            {
+              "name": "Адрес",
+              "kind": "url",
+              "onCard": true
+            },
+            {
+              "name": "Статус",
+              "kind": "select",
+              "onCard": true,
+              "options": ["Набросок", "Макет", "Готов"]
+            }
+          ]
+        },
+        {
+          "key": "api",
+          "name": "API-метод",
+          "icon": "🔌",
+          "color": "purple",
+          "fields": [
+            {
+              "name": "Метод",
+              "kind": "select",
+              "onCard": true,
+              "options": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+            },
+            {
+              "name": "Путь",
+              "kind": "text",
+              "onCard": true
+            },
+            {
+              "name": "Описание",
+              "kind": "longText",
+              "onCard": true
+            },
+            {
+              "name": "Экраны",
+              "kind": "relation",
+              "target": "screen",
+              "multiple": true,
+              "backName": "Вызывает API"
+            }
+          ]
+        },
+        {
+          "key": "table",
+          "name": "Таблица БД",
+          "icon": "🗄️",
+          "color": "teal",
+          "fields": [
+            {
+              "name": "Описание",
+              "kind": "longText",
+              "onCard": true
+            },
+            {
+              "name": "Поля",
+              "kind": "longText",
+              "onCard": true
+            },
+            {
+              "name": "API",
+              "kind": "relation",
+              "target": "api",
+              "multiple": true,
+              "backName": "Таблицы"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

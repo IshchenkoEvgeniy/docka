@@ -7,3 +7,4 @@ export * from './model';
 export * from './ports';
 export { err, ok } from './result';
 export type { Result } from './result';
+export * from './search';

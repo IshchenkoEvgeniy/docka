@@ -3,6 +3,7 @@ import { ELEMENT_ID_ATTRIBUTE, useInteraction } from '../../canvas';
 import type { BoardElement } from '../../core';
 import { definitionFor } from '../../elements';
 import { cx } from '../../ui';
+import { ElementTags } from './ElementLayer';
 import type { BoardModel } from './model';
 import styles from './Board.module.css';
 
@@ -12,6 +13,7 @@ export function createChildView(model: BoardModel) {
   return memo(function ColumnChild({ element }: { readonly element: BoardElement }) {
     const selected = useInteraction(store, (state) => state.selection.has(element.id));
     const editing = useInteraction(store, (state) => state.editingId === element.id);
+    const dimmed = useInteraction(store, (state) => state.highlight?.has(element.id) === false);
     const drag = useInteraction(store, (state) =>
       state.drag?.ids.has(element.id) === true ? state.drag : null,
     );
@@ -24,6 +26,7 @@ export function createChildView(model: BoardModel) {
           styles.child,
           selected && styles.childSelected,
           drag !== null && styles.childDragging,
+          dimmed && !selected && styles.childDimmed,
         )}
         style={
           drag === null
@@ -32,6 +35,7 @@ export function createChildView(model: BoardModel) {
         }
       >
         <Render element={element} editing={editing} />
+        <ElementTags element={element} inline />
       </div>
     );
   });

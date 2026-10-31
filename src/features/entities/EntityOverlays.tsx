@@ -7,6 +7,7 @@ import { DeleteEntityDialog } from './DeleteEntityDialog';
 import { EntityPanel } from './EntityPanel';
 import { Library } from './Library';
 import { TypeEditor } from './TypeEditor';
+import type { ProjectTags } from '../tags';
 import type { ProjectEntitiesSession } from './useProjectEntities';
 import styles from './Entities.module.css';
 
@@ -45,11 +46,13 @@ export function EntityOverlays({
   project,
   assets,
   onOpenBoard,
+  tags,
 }: {
   readonly session: ProjectEntitiesSession;
   readonly project: OpenProject;
   readonly assets: AssetStore | null;
   readonly onOpenBoard: (boardId: BoardId) => void;
+  readonly tags: ProjectTags;
 }) {
   const { entities, ui } = session;
   const state = useStore(ui.store);
@@ -100,6 +103,7 @@ export function EntityOverlays({
           }}
           onPlace={ui.place}
           onOpenEntity={ui.openEntity}
+          tags={tags}
         />
       )}
       {state.typesOpen && (

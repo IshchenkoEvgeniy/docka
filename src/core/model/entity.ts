@@ -8,6 +8,7 @@ import {
   type EntityId,
 } from './ids';
 import { BUILTIN_FIELD_KEYS, BUILTIN_OPTION_KEYS, BUILTIN_TYPE_KEYS } from './entityBuiltinKeys';
+import { TagSetSchema } from './tag';
 
 /**
  * Сущности проекта (ТЗ, раздел 6; ADR 0004): типы с полями и сами сущности.
@@ -84,6 +85,7 @@ export const EntitySchema = z.object({
   name: z.string().max(200),
   /** Значения полей по id поля; проверяются видом поля при чтении (fieldValue). */
   values: z.record(z.string(), z.unknown()),
+  tags: TagSetSchema,
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
   deletedAt: TimestampSchema.nullable(),

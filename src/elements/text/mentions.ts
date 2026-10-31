@@ -2,17 +2,19 @@ import Mention from '@tiptap/extension-mention';
 import { PluginKey } from '@tiptap/pm/state';
 import type { SuggestionKeyDownProps, SuggestionProps } from '@tiptap/suggestion';
 import { createStore, type StoreApi } from 'zustand/vanilla';
-import { MENTION_NODE } from '../../core';
+import { MENTION_NODE, TAG_MENTION_CHAR } from '../../core';
 
 /**
  * Упоминания сущностей в тексте (ADR 0004): `@` или `[[` открывает список сущностей,
- * выбор вставляет узел mention с id и названием на момент вставки.
+ * выбор вставляет узел mention с id и названием на момент вставки. `#` — тег (ADR 0006).
  */
 export interface MentionItem {
   readonly id: string;
   readonly label: string;
   /** Подсказка справа (тип сущности). */
   readonly hint: string;
+  /** Пункт «создать новый» (тег по набранному тексту). */
+  readonly create?: boolean;
 }
 
 export interface MentionPopup {
@@ -34,6 +36,8 @@ export interface MentionSource {
   readonly find: (query: string) => readonly MentionItem[];
   /** Актуальное название (null — сущность удалена). */
   readonly labelOf: (id: string) => string | null;
+  /** Создать по набранному тексту (тег); null — не создан. */
+  readonly create?: (label: string) => string | null;
 }
 
 function onKey(popup: StoreApi<MentionPopup>, { event }: SuggestionKeyDownProps): boolean {
@@ -67,7 +71,8 @@ function suggestion(
       index: 0,
       rect: props.clientRect?.() ?? null,
       select: (item) => {
-        props.command({ id: item.id, label: item.label });
+        const id = item.create === true ? (source.create?.(item.label) ?? null) : item.id;
+        if (id !== null) props.command({ id, label: item.label });
       },
     });
   };
@@ -92,17 +97,21 @@ function attr(value: unknown): string {
 }
 
 export function mentionExtension(
-  source: MentionSource,
+  sources: { readonly entities: MentionSource; readonly tags: MentionSource },
   popup: StoreApi<MentionPopup>,
   chipClass: string,
 ) {
-  const text = (attrs: Record<string, unknown>) =>
-    `@${source.labelOf(attr(attrs.id)) ?? attr(attrs.label)}`;
+  const text = (attrs: Record<string, unknown>) => {
+    const tag = attrs.mentionSuggestionChar === TAG_MENTION_CHAR;
+    const source = tag ? sources.tags : sources.entities;
+    return `${tag ? TAG_MENTION_CHAR : '@'}${source.labelOf(attr(attrs.id)) ?? attr(attrs.label)}`;
+  };
   return Mention.extend({ name: MENTION_NODE }).configure({
     HTMLAttributes: { class: chipClass },
     suggestions: [
-      suggestion('@', 'mention-at', source, popup),
-      suggestion('[[', 'mention-brackets', source, popup),
+      suggestion('@', 'mention-at', sources.entities, popup),
+      suggestion('[[', 'mention-brackets', sources.entities, popup),
+      suggestion(TAG_MENTION_CHAR, 'mention-tag', sources.tags, popup),
     ],
     renderText: ({ node }) => text(node.attrs),
     renderHTML: ({ node }) => [

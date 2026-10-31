@@ -34,6 +34,11 @@ export function defineElement<D extends ElementData>(
         });
   return {
     type: definition.type,
+    label: definition.label,
+    openTasks: (element) => {
+      const data = parse(element.data);
+      return data === null || definition.openTasks === undefined ? 0 : definition.openTasks(data);
+    },
     defaultSize: definition.defaultSize,
     minSize: definition.minSize,
     resize: definition.resize,
@@ -55,6 +60,12 @@ export function defineElement<D extends ElementData>(
     target: (element) => {
       const data = parse(element.data);
       return data === null || definition.target === undefined ? null : definition.target(data);
+    },
+    withTarget: (raw, targetId) => {
+      const data = parse(raw) ?? parse(definition.createData());
+      return data === null || definition.withTarget === undefined
+        ? null
+        : definition.withTarget(data, targetId);
     },
     entityOf: (raw) => {
       const data = parse(raw);

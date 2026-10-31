@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ColorNameSchema } from './color';
-import { BoardIdSchema, ElementIdSchema, TagIdSchema, TimestampSchema } from './ids';
+import { BoardIdSchema, ElementIdSchema, TimestampSchema } from './ids';
+import { TagSetSchema } from './tag';
 
 /** Пределы размеров и координат: защищают от мусора в файлах (NaN, бесконечность, гигантские числа). */
 const COORDINATE_LIMIT = 10_000_000;
@@ -30,7 +31,8 @@ export const ElementSchema = z.object({
   parentId: ElementIdSchema.nullable(),
   color: ColorNameSchema,
   locked: z.boolean(),
-  tagIds: z.array(TagIdSchema),
+  /** Теги элемента — множество (ADR 0006). */
+  tags: TagSetSchema,
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
   /** Момент удаления в корзину; null — элемент на доске. */

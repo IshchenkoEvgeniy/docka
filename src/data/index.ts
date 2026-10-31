@@ -105,3 +105,5 @@ export type { AssetState, AssetStore } from './assetStore';
 export { listProjectDevices, recordDeviceName } from './devices';
 export type { ProjectDevice } from './devices';
 export { ENTITY_TEXTS_FIELD, ensureEntityText, entityTextOf, entityTexts } from './entityText';
+export { TEMPLATES_DIR, listTemplates, removedTemplateIds, saveTemplate } from './templates';
+export type { TemplateList } from './templates';

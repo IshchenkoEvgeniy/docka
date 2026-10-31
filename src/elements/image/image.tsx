@@ -41,6 +41,7 @@ function ImageFullView({ data }: ElementViewProps<ImageData>) {
 
 export const image = defineElement<ImageData>({
   type: 'image',
+  label: () => t('elementTypes.image'),
   dataSchema: ImageDataSchema,
   defaultSize: { width: 320, height: 240 },
   minSize: { width: 32, height: 32 },

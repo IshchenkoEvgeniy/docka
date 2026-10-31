@@ -9,7 +9,7 @@ import { fitAll, worldPoint, zoomBy, zoomTo } from './view';
 import styles from './Board.module.css';
 
 /** Меню панели: «Добавить» и «Действия» с выделенным (на телефоне правой кнопки нет). */
-export type ToolbarMenu = 'add' | 'actions';
+export type ToolbarMenu = 'add' | 'actions' | 'tags';
 
 interface BoardToolbarProps {
   readonly model: BoardModel;
@@ -23,6 +23,7 @@ export function BoardToolbar({ model, controls, onHelp, onOpenMenu }: BoardToolb
   const canUndo = useSyncExternalStore(model.undo.subscribe, model.undo.canUndo);
   const canRedo = useSyncExternalStore(model.undo.subscribe, model.undo.canRedo);
   const gridSnap = useStore(model.settings, (state) => state.gridSnap);
+  const tagFilter = useStore(model.settings, (state) => state.tagFilter);
   const zoom = useCamera(controls).zoom;
   const hasSelection = useInteraction(
     model.interaction,
@@ -104,6 +105,15 @@ export function BoardToolbar({ model, controls, onHelp, onOpenMenu }: BoardToolb
         }}
       >
         {t('board.toolbar.grid')}
+      </Button>
+      <Button
+        aria-haspopup="menu"
+        pressed={tagFilter !== null}
+        onClick={(event) => {
+          onOpenMenu('tags', event.currentTarget.getBoundingClientRect());
+        }}
+      >
+        {t('board.toolbar.tags')}
       </Button>
       {hasSelection && (
         <Button

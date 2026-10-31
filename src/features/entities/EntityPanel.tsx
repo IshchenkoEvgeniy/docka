@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { backLinks, fieldsOf, type BoardId, type EntityId } from '../../core';
+import { backLinks, fieldsOf, type BoardId, type Entity, type EntityId } from '../../core';
+import { TagChips, TagPicker, type ProjectTags } from '../tags';
 import type { OpenProject } from '../../data';
 import {
   EntityChips,
@@ -28,6 +29,53 @@ export interface EntityPanelProps {
   /** Положить карточку сущности на открытую доску. */
   readonly onPlace: (entityId: string) => void;
   readonly onOpenEntity: (entityId: string) => void;
+  readonly tags: ProjectTags;
+}
+
+/** Теги сущности: метки и окно выбора. */
+function EntityTags({
+  entity,
+  entities,
+  tags,
+}: {
+  readonly entity: Entity;
+  readonly entities: ProjectEntities;
+  readonly tags: ProjectTags;
+}) {
+  const [picking, setPicking] = useState(false);
+  return (
+    <div className={styles.fieldRow}>
+      <span className={styles.fieldLabel}>{t('entities.panel.tags')}</span>
+      <div className={styles.inline}>
+        <TagChips tags={entity.tags} />
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setPicking(true);
+          }}
+        >
+          {t('entities.panel.editTags')}
+        </Button>
+      </div>
+      {picking && (
+        <TagPicker
+          title={t('entities.panel.tags')}
+          tags={tags}
+          sets={[entity.tags]}
+          onToggle={(tagId, on) => {
+            entities.run({
+              kind: 'updateEntity',
+              entityId: entity.id,
+              changes: { tags: { [tagId]: on } },
+            });
+          }}
+          onClose={() => {
+            setPicking(false);
+          }}
+        />
+      )}
+    </div>
+  );
 }
 
 function NameField({
@@ -116,6 +164,7 @@ export function EntityPanel(props: EntityPanelProps) {
             entities={entities}
             storeImage={props.storeImage}
           />
+          <EntityTags entity={found.entity} entities={entities} tags={props.tags} />
           <BackLinks entityId={entityId} />
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>{t('entities.usage.title')}</h3>

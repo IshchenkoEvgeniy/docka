@@ -101,6 +101,7 @@ function LinkView({ element, data, editing }: ElementViewProps<LinkData>) {
 
 export const link = defineElement<LinkData>({
   type: 'link',
+  label: () => t('elementTypes.link'),
   dataSchema: LinkDataSchema,
   defaultSize: { width: 320, height: 120 },
   minSize: { width: 200, height: 60 },

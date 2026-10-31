@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ColorNameSchema } from './color';
 import { BoardIdSchema, TimestampSchema, type BoardId } from './ids';
+import { TagSetSchema } from './tag';
 
 export const BOARD_BACKGROUNDS = ['plain', 'dots', 'grid'] as const;
 export type BoardBackground = (typeof BOARD_BACKGROUNDS)[number];
@@ -13,6 +14,7 @@ export const BoardSchema = z.object({
   icon: z.string().max(32).nullable(),
   color: ColorNameSchema,
   background: z.enum(BOARD_BACKGROUNDS),
+  tags: TagSetSchema,
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
   /** Момент удаления в корзину; null — доска не удалена. Вложенные доски скрыты вместе с ней. */

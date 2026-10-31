@@ -44,11 +44,12 @@ function renderNodes(nodes: readonly RichNode[]): ReactNode[] {
   return nodes.map((node, index) => {
     if (node.type === 'text') return renderText(node, index);
     if (node.name === MENTION_NODE) {
-      const { id, label } = node.attrs ?? {};
+      const { id, label, mentionSuggestionChar: char } = node.attrs ?? {};
       return createElement(MentionChip, {
         key: index,
         id: typeof id === 'string' ? id : '',
         label: typeof label === 'string' ? label : '',
+        char: typeof char === 'string' ? char : '@',
       });
     }
     const tag = node.name === 'heading' ? headingTag(node.attrs) : BLOCK_TAGS[node.name];

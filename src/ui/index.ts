@@ -13,3 +13,4 @@ export { TextField } from './TextField';
 export { applyTheme } from './theme';
 export { ColorPalette } from './ColorPalette';
 export type { PaletteColor } from './ColorPalette';
+export { Chip } from './Chip';

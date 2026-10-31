@@ -10,6 +10,7 @@ interface BoardTreeProps {
   readonly currentId: BoardId;
   readonly onOpen: (boardId: BoardId) => void;
   readonly onCreate: () => void;
+  readonly onCreateFromTemplate: () => void;
 }
 
 function TreeItem({
@@ -78,7 +79,13 @@ function TreeItem({
 }
 
 /** Боковая панель: все доски проекта деревом и кнопка новой доски внутри текущей. */
-export function BoardTree({ tree, currentId, onOpen, onCreate }: BoardTreeProps) {
+export function BoardTree({
+  tree,
+  currentId,
+  onOpen,
+  onCreate,
+  onCreateFromTemplate,
+}: BoardTreeProps) {
   const [collapsed, setCollapsed] = useState<ReadonlySet<BoardId>>(new Set());
   const toggle = (boardId: BoardId): void => {
     setCollapsed((previous) => {
@@ -101,6 +108,9 @@ export function BoardTree({ tree, currentId, onOpen, onCreate }: BoardTreeProps)
       </ul>
       <Button className={styles.treeCreate} onClick={onCreate}>
         {t('project.tree.newBoard')}
+      </Button>
+      <Button variant="ghost" className={styles.treeCreate} onClick={onCreateFromTemplate}>
+        {t('templates.fromTemplate')}
       </Button>
     </nav>
   );

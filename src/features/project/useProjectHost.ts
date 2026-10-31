@@ -5,7 +5,10 @@ import type { BoardDirectory } from '../../elements';
 import type { BoardHost } from '../board';
 import type { ProjectEntitiesSession } from '../entities';
 import type { Workspace } from '../workspace';
+import type { ProjectTags } from '../tags';
 import type { ProjectActions } from './projectActions';
+import type { FocusFeed } from './focusFeed';
+import type { ProjectUi } from './projectUi';
 
 interface HostParts {
   readonly assets: AssetStore | null;
@@ -16,12 +19,34 @@ interface HostParts {
   readonly session: ProjectEntitiesSession;
   readonly renameBoard: (boardId: BoardId) => void;
   readonly openAsset: ((asset: string, mime: string) => Promise<void>) | null;
+  readonly tags: ProjectTags;
+  readonly ui: ProjectUi;
+  readonly focus: FocusFeed;
+}
+
+/** Окна проекта, которые открывает доска: теги, теги доски, поиск. */
+function projectWindows(ui: ProjectUi, currentId: BoardId) {
+  return {
+    openTagManager: () => {
+      ui.setState({ tagManager: true });
+    },
+    editBoardTags: () => {
+      ui.setState({ boardTags: currentId });
+    },
+    openSearch: () => {
+      ui.setState({ search: true });
+    },
+    saveAsTemplate: () => {
+      ui.setState({ templates: 'save' });
+    },
+  };
 }
 
 /** Что доска получает от проекта: файлы, доски, сущности, «Поделиться», «На доску». */
 export function useProjectHost(parts: HostParts): BoardHost {
   const { assets, directory, workspace, actions, currentId, session, renameBoard, openAsset } =
     parts;
+  const { tags, ui, focus } = parts;
   return useMemo<BoardHost>(
     () => ({
       assets,
@@ -35,6 +60,9 @@ export function useProjectHost(parts: HostParts): BoardHost {
       setBackground: (background) => {
         actions.run({ kind: 'updateBoard', boardId: currentId, changes: { background } });
       },
+      tags,
+      ...projectWindows(ui, currentId),
+      focus,
       network: workspace.services.network,
       openAsset,
       openUrl: workspace.services.openUrl,
@@ -43,6 +71,18 @@ export function useProjectHost(parts: HostParts): BoardHost {
         subscribe: (listener) => workspace.store.subscribe(listener),
       },
     }),
-    [assets, directory, workspace, actions, currentId, session, renameBoard, openAsset],
+    [
+      assets,
+      directory,
+      workspace,
+      actions,
+      currentId,
+      session,
+      renameBoard,
+      openAsset,
+      tags,
+      ui,
+      focus,
+    ],
   );
 }

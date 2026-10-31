@@ -97,6 +97,12 @@ function editHandlers({ model, controls, pointer, pickers }: HotkeyContext): Hot
       createBoardCard(model, worldPoint(controls, pointer()));
     },
     selectAll: on(selectAll),
+    search: () => {
+      model.host.openSearch();
+    },
+    find: () => {
+      model.settings.setState({ find: model.settings.getState().find ?? '' });
+    },
     openLibrary: on(openLibrary),
     // Esc сначала отменяет начатый жест, потом снимает выделение.
     escape: () => {

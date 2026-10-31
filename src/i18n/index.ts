@@ -4,6 +4,7 @@
  */
 import i18next from 'i18next';
 import ru from './locales/ru.json';
+import ruTemplates from './templates/ru.json';
 import type { MessageKey } from './messageKey';
 
 export type TranslationKey = MessageKey<typeof ru>;
@@ -75,4 +76,12 @@ export function formatFileSize(bytes: number): string {
     unit,
     maximumFractionDigits: value < 10 ? 1 : 0,
   }).format(value);
+}
+
+/**
+ * Встроенные шаблоны досок и проектов текущего языка (ADR 0006): их текст — часть перевода.
+ * Проверяет схемой и собирает слой шаблонов.
+ */
+export function builtinTemplatesSource(): unknown {
+  return ruTemplates;
 }

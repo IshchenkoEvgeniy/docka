@@ -30,6 +30,7 @@ function EntityElementView({ element, data }: ElementViewProps<EntityElementData
 /** Карточка сущности проекта: данные общие, размер, место и вид — у размещения (ADR 0004). */
 export const entity = defineElement<EntityElementData>({
   type: ENTITY_ELEMENT_TYPE,
+  label: () => t('elementTypes.entity'),
   dataSchema: EntityElementDataSchema,
   defaultSize: { width: ENTITY_VIEW_WIDTH.card, height: 120 },
   minSize: { width: 120, height: 32 },
