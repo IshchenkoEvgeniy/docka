@@ -1,0 +1,198 @@
+import { describe, expect, it, vi } from 'vitest';
+import * as Y from 'yjs';
+import {
+  createManualClock,
+  createMemoryFileSystem,
+  createSequentialIdGenerator,
+  type BoardId,
+  type MemoryFileSystem,
+} from '../core';
+import { executeBoardCommand, executeProjectCommand } from './commands';
+import { checkMigrationChain, documentFormatVersion, type Migration } from './migrations';
+import { createProject, openProject, type ProjectContext } from './project';
+import { readElements } from './projectDocument';
+
+/** Тестовые миграции «будущих» версий 2 и 3: помечают элементы досок и документ проекта. */
+function futureMigrations() {
+  const markElements = (flag: string) => (doc: Y.Doc) => {
+    doc.getMap<unknown>('elements').forEach((record) => {
+      const data = record instanceof Y.Map ? (record as Y.Map<unknown>).get('data') : undefined; // записи — Y.Map
+      if (data instanceof Y.Map) data.set(flag, true);
+    });
+  };
+  const v2: Migration = {
+    version: 2,
+    description: 'тест: отметка v2',
+    migrateProjectDoc: vi.fn((doc: Y.Doc) => {
+      doc.getMap<unknown>('meta').set('v2', true);
+    }),
+    migrateBoardDoc: vi.fn(markElements('v2')),
+  };
+  const v3: Migration = {
+    version: 3,
+    description: 'тест: отметка v3',
+    migrateBoardDoc: vi.fn(markElements('v3')),
+  };
+  return { v2, v3, format: { version: 3, migrations: [v2, v3] } };
+}
+
+function context(
+  fs: MemoryFileSystem,
+  deviceId = 'pc',
+  format?: ProjectContext['format'],
+): ProjectContext {
+  return {
+    fs,
+    deviceId,
+    clock: createManualClock(0),
+    ids: createSequentialIdGenerator(deviceId),
+    ...(format ? { format } : {}),
+  };
+}
+
+/** Проект формата 1 с доской и одним элементом на ней. */
+async function oldProject(fs: MemoryFileSystem) {
+  const ctx = context(fs);
+  const created = await createProject(ctx, 'Игра');
+  if (!created.ok) throw new Error(created.error);
+  const project = created.value;
+  const board = executeProjectCommand(
+    project.projectDoc.doc,
+    { kind: 'createBoard', parentId: project.meta.rootBoardId, title: 'НПС' },
+    ctx,
+  );
+  const boardId = (board.ok ? board.value.createdId : '') as BoardId; // доска создана выше
+  const stored = await project.openBoard(boardId);
+  executeBoardCommand(
+    stored.doc,
+    boardId,
+    {
+      kind: 'createElement',
+      type: 'note',
+      placement: { x: 0, y: 0, width: 1, height: 1 },
+      data: { text: 'Трактирщик' },
+    },
+    ctx,
+  );
+  await project.close();
+  return boardId;
+}
+
+const projectJson = (fs: MemoryFileSystem) =>
+  JSON.parse(new TextDecoder().decode(fs.snapshot().get('project.json'))) as {
+    formatVersion: number;
+  };
+
+describe('цепочка миграций', () => {
+  const step = (version: number): Migration => ({ version, description: '' });
+  it('должна быть непрерывной и без лишних шагов', () => {
+    expect(checkMigrationChain([], 1).ok).toBe(true);
+    expect(checkMigrationChain([step(2), step(3)], 3).ok).toBe(true);
+    expect(checkMigrationChain([step(3)], 3).ok).toBe(false);
+    expect(checkMigrationChain([step(2), step(2)], 2).ok).toBe(false);
+    expect(checkMigrationChain([step(2), step(4)], 2).ok).toBe(false);
+  });
+});
+
+describe('миграция проекта', () => {
+  it('project.json и документ проекта — при открытии, доски — при открытии доски', async () => {
+    const fs = createMemoryFileSystem();
+    const boardId = await oldProject(fs);
+    const { v2, v3, format } = futureMigrations();
+
+    const opened = await openProject(context(fs, 'pc', format));
+    if (!opened.ok) throw new Error(opened.error);
+    expect(projectJson(fs).formatVersion).toBe(3);
+    expect(documentFormatVersion(opened.value.projectDoc.doc)).toBe(3);
+    expect(opened.value.projectDoc.doc.getMap('meta').get('v2')).toBe(true);
+    expect(v2.migrateBoardDoc).not.toHaveBeenCalled();
+
+    const board = await opened.value.openBoard(boardId);
+    expect(readElements(board.doc).items[0]?.data).toEqual({
+      text: 'Трактирщик',
+      v2: true,
+      v3: true,
+    });
+    expect(v3.migrateBoardDoc).toHaveBeenCalledTimes(1);
+    await opened.value.close();
+
+    const again = await openProject(context(fs, 'pc', format));
+    if (!again.ok) throw new Error(again.error);
+    await again.value.openBoard(boardId);
+    expect(v2.migrateProjectDoc).toHaveBeenCalledTimes(1);
+    expect(v3.migrateBoardDoc).toHaveBeenCalledTimes(1);
+  });
+
+  it('старое приложение не открывает и не меняет обновлённый проект', async () => {
+    const fs = createMemoryFileSystem();
+    await oldProject(fs);
+    const upgraded = await openProject(context(fs, 'pc', futureMigrations().format));
+    if (!upgraded.ok) throw new Error(upgraded.error);
+    await upgraded.value.close();
+    const writes = fs.writtenPaths().length;
+    expect(await openProject(context(fs))).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('обновите') as unknown,
+    });
+    expect(fs.writtenPaths().length).toBe(writes);
+  });
+
+  it('доска, обновлённая другим устройством раньше project.json, не открывается старым приложением', async () => {
+    const fs = createMemoryFileSystem();
+    const boardId = await oldProject(fs);
+    const project = await openProject(context(fs));
+    if (!project.ok) throw new Error(project.error);
+    const newer = new Y.Doc();
+    newer.getMap<unknown>('format').set('v9', true);
+    const { encodeFrame } = await import('./logFormat');
+    fs.putExternal(`data/phone/${boardId}.log`, encodeFrame(Y.encodeStateAsUpdate(newer)));
+    await expect(project.value.openBoard(boardId)).rejects.toThrow('новой версией');
+  });
+
+  it('два устройства обновляют проект одновременно — результат одинаковый', async () => {
+    const pcFs = createMemoryFileSystem();
+    const boardId = await oldProject(pcFs);
+    const phoneFs = createMemoryFileSystem();
+    for (const [path, data] of pcFs.snapshot()) phoneFs.putExternal(path, data);
+
+    const migrate = async (fs: MemoryFileSystem, device: string) => {
+      const opened = await openProject(context(fs, device, futureMigrations().format));
+      if (!opened.ok) throw new Error(opened.error);
+      await opened.value.openBoard(boardId);
+      await opened.value.flushAll();
+      return opened.value;
+    };
+    const pc = await migrate(pcFs, 'pc');
+    const phone = await migrate(phoneFs, 'phone');
+    for (const [path, data] of phoneFs.snapshot())
+      if (path.startsWith('data/phone/')) pcFs.putExternal(path, data);
+    for (const [path, data] of pcFs.snapshot())
+      if (path.startsWith('data/pc/')) phoneFs.putExternal(path, data);
+    await pc.refreshAll();
+    await phone.refreshAll();
+    const state = async (project: typeof pc) =>
+      readElements((await project.openBoard(boardId)).doc).items.map((e) => e.data);
+    expect(await state(pc)).toEqual(await state(phone));
+    expect(await state(pc)).toEqual([{ text: 'Трактирщик', v2: true, v3: true }]);
+  });
+
+  it('версия документа при слиянии только растёт', () => {
+    const pc = new Y.Doc();
+    const phone = new Y.Doc();
+    pc.getMap<unknown>('format').set('v1', true);
+    phone.getMap<unknown>('format').set('v3', true);
+    Y.applyUpdate(pc, Y.encodeStateAsUpdate(phone));
+    Y.applyUpdate(phone, Y.encodeStateAsUpdate(pc));
+    expect(documentFormatVersion(pc)).toBe(3);
+    expect(documentFormatVersion(phone)).toBe(3);
+  });
+
+  it('разорванная цепочка миграций — ошибка до любых изменений', async () => {
+    const fs = createMemoryFileSystem();
+    await oldProject(fs);
+    const writes = fs.writtenPaths().length;
+    const broken = { version: 3, migrations: [{ version: 3, description: '' }] };
+    expect((await openProject(context(fs, 'pc', broken))).ok).toBe(false);
+    expect(fs.writtenPaths().length).toBe(writes);
+  });
+});
