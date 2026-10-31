@@ -1,0 +1,135 @@
+/*
+ * Дизайн-токены. Цвета, отступы, радиусы и шрифты в коде берутся только отсюда.
+ * Тема выбирается системой или атрибутом data-theme на <html>.
+ */
+
+:root {
+  --font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 24px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --touch-target: 44px;
+}
+
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+  --color-canvas: #f4f3f0;
+  --color-grid: #dedcd6;
+  --color-surface: #ffffff;
+  --color-border: #dcdad5;
+  --color-text: #1d1d1b;
+  --color-text-muted: #6b6a66;
+  --color-accent: #2f6fde;
+  --color-on-accent: #ffffff;
+  --color-danger: #c4352b;
+  --color-overlay: rgb(0 0 0 / 8%);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 8%), 0 1px 1px rgb(0 0 0 / 4%);
+  --shadow-menu: 0 6px 24px rgb(0 0 0 / 16%);
+  --color-card-default: #ffffff;
+  --color-card-yellow: #fff4c2;
+  --color-card-orange: #ffe2c6;
+  --color-card-red: #fbd7d4;
+  --color-card-pink: #fadaea;
+  --color-card-purple: #e7dcf8;
+  --color-card-blue: #dde9fb;
+  --color-card-teal: #d4f0ee;
+  --color-card-green: #def3dc;
+  --color-card-gray: #e9e8e4;
+  --color-ink-default: #6b6a66;
+  --color-ink-yellow: #b08900;
+  --color-ink-orange: #d9730d;
+  --color-ink-red: #d1453b;
+  --color-ink-pink: #c4407e;
+  --color-ink-purple: #7d50c8;
+  --color-ink-blue: #2f6fde;
+  --color-ink-teal: #11847c;
+  --color-ink-green: #3b8a3e;
+  --color-ink-gray: #8a8984;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-canvas: #1b1b1d;
+  --color-grid: #333337;
+  --color-surface: #262629;
+  --color-border: #3a3a3f;
+  --color-text: #ececea;
+  --color-text-muted: #a2a19c;
+  --color-accent: #6b9cf0;
+  --color-on-accent: #10131a;
+  --color-danger: #f0766b;
+  --color-overlay: rgb(255 255 255 / 8%);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-menu: 0 6px 24px rgb(0 0 0 / 50%);
+  --color-card-default: #2c2c30;
+  --color-card-yellow: #4a4224;
+  --color-card-orange: #4d3522;
+  --color-card-red: #4d2724;
+  --color-card-pink: #4a2638;
+  --color-card-purple: #382a4d;
+  --color-card-blue: #24344f;
+  --color-card-teal: #1f3f3d;
+  --color-card-green: #253f2a;
+  --color-card-gray: #333336;
+  --color-ink-default: #a2a19c;
+  --color-ink-yellow: #e0be4a;
+  --color-ink-orange: #f0a35e;
+  --color-ink-red: #f0766b;
+  --color-ink-pink: #ee7fb3;
+  --color-ink-purple: #b392f0;
+  --color-ink-blue: #6b9cf0;
+  --color-ink-teal: #4fc4b9;
+  --color-ink-green: #78c47a;
+  --color-ink-gray: #8f8e8a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --color-canvas: #1b1b1d;
+    --color-grid: #333337;
+    --color-surface: #262629;
+    --color-border: #3a3a3f;
+    --color-text: #ececea;
+    --color-text-muted: #a2a19c;
+    --color-accent: #6b9cf0;
+    --color-on-accent: #10131a;
+    --color-danger: #f0766b;
+    --color-overlay: rgb(255 255 255 / 8%);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-menu: 0 6px 24px rgb(0 0 0 / 50%);
+    --color-card-default: #2c2c30;
+    --color-card-yellow: #4a4224;
+    --color-card-orange: #4d3522;
+    --color-card-red: #4d2724;
+    --color-card-pink: #4a2638;
+    --color-card-purple: #382a4d;
+    --color-card-blue: #24344f;
+    --color-card-teal: #1f3f3d;
+    --color-card-green: #253f2a;
+    --color-card-gray: #333336;
+    --color-ink-default: #a2a19c;
+    --color-ink-yellow: #e0be4a;
+    --color-ink-orange: #f0a35e;
+    --color-ink-red: #f0766b;
+    --color-ink-pink: #ee7fb3;
+    --color-ink-purple: #b392f0;
+    --color-ink-blue: #6b9cf0;
+    --color-ink-teal: #4fc4b9;
+    --color-ink-green: #78c47a;
+    --color-ink-gray: #8f8e8a;
+  }
+}

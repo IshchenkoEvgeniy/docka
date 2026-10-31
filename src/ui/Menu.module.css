@@ -1,0 +1,74 @@
+.menu {
+  position: fixed;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  max-height: calc(100vh - 16px);
+  padding: var(--space-1);
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-menu);
+}
+
+.item {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  font: inherit;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+.item:hover:not(:disabled),
+.item:focus-visible {
+  background: var(--color-overlay);
+  outline: none;
+}
+
+.item:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.danger {
+  color: var(--color-danger);
+}
+
+.hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.heading {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.separator {
+  width: 100%;
+  margin: var(--space-1) 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+@media (pointer: coarse) {
+  .item {
+    min-height: var(--touch-target);
+  }
+
+  /* Сочетания клавиш на телефоне — лишний шум. */
+  .hint {
+    display: none;
+  }
+}
