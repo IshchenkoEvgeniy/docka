@@ -1,0 +1,99 @@
+.frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: var(--radius-md);
+}
+
+.selected {
+  outline: calc(2px / var(--canvas-zoom, 1)) solid var(--color-accent);
+  outline-offset: calc(2px / var(--canvas-zoom, 1));
+}
+
+.editing {
+  z-index: 2;
+}
+
+.locked.selected {
+  outline-style: dashed;
+}
+
+.dropTarget {
+  outline: calc(3px / var(--canvas-zoom, 1)) dashed var(--color-accent);
+  outline-offset: calc(4px / var(--canvas-zoom, 1));
+}
+
+.dragging {
+  z-index: 1;
+  opacity: 0.92;
+}
+
+.handle {
+  position: absolute;
+  width: calc(12px / var(--canvas-zoom, 1));
+  height: calc(12px / var(--canvas-zoom, 1));
+  background: var(--color-surface);
+  border: calc(2px / var(--canvas-zoom, 1)) solid var(--color-accent);
+  border-radius: 50%;
+}
+
+/* Зона нажатия больше видимой ручки: под палец. */
+.handle::before {
+  position: absolute;
+  inset: calc(-12px / var(--canvas-zoom, 1));
+  content: '';
+}
+
+.handle[data-resize-handle='se'] {
+  right: calc(-7px / var(--canvas-zoom, 1));
+  bottom: calc(-7px / var(--canvas-zoom, 1));
+  cursor: nwse-resize;
+}
+
+.handle[data-resize-handle='e'] {
+  top: calc(50% - 6px / var(--canvas-zoom, 1));
+  right: calc(-7px / var(--canvas-zoom, 1));
+  cursor: ew-resize;
+}
+
+.handle[data-resize-handle='s'] {
+  bottom: calc(-7px / var(--canvas-zoom, 1));
+  left: calc(50% - 6px / var(--canvas-zoom, 1));
+  cursor: ns-resize;
+}
+
+.connector {
+  position: absolute;
+  top: calc(50% - 8px / var(--canvas-zoom, 1));
+  right: calc(-28px / var(--canvas-zoom, 1));
+  width: calc(16px / var(--canvas-zoom, 1));
+  height: calc(16px / var(--canvas-zoom, 1));
+  cursor: crosshair;
+  background: var(--color-accent);
+  border: calc(3px / var(--canvas-zoom, 1)) solid var(--color-surface);
+  border-radius: 50%;
+  box-shadow: var(--shadow-card);
+}
+
+.connector::before {
+  position: absolute;
+  inset: calc(-12px / var(--canvas-zoom, 1));
+  content: '';
+}
+
+.marquee {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border: calc(1px / var(--canvas-zoom, 1)) solid var(--color-accent);
+  pointer-events: none;
+}
+
+.guide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--color-danger);
+  pointer-events: none;
+}

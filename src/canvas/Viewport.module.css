@@ -1,0 +1,45 @@
+.viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-canvas);
+  /* Жесты обрабатывает холст, браузер не должен прокручивать или масштабировать страницу. */
+  touch-action: none;
+  user-select: none;
+}
+
+.layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* Слой бесконечный: его размер не ограничивает положение элементов. */
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.overview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* События проходят к фону холста: жесты пана и зума работают поверх картинки. */
+  pointer-events: none;
+}
+
+/* Фон доски; шаг и сдвиг выставляет камера (--grid-*). */
+.dots {
+  background-image: radial-gradient(circle, var(--color-grid) 1px, transparent 1.5px);
+  background-position: var(--grid-x, 0) var(--grid-y, 0);
+  background-size: var(--grid-step, 24px) var(--grid-step, 24px);
+}
+
+.grid {
+  background-image:
+    linear-gradient(to right, var(--color-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-grid) 1px, transparent 1px);
+  background-position: var(--grid-x, 0) var(--grid-y, 0);
+  background-size: var(--grid-step, 24px) var(--grid-step, 24px);
+}

@@ -1,0 +1,9 @@
+.note {
+  width: 100%;
+  padding: var(--space-3);
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
