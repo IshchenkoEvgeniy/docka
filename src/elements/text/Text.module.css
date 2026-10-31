@@ -1,0 +1,123 @@
+.text,
+.editor {
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.text > :first-child,
+.editor > :first-child {
+  margin-top: 0;
+}
+
+.text > :last-child,
+.editor > :last-child {
+  margin-bottom: 0;
+}
+
+.text p,
+.editor p {
+  min-height: 1.45em;
+  margin: 0;
+}
+
+.text h1,
+.editor h1 {
+  margin: 0.3em 0;
+  font-size: 1.5em;
+}
+
+.text h2,
+.editor h2 {
+  margin: 0.3em 0;
+  font-size: 1.25em;
+}
+
+.text h3,
+.editor h3 {
+  margin: 0.3em 0;
+  font-size: 1.1em;
+}
+
+.text ul,
+.text ol,
+.editor ul,
+.editor ol {
+  margin: 0.2em 0;
+  padding-left: 1.4em;
+}
+
+.text blockquote,
+.editor blockquote {
+  margin: 0.3em 0;
+  padding-left: 0.8em;
+  color: var(--color-text-muted);
+  border-left: 3px solid var(--color-border);
+}
+
+.text code,
+.editor code {
+  padding: 0 0.25em;
+  font-size: 0.9em;
+  background: var(--color-overlay);
+  border-radius: var(--radius-sm);
+}
+
+.link,
+.editor a {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.editorHost {
+  cursor: text;
+}
+
+/* Холст запрещает выделение и жесты браузера — в редакторе они нужны. */
+.editor {
+  min-height: 1.45em;
+  outline: none;
+  user-select: text;
+  touch-action: manipulation;
+  -webkit-user-select: text;
+}
+
+.placeholder {
+  color: var(--color-text-muted);
+}
+
+.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--color-surface);
+}
+
+.fullscreenBar {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.done {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-4);
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+  border: 0;
+  border-radius: var(--radius-md);
+}
+
+.fullscreenBody {
+  flex: 1;
+  padding: var(--space-4);
+  overflow-y: auto;
+  font-size: var(--font-size-lg);
+  touch-action: pan-y;
+}

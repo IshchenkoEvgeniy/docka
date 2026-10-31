@@ -1,0 +1,8 @@
+.title {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text);
+}
