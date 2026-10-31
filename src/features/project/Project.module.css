@@ -1,0 +1,224 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-height: 52px;
+  padding: var(--space-1) var(--space-3);
+  padding-top: calc(var(--space-1) + env(safe-area-inset-top));
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.board {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.crumbs {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  list-style: none;
+  touch-action: pan-x;
+  scrollbar-width: none;
+}
+
+.crumb {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.crumbSeparator {
+  margin: 0 var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.crumbLink,
+.crumbCurrent {
+  max-width: 220px;
+  padding: var(--space-1) var(--space-2);
+  overflow: hidden;
+  font: inherit;
+  color: var(--color-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+.crumbCurrent {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.crumbLink:hover,
+.crumbCurrent:hover {
+  background: var(--color-overlay);
+}
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 260px;
+  padding: var(--space-2);
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  touch-action: pan-y;
+}
+
+.treeList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.treeRow {
+  display: flex;
+  align-items: center;
+}
+
+.treeToggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 32px;
+  padding: 0;
+  font: inherit;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.treeItem {
+  flex: 1;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  overflow: hidden;
+  font: inherit;
+  color: var(--color-text);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+.treeItem:hover {
+  background: var(--color-overlay);
+}
+
+.treeCurrent {
+  font-weight: 600;
+  color: var(--color-accent);
+  background: var(--color-overlay);
+}
+
+.treeCreate {
+  margin-top: var(--space-3);
+}
+
+.treeBackdrop {
+  display: none;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Телефон: дерево выезжает поверх доски. */
+@media (max-width: 640px) {
+  .tree {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    width: min(300px, 85vw);
+    box-shadow: var(--shadow-menu);
+  }
+
+  .treeBackdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 19;
+    display: block;
+    background: rgb(0 0 0 / 30%);
+  }
+
+  .treeItem,
+  .treeToggle {
+    min-height: var(--touch-target);
+  }
+}
+
+.message {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--space-6);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.devices {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.device {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.deviceName {
+  font-weight: 600;
+}
+
+.deviceTime,
+.syncHint {
+  color: var(--color-text-muted);
+}
+
+.syncHint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-sm);
+}

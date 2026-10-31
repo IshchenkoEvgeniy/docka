@@ -1,0 +1,9 @@
+.splash {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--space-6);
+  color: var(--color-text-muted);
+  text-align: center;
+}
