@@ -1,0 +1,26 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Локальные настройки редактора
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Лог установки
+setup-log*.txt
+setup-android-log.txt
+
+# Готовые сборки (build-windows.cmd, build-android.cmd)
+release/
+build-*-log.txt
+
+# История для первой отправки на GitHub (push-github.cmd)
+*.bundle
