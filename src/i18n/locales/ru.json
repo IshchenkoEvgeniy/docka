@@ -216,6 +216,19 @@
       "previousIcon": "↑",
       "nextIcon": "↓",
       "closeIcon": "×"
+    },
+    "palette": {
+      "title": "Элементы",
+      "note": "Заметка",
+      "link": "Ссылка",
+      "checklist": "Список",
+      "line": "Линия",
+      "board": "Доска",
+      "column": "Колонка",
+      "more": "Ещё",
+      "image": "Картинка",
+      "file": "Файл",
+      "trash": "Корзина"
     }
   },
   "hotkeys": {

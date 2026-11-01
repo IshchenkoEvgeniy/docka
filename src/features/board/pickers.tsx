@@ -1,5 +1,5 @@
 import { useMemo, useRef, type ReactNode, type RefObject } from 'react';
-import type { CameraControls } from '../../canvas';
+import type { CameraControls, Point } from '../../canvas';
 import type { AddPickers } from './addMenu';
 import { insertFiles } from './files';
 import { insertImages } from './images';
@@ -39,12 +39,25 @@ export function useBoardPickers(
 ): { readonly pickers: AddPickers; readonly inputs: ReactNode } {
   const images = useRef<HTMLInputElement>(null);
   const files = useRef<HTMLInputElement>(null);
+  // Куда положить выбранное: точка, куда бросили значок с панели; иначе центр экрана.
+  const target = useRef<Point | null>(null);
+  const placeAt = (): Point => {
+    const at = target.current ?? worldPoint(controls, null);
+    target.current = null;
+    return at;
+  };
   const pickers = useMemo<AddPickers>(
     () => ({
-      images: () => images.current?.click(),
-      files: () => files.current?.click(),
-      link: () => {
-        model.overlay.setState({ dialog: { kind: 'link', at: worldPoint(controls, null) } });
+      images: (at) => {
+        target.current = at ?? null;
+        images.current?.click();
+      },
+      files: (at) => {
+        target.current = at ?? null;
+        files.current?.click();
+      },
+      link: (at) => {
+        model.overlay.setState({ dialog: { kind: 'link', at: at ?? worldPoint(controls, null) } });
       },
     }),
     [model, controls],
@@ -54,11 +67,11 @@ export function useBoardPickers(
       <FileInput
         inputRef={images}
         accept="image/*"
-        onFiles={(picked) => void insertImages(model, picked, worldPoint(controls, null))}
+        onFiles={(picked) => void insertImages(model, picked, placeAt())}
       />
       <FileInput
         inputRef={files}
-        onFiles={(picked) => void insertFiles(model, picked, worldPoint(controls, null))}
+        onFiles={(picked) => void insertFiles(model, picked, placeAt())}
       />
     </>
   );

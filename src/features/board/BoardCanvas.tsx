@@ -20,6 +20,7 @@ import { BoardNotice, BoardToolbar } from './BoardToolbar';
 import { BoardDialogs } from './BoardDialogs';
 import { ConnectionLayer } from './ConnectionLayer';
 import { BoardOverview, ElementLayer } from './ElementLayer';
+import { ElementPalette } from './ElementPalette';
 import { createGestureHandlers } from './gestureHandlers';
 import type { BoardHost } from './host';
 import { FullscreenEditing } from './FullscreenEditing';
@@ -171,22 +172,32 @@ function BoardSurface({
       }}
     >
       <ElementRuntimeContext.Provider value={runtime}>
-        <Viewport
-          controls={controls}
-          background={background}
-          underlay={
-            <BoardOverview model={model} controls={controls} zoomedOutView={zoomedOutView} />
-          }
-        >
-          <ConnectionLayer model={model} />
-          <ElementLayer model={model} controls={controls} zoomedOutView={zoomedOutView} />
-          <InteractionOverlay store={model.interaction} />
-        </Viewport>
+        <div className={styles.canvasArea}>
+          <Viewport
+            controls={controls}
+            background={background}
+            underlay={
+              <BoardOverview model={model} controls={controls} zoomedOutView={zoomedOutView} />
+            }
+          >
+            <ConnectionLayer model={model} />
+            <ElementLayer model={model} controls={controls} zoomedOutView={zoomedOutView} />
+            <InteractionOverlay store={model.interaction} />
+          </Viewport>
+        </div>
         <HighlightSync model={model} />
         <ElementViewer model={model} />
         <FullscreenEditing model={model} runtime={runtime} />
         <BoardDialogs model={model} background={background} />
       </ElementRuntimeContext.Provider>
+      <ElementPalette
+        model={model}
+        controls={controls}
+        pickers={pickers}
+        onMore={(anchor) => {
+          setMenu({ kind: 'add', client: { x: anchor.right + 4, y: anchor.top } });
+        }}
+      />
       <BoardToolbar
         model={model}
         controls={controls}

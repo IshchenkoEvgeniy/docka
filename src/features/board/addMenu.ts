@@ -7,9 +7,10 @@ import type { BoardModel } from './model';
 
 /** Системные окна выбора файлов и окно адреса ссылки (их держит доска). */
 export interface AddPickers {
-  readonly images: () => void;
-  readonly files: () => void;
-  readonly link: () => void;
+  /** at — куда положить выбранное (точка мира); без неё — центр экрана. */
+  readonly images: (at?: Point) => void;
+  readonly files: (at?: Point) => void;
+  readonly link: (at?: Point) => void;
 }
 
 /** Типы, которые создаются пустыми в точке: подпись пункта и горячая клавиша. */
@@ -37,9 +38,25 @@ export function addMenuEntries(model: BoardModel, at: Point, pickers: AddPickers
   );
   return [
     ...simple,
-    action('add-image', 'board.toolbar.addImage', pickers.images, { hotkey: 'addImage' }),
-    action('add-file', 'board.toolbar.addFile', pickers.files),
-    action('add-link', 'board.toolbar.addLink', pickers.link, { hotkey: 'addLink' }),
+    action(
+      'add-image',
+      'board.toolbar.addImage',
+      () => {
+        pickers.images(at);
+      },
+      { hotkey: 'addImage' },
+    ),
+    action('add-file', 'board.toolbar.addFile', () => {
+      pickers.files(at);
+    }),
+    action(
+      'add-link',
+      'board.toolbar.addLink',
+      () => {
+        pickers.link(at);
+      },
+      { hotkey: 'addLink' },
+    ),
     action(
       'add-board',
       'board.toolbar.addBoard',

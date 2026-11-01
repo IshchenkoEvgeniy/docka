@@ -3,9 +3,8 @@ import { useStore } from 'zustand';
 import { useCamera, useInteraction, type CameraControls } from '../../canvas';
 import { t } from '../../i18n';
 import { Button } from '../../ui';
-import { createNote } from './boardActions';
 import type { BoardModel } from './model';
-import { fitAll, worldPoint, zoomBy, zoomTo } from './view';
+import { fitAll, zoomBy, zoomTo } from './view';
 import styles from './Board.module.css';
 
 /** Меню панели: «Добавить» и «Действия» с выделенным (на телефоне правой кнопки нет). */
@@ -31,22 +30,6 @@ export function BoardToolbar({ model, controls, onHelp, onOpenMenu }: BoardToolb
   );
   return (
     <div className={styles.toolbar}>
-      <Button
-        variant="primary"
-        onClick={() => {
-          createNote(model, worldPoint(controls, null));
-        }}
-      >
-        {t('board.toolbar.addNote')}
-      </Button>
-      <Button
-        aria-haspopup="menu"
-        onClick={(event) => {
-          onOpenMenu('add', event.currentTarget.getBoundingClientRect());
-        }}
-      >
-        {t('board.toolbar.add')}
-      </Button>
       <Button
         disabled={!canUndo}
         onClick={() => void model.undo.undo()}

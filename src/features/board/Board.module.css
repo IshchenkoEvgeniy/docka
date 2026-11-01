@@ -1,21 +1,33 @@
 .board {
+  --palette-width: 76px;
+  --palette-height: 72px;
+
   position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
 }
 
+/* Холст — справа от панели элементов (на телефоне — над ней). */
+.canvasArea {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--palette-width);
+}
+
 .toolbar {
   position: absolute;
   top: var(--space-3);
-  left: var(--space-3);
+  left: calc(var(--palette-width) + var(--space-3));
   right: var(--space-3);
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
   width: fit-content;
-  max-width: calc(100% - 2 * var(--space-3));
+  max-width: calc(100% - var(--palette-width) - 2 * var(--space-3));
   padding: var(--space-2);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -46,13 +58,18 @@
   pointer-events: none;
 }
 
-/* Телефон: панель внизу под большим пальцем, в одну строку с прокруткой; клавиатурное — скрыто. */
+/* Телефон: внизу — панель элементов, сверху — эта панель в одну строку с прокруткой. */
 @media (pointer: coarse), (max-width: 640px) {
+  .canvasArea {
+    bottom: calc(var(--palette-height) + env(safe-area-inset-bottom));
+    left: 0;
+  }
+
   .toolbar {
-    top: auto;
-    bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+    top: var(--space-2);
     left: 50%;
     flex-wrap: nowrap;
+    max-width: calc(100% - 2 * var(--space-2));
     overflow-x: auto;
     transform: translateX(-50%);
     touch-action: pan-x;
@@ -73,7 +90,7 @@
   }
 
   .notice {
-    bottom: calc(80px + env(safe-area-inset-bottom));
+    bottom: calc(var(--palette-height) + var(--space-3) + env(safe-area-inset-bottom));
   }
 }
 

@@ -66,6 +66,37 @@ function viewHandlers({ model, controls, openHelp }: HotkeyContext): HotkeyHandl
   };
 }
 
+/** Создание элементов: в точке под указателем (или в центре экрана). */
+function createHandlers(
+  model: BoardModel,
+  controls: HotkeyContext['controls'],
+  pointer: HotkeyContext['pointer'],
+  pickers: HotkeyContext['pickers'],
+): HotkeyHandlers {
+  const here = () => worldPoint(controls, pointer());
+  const element = (type: string) => () => {
+    createElementAt(model, type, here());
+  };
+  return {
+    addNote: () => {
+      createNote(model, here());
+    },
+    addTitle: element('title'),
+    addShape: element('shape'),
+    addChecklist: element('checklist'),
+    addColumn: element('column'),
+    addImage: () => {
+      pickers.images(here());
+    },
+    addLink: () => {
+      pickers.link(here());
+    },
+    addBoard: () => {
+      createBoardCard(model, here());
+    },
+  };
+}
+
 function editHandlers({ model, controls, pointer, pickers }: HotkeyContext): HotkeyHandlers {
   const on = (action: (target: BoardModel) => void) => () => {
     action(model);
@@ -75,27 +106,8 @@ function editHandlers({ model, controls, pointer, pickers }: HotkeyContext): Hot
     redo: () => void model.undo.redo(),
     duplicate: on(duplicateSelection),
     delete: on(deleteSelection),
-    addNote: () => {
-      createNote(model, worldPoint(controls, pointer()));
-    },
-    addTitle: () => {
-      createElementAt(model, 'title', worldPoint(controls, pointer()));
-    },
     editText: on(editSelection),
-    addImage: pickers.images,
-    addLink: pickers.link,
-    addShape: () => {
-      createElementAt(model, 'shape', worldPoint(controls, pointer()));
-    },
-    addChecklist: () => {
-      createElementAt(model, 'checklist', worldPoint(controls, pointer()));
-    },
-    addColumn: () => {
-      createElementAt(model, 'column', worldPoint(controls, pointer()));
-    },
-    addBoard: () => {
-      createBoardCard(model, worldPoint(controls, pointer()));
-    },
+    ...createHandlers(model, controls, pointer, pickers),
     selectAll: on(selectAll),
     search: () => {
       model.host.openSearch();
