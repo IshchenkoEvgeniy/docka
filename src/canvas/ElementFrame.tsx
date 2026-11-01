@@ -1,25 +1,11 @@
 import type { ReactNode } from 'react';
 import { cx } from '../ui';
-import {
-  CONNECTOR_HANDLE_ATTRIBUTE,
-  ELEMENT_ID_ATTRIBUTE,
-  RESIZE_HANDLE_ATTRIBUTE,
-} from './attachPointerEvents';
+import { CONNECTOR_HANDLE_ATTRIBUTE, ELEMENT_ID_ATTRIBUTE } from './attachPointerEvents';
 import type { Rect } from './geometry';
-import type { ResizeHandle } from './gestureController';
+import type { ResizeMode } from './resize';
+import { ResizeHandles } from './ResizeHandles';
 import { useInteraction, type InteractionStore } from './interactionStore';
 import styles from './ElementFrame.module.css';
-
-/** Какие стороны можно тянуть: зависит от типа элемента. */
-/** 'aspect' — один угол, пропорции сохраняются (картинки). */
-export type ResizeMode = 'none' | 'width' | 'both' | 'aspect';
-
-const HANDLES: Readonly<Record<ResizeMode, readonly ResizeHandle[]>> = {
-  none: [],
-  width: ['e'],
-  both: ['e', 's', 'se'],
-  aspect: ['se'],
-};
 
 interface ElementFrameProps {
   readonly id: string;
@@ -58,7 +44,7 @@ export function ElementFrame({
   const shown = resized ?? { ...rect, x: rect.x + (drag?.dx ?? 0), y: rect.y + (drag?.dy ?? 0) };
   // Ширину тянут вручную, а высота растёт вместе с текстом.
   const autoHeight = resize === 'width';
-  const handles = selected && alone && !locked ? HANDLES[resize] : [];
+  const showHandles = selected && alone && !locked && !editing && drag === null;
   const connectTarget = useInteraction(store, (state) => state.connecting?.hoverId === id);
   const dimmed = useInteraction(store, (state) => state.highlight?.has(id) === false);
   const attributes = { [ELEMENT_ID_ATTRIBUTE]: id };
@@ -87,10 +73,8 @@ export function ElementFrame({
       }}
     >
       {children}
-      {handles.map((handle) => (
-        <div key={handle} className={styles.handle} {...{ [RESIZE_HANDLE_ATTRIBUTE]: handle }} />
-      ))}
-      {selected && alone && drag === null && (
+      {showHandles && <ResizeHandles mode={resize} rect={shown} active={resized !== null} />}
+      {selected && alone && !editing && drag === null && resized === null && (
         <div className={styles.connector} {...{ [CONNECTOR_HANDLE_ATTRIBUTE]: id }} />
       )}
     </div>

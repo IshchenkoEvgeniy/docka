@@ -7,6 +7,8 @@ import {
   type WheelInput,
 } from './panZoomController';
 import type { Camera } from './camera';
+import type { ResizeHandle, ResizeModifiers } from './resize';
+export type { ResizeHandle } from './resize';
 
 /**
  * Жесты холста поверх пана и зума (ТЗ, раздел 4). Без DOM и без знания о данных:
@@ -18,8 +20,6 @@ import type { Camera } from './camera';
  * по пустому месту — пан, долгое нажатие — рамка (или меню, если палец не двигался);
  * второй палец в любой момент отменяет начатое и превращает жест в щипок.
  */
-
-export type ResizeHandle = 'e' | 's' | 'se';
 
 export type PointerTarget =
   | { readonly kind: 'background' }
@@ -52,7 +52,7 @@ export interface GestureHandlers {
   readonly updateMove: (delta: Point) => void;
   readonly endMove: (commit: boolean) => void;
   readonly startResize: (id: string, handle: ResizeHandle) => boolean;
-  readonly updateResize: (delta: Point) => void;
+  readonly updateResize: (delta: Point, modifiers?: ResizeModifiers) => void;
   readonly endResize: (commit: boolean) => void;
   readonly updateMarquee: (rect: Rect, additive: boolean) => void;
   readonly endMarquee: (commit: boolean) => void;
@@ -82,6 +82,7 @@ interface Tracked {
   /** Начальная точка в мире: если камера сдвинется во время жеста, смещение останется верным. */
   readonly startWorld: Point;
   last: Point;
+  modifiers?: ResizeModifiers;
 }
 
 type Phase =
@@ -164,7 +165,7 @@ export class GestureController {
     return true;
   };
 
-  readonly pointerMove = (id: number, point: Point): void => {
+  readonly pointerMove = (id: number, point: Point, modifiers?: ResizeModifiers): void => {
     const phase = this.phase;
     if (phase.kind === 'pan' || phase.kind === 'idle') {
       this.panZoom.pointerMove(id, point);
@@ -172,6 +173,7 @@ export class GestureController {
     }
     if (phase.pointer !== id) return;
     phase.last = point;
+    if (modifiers !== undefined) phase.modifiers = modifiers;
     if (phase.kind === 'press') {
       this.movePress(phase, point);
       return;
@@ -291,7 +293,7 @@ export class GestureController {
     const current = screenToWorld(this.panZoom.getCamera(), phase.last);
     const delta = { x: current.x - phase.startWorld.x, y: current.y - phase.startWorld.y };
     if (phase.kind === 'move') handlers.updateMove(delta);
-    else if (phase.kind === 'resize') handlers.updateResize(delta);
+    else if (phase.kind === 'resize') handlers.updateResize(delta, phase.modifiers);
     else if (phase.kind === 'connect') handlers.updateConnect(current);
     else if (phase.kind === 'marquee')
       handlers.updateMarquee(rectFromCorners(phase.startWorld, current), phase.additive);

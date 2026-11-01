@@ -1,6 +1,7 @@
 import type { Point } from './camera';
 import type { GestureController, PointerTarget, ResizeHandle } from './gestureController';
 import type { PointerKind } from './panZoomController';
+import { RESIZE_HANDLES } from './resize';
 
 /** Атрибут, которым помечается пустой фон холста (жест по нему = пан, а не работа с элементом). */
 export const BACKGROUND_ATTRIBUTE = 'data-canvas-background';
@@ -16,10 +17,8 @@ function isControl(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest(`[${CONTROL_ATTRIBUTE}]`) !== null;
 }
 
-const RESIZE_HANDLES: readonly string[] = ['e', 's', 'se'] satisfies ResizeHandle[];
-
 function isResizeHandle(value: string | null): value is ResizeHandle {
-  return value !== null && RESIZE_HANDLES.includes(value);
+  return value !== null && RESIZE_HANDLES.some((handle) => handle === value);
 }
 
 /** Что под указателем: ручка размера, элемент или пустое место. */
@@ -77,7 +76,10 @@ function attachPointer(container: HTMLElement, controller: GestureController): (
     container.setPointerCapture(event.pointerId);
   };
   const onMove = (event: PointerEvent): void => {
-    controller.pointerMove(event.pointerId, localPoint(container, event));
+    controller.pointerMove(event.pointerId, localPoint(container, event), {
+      keepAspect: event.shiftKey,
+      fromCenter: event.altKey,
+    });
   };
   const onUp = (event: PointerEvent): void => {
     controller.pointerUp(event.pointerId);

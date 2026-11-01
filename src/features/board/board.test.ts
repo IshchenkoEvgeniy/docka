@@ -82,10 +82,10 @@ describe('жесты доски', () => {
 
   it('размер: не меньше минимального, одна команда', () => {
     const { handlers, a, element } = setup();
-    handlers.startResize(a, 'se');
+    handlers.startResize(a, 'e');
     handlers.updateResize({ x: -1000, y: 30 });
     handlers.endResize(true);
-    expect(element(a)).toMatchObject({ width: 80, height: 150 });
+    expect(element(a)).toMatchObject({ width: 80, height: 120 });
   });
 
   it('рамка выделяет пересечённое; с Shift — добавляет к прежнему', () => {

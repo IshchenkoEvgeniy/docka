@@ -3,56 +3,18 @@ import {
   pressSelection,
   releaseSelection,
   selectionInRect,
-  snapToGrid,
   type DeferredSelection,
   type GestureHandlers,
-  type Point,
-  type Rect,
-  type ResizeHandle,
-  type Size,
 } from '../../canvas';
-import type { BoardElement, ElementId } from '../../core';
 import { definitionFor, encloses } from '../../elements';
 import { activateElement, stopEditing } from './boardActions';
 import type { GestureContext, GestureView, HandlersPart } from './gestureContext';
 import type { BoardModel } from './model';
 import { connectionHandlers } from './connecting';
 import { moveHandlers } from './moving';
+import { resizeHandlers } from './resizing';
 
 export type { GestureView } from './gestureContext';
-
-interface ResizeSession {
-  readonly element: BoardElement;
-  readonly handle: ResizeHandle;
-  readonly minSize: Size;
-  readonly keepAspect: boolean;
-}
-
-function resizedRect(session: ResizeSession, delta: Point, grid: boolean): Rect {
-  const { element, handle, minSize } = session;
-  if (session.keepAspect) {
-    const ratio = element.height / element.width;
-    const width = Math.max(minSize.width, minSize.height / ratio, element.width + delta.x);
-    return {
-      x: element.x,
-      y: element.y,
-      width: Math.round(width),
-      height: Math.round(width * ratio),
-    };
-  }
-  const horizontal = handle !== 's';
-  const vertical = handle !== 'e';
-  let width = horizontal ? element.width + delta.x : element.width;
-  let height = vertical ? element.height + delta.y : element.height;
-  if (grid && horizontal) width = snapToGrid(element.x + width) - element.x;
-  if (grid && vertical) height = snapToGrid(element.y + height) - element.y;
-  return {
-    x: element.x,
-    y: element.y,
-    width: Math.round(Math.max(minSize.width, width)),
-    height: Math.round(Math.max(minSize.height, height)),
-  };
-}
 
 function selectionHandlers({
   model,
@@ -96,48 +58,6 @@ function selectionHandlers({
           connectionSelection: EMPTY_SELECTION,
         });
       view.openMenu(target, screen);
-    },
-  };
-}
-
-function resizeHandlers({
-  model,
-  gridSnap,
-}: GestureContext): HandlersPart<'startResize' | 'updateResize' | 'endResize'> {
-  const { interaction } = model;
-  let resize: ResizeSession | null = null;
-  return {
-    startResize: (id, handle) => {
-      const element = model.elements.getSnapshot().get(id);
-      if (element === undefined || element.locked) return false;
-      if (interaction.getState().editingId !== id) stopEditing(model);
-      const definition = definitionFor(element.type);
-      resize = {
-        element,
-        handle,
-        minSize: definition.minSize,
-        keepAspect: definition.resize === 'aspect',
-      };
-      interaction.setState({ resize: { id, rect: element } });
-      return true;
-    },
-    updateResize: (delta) => {
-      if (resize === null) return;
-      const rect = resizedRect(resize, delta, gridSnap());
-      interaction.setState({ resize: { id: resize.element.id, rect } });
-    },
-    endResize: (commit) => {
-      const preview = interaction.getState().resize;
-      if (commit && resize !== null && preview !== null) {
-        const { x, y, width, height } = preview.rect;
-        const elementId: ElementId = resize.element.id;
-        if (width !== resize.element.width || height !== resize.element.height)
-          model.run({ kind: 'resizeElement', elementId, placement: { x, y, width, height } });
-        // Другая ширина — другие переносы строк: высоту текста надо перемерить.
-        model.markForMeasure([elementId]);
-      }
-      resize = null;
-      interaction.setState({ resize: null });
     },
   };
 }
