@@ -1,6 +1,9 @@
 node_modules/
 dist/
 coverage/
+playwright-report/
+test-results/
+.taste-skill/
 *.log
 .DS_Store
 Thumbs.db
@@ -8,6 +11,7 @@ Thumbs.db
 # Rust / Tauri
 src-tauri/target/
 src-tauri/gen/schemas/
+src-tauri/gen/android/.kotlin/
 
 # Локальные настройки редактора
 .vscode/*

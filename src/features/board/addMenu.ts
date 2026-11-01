@@ -18,6 +18,7 @@ const SIMPLE: readonly (readonly [string, TranslationKey, string | undefined])[]
   ['note', 'board.toolbar.addNote', 'addNote'],
   ['title', 'board.toolbar.addTitle', 'addTitle'],
   ['column', 'board.toolbar.addColumn', 'addColumn'],
+  ['frame', 'frames.add', undefined],
   ['checklist', 'board.toolbar.addChecklist', 'addChecklist'],
   ['table', 'board.toolbar.addTable', undefined],
   ['shape', 'board.toolbar.addShape', 'addShape'],

@@ -25,7 +25,11 @@ export interface DocumentStoreOptions {
   readonly autoFlushMs?: number;
   /** Ошибка автосохранения (диск полон, папка исчезла) — чтобы интерфейс мог её показать. */
   readonly onAutoFlushError?: (error: unknown) => void;
+  readonly onSaveState?: (docId: string, state: SaveState) => void;
+  readonly onCorruptFiles?: (files: readonly string[]) => void;
 }
+
+export type SaveState = 'saved' | 'pending' | 'saving' | 'error';
 
 export interface RefreshReport {
   /** Устройства, чьи файлы были прочитаны. */
@@ -132,7 +136,16 @@ export async function openDocument(
   const doc = new Y.Doc();
   const seen: SeenFiles = new Map();
   const initial = await readDevices(fs, doc, docId, await listDevices(fs), deviceId, seen);
-  const writer = createOwnWriter(fs, doc, deviceId, docId, threshold, initial.ownLogBytes);
+  if (initial.corruptFiles.length > 0) options.onCorruptFiles?.(initial.corruptFiles);
+  const writer = createOwnWriter(
+    fs,
+    doc,
+    deviceId,
+    docId,
+    threshold,
+    initial.ownLogBytes,
+    (state) => options.onSaveState?.(docId, state),
+  );
   const stopAutoFlush = startAutoFlush(doc, writer.flush, options);
 
   // Свой журнал с испорченным хвостом нельзя дописывать: новые кадры встали бы после мусора.
@@ -178,6 +191,31 @@ function startAutoFlush(
 }
 
 /** Запись правок своего устройства: копит обновления, пишет их кадрами, сжимает журнал. */
+function recoverableQueue(
+  reportState: (state: SaveState) => void,
+  pending: readonly Uint8Array[],
+  failed: (value: boolean) => void,
+) {
+  let queue: Promise<void> = Promise.resolve();
+  return (task: () => Promise<void>): Promise<void> => {
+    const run = queue.then(async () => {
+      reportState('saving');
+      try {
+        await task();
+        failed(false);
+        reportState(pending.length === 0 ? 'saved' : 'pending');
+      } catch (error: unknown) {
+        failed(true);
+        reportState('error');
+        throw error;
+      }
+    });
+    // Вызывающий получает ошибку, но следующая попытка не наследует отклонённую очередь.
+    queue = run.catch(() => undefined);
+    return run;
+  };
+}
+
 function createOwnWriter(
   fs: FileSystem,
   doc: Y.Doc,
@@ -185,24 +223,25 @@ function createOwnWriter(
   docId: string,
   threshold: number,
   initialLogBytes: number,
+  reportState: (state: SaveState) => void,
 ) {
-  let pending: Uint8Array[] = [];
+  const pending: Uint8Array[] = [];
   let logBytes = initialLogBytes;
+  let needsSnapshot = false;
+  let failed = false;
   // Записи на диск идут строго по очереди, даже если flush вызван несколько раз подряд.
-  let queue: Promise<void> = Promise.resolve();
+  const enqueue = recoverableQueue(reportState, pending, (value) => {
+    failed = value;
+    // Дописывание могло оборваться посреди кадра: повторяем полным атомарным снимком.
+    if (value) needsSnapshot = true;
+  });
 
-  const onUpdate = (update: Uint8Array, origin: unknown): void => {
-    if (origin !== FROM_DISK) pending.push(update);
-  };
-  doc.on('update', onUpdate);
-
-  const enqueue = (task: () => Promise<void>): Promise<void> => {
-    queue = queue.then(task);
-    return queue;
-  };
+  const detach = collectLocalUpdates(doc, pending, () => {
+    reportState(failed ? 'error' : 'pending');
+  });
 
   const writeSnapshot = async (): Promise<void> => {
-    pending = [];
+    const count = pending.length;
     // Сначала снимок, потом пустой журнал: при сбое между ними правки есть в обоих (Yjs не задвоит).
     await fs.writeFileAtomic(
       snapshotPath(deviceId, docId),
@@ -210,13 +249,17 @@ function createOwnWriter(
     );
     await fs.writeFileAtomic(logPath(deviceId, docId), new Uint8Array());
     logBytes = 0;
+    pending.splice(0, count);
+    needsSnapshot = false;
   };
 
   const appendPending = async (): Promise<void> => {
+    if (needsSnapshot) return writeSnapshot();
     if (pending.length === 0) return;
+    const count = pending.length;
     const frame = encodeFrame(Y.mergeUpdates(pending));
-    pending = [];
     await fs.appendFile(logPath(deviceId, docId), frame);
+    pending.splice(0, count);
     logBytes += frame.length;
     if (logBytes > threshold) await writeSnapshot();
   };
@@ -224,8 +267,18 @@ function createOwnWriter(
   return {
     flush: () => enqueue(appendPending),
     compact: () => enqueue(writeSnapshot),
-    close: () => {
-      doc.off('update', onUpdate);
-    },
+    close: detach,
+  };
+}
+
+function collectLocalUpdates(doc: Y.Doc, pending: Uint8Array[], changed: () => void): () => void {
+  const onUpdate = (update: Uint8Array, origin: unknown): void => {
+    if (origin === FROM_DISK) return;
+    pending.push(update);
+    changed();
+  };
+  doc.on('update', onUpdate);
+  return () => {
+    doc.off('update', onUpdate);
   };
 }

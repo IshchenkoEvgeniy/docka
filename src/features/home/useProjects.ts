@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { listProjects, readProjectEntry, sortProjects, type ProjectEntry } from '../../data';
 import { t } from '../../i18n';
 import { projectLocation, type AppServices } from '../workspace';
@@ -45,13 +45,17 @@ async function loadProjects(
 export function useProjects(services: AppServices, paths: readonly string[]): ProjectsState {
   const [entries, setEntries] = useState<readonly ProjectEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const latest = useRef(0);
   const reload = useCallback(() => {
+    const request = ++latest.current;
     loadProjects(services, paths).then(
       (list) => {
+        if (request !== latest.current) return;
         setEntries(list);
         setError(null);
       },
       (failure: unknown) => {
+        if (request !== latest.current) return;
         setError(String(failure));
       },
     );
@@ -67,6 +71,7 @@ export function useProjects(services: AppServices, paths: readonly string[]): Pr
     const stopWatching = services.projectsWatcher?.watch('', later);
     window.addEventListener('focus', reload);
     return () => {
+      latest.current += 1;
       clearTimeout(timer);
       stopWatching?.();
       window.removeEventListener('focus', reload);

@@ -189,6 +189,9 @@
 }
 
 .trashTitle {
+  min-height: var(--touch-target);
+  padding: var(--space-2) 0;
+  cursor: pointer;
   margin: 0 0 var(--space-3);
   font-size: var(--font-size-lg);
 }

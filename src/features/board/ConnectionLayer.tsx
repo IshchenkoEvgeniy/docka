@@ -13,6 +13,7 @@ import {
 import type { BoardElement, Connection, Endpoint } from '../../core';
 import { cx, inkColor } from '../../ui';
 import type { BoardModel } from './model';
+import { regionConnectionMoves } from './regionMoves';
 import styles from './Connections.module.css';
 
 const HEAD_SIZE = 12;
@@ -123,9 +124,25 @@ export function ConnectionLayer({ model }: { readonly model: BoardModel }) {
   const resize = useInteraction(model.interaction, (state) => state.resize);
   const selection = useInteraction(model.interaction, (state) => state.connectionSelection);
   const preview: Preview = { drag, resize };
+  const moving =
+    drag === null
+      ? []
+      : [...drag.ids].flatMap((id) => {
+          const element = elements.get(id);
+          return element === undefined
+            ? []
+            : [{ id, x: element.x + drag.dx, y: element.y + drag.dy }];
+        });
+  const endpoints = new Map(
+    regionConnectionMoves(elements, connections.values(), moving).map((item) => [
+      item.connectionId,
+      item,
+    ]),
+  );
   const shapes = [...connections.values()].flatMap((connection) => {
-    const from = endOf(elements, connection.from, preview);
-    const to = endOf(elements, connection.to, preview);
+    const shifted = endpoints.get(connection.id);
+    const from = endOf(elements, shifted?.from ?? connection.from, preview);
+    const to = endOf(elements, shifted?.to ?? connection.to, preview);
     if (from === null || to === null) return [];
     return [{ connection, geometry: connectorGeometry(from, to, connection.lineStyle) }];
   });

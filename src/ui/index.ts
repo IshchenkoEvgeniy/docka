@@ -7,7 +7,7 @@ export { Button } from './Button';
 export { Dialog } from './Dialog';
 export { Menu } from './Menu';
 export type { MenuAction, MenuEntry } from './Menu';
-export { isEditableTarget } from './dom';
+export { isEditableTarget, isModalOpen } from './dom';
 export { Segmented } from './Segmented';
 export { TextField } from './TextField';
 export { applyTheme } from './theme';

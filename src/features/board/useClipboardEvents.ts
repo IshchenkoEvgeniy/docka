@@ -1,7 +1,14 @@
 import { useEffect } from 'react';
 import type { CameraControls, Point } from '../../canvas';
-import { isEditableTarget } from '../../ui';
-import { copySelection, createNote, deleteSelection, pastePayload } from './boardActions';
+import { isEditableTarget, isModalOpen } from '../../ui';
+import {
+  copySelection,
+  createNote,
+  deleteSelection,
+  pastePayload,
+  stopEditing,
+} from './boardActions';
+import { clipboardFiles } from './clipboardFiles';
 import {
   CLIPBOARD_MIME,
   PLACE_MIME,
@@ -39,13 +46,13 @@ async function dropFiles(model: BoardModel, files: readonly File[], at: Point): 
 
 function attachClipboard(model: BoardModel, controls: CameraControls, pointer: () => Point | null) {
   const onCopy = (event: ClipboardEvent, cut: boolean): void => {
-    if (isEditableTarget(event.target) || event.clipboardData === null) return;
+    if (isEditableTarget(event.target) || isModalOpen() || event.clipboardData === null) return;
     const content = copySelection(model);
     if (content === null) return;
     event.preventDefault();
     event.clipboardData.setData('text/plain', content.plainText);
     event.clipboardData.setData(CLIPBOARD_MIME, serializePayload(content.payload));
-    appClipboard.setState({ content });
+    appClipboard.setState({ content, copiedAt: Date.now() });
     if (cut) deleteSelection(model);
   };
   const copy = (event: ClipboardEvent): void => {
@@ -55,15 +62,19 @@ function attachClipboard(model: BoardModel, controls: CameraControls, pointer: (
     onCopy(event, true);
   };
   const paste = (event: ClipboardEvent): void => {
-    if (isEditableTarget(event.target) || event.clipboardData === null) return;
-    event.preventDefault();
+    if (isModalOpen() || event.clipboardData === null) return;
     const data = event.clipboardData;
-    const files = [...data.files];
+    const files = clipboardFiles(data);
     const at = worldPoint(controls, pointer());
     if (files.length > 0) {
+      event.preventDefault();
+      event.stopPropagation();
+      stopEditing(model);
       void dropFiles(model, files, at);
       return;
     }
+    if (isEditableTarget(event.target)) return;
+    event.preventDefault();
     const resolved = resolvePaste(
       data.getData(CLIPBOARD_MIME),
       data.getData('text/plain'),
@@ -73,11 +84,11 @@ function attachClipboard(model: BoardModel, controls: CameraControls, pointer: (
   };
   document.addEventListener('copy', copy);
   document.addEventListener('cut', cut);
-  document.addEventListener('paste', paste);
+  document.addEventListener('paste', paste, true);
   return () => {
     document.removeEventListener('copy', copy);
     document.removeEventListener('cut', cut);
-    document.removeEventListener('paste', paste);
+    document.removeEventListener('paste', paste, true);
   };
 }
 

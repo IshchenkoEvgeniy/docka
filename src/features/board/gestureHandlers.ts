@@ -12,7 +12,7 @@ import {
   type Size,
 } from '../../canvas';
 import type { BoardElement, ElementId } from '../../core';
-import { definitionFor } from '../../elements';
+import { definitionFor, encloses } from '../../elements';
 import { activateElement, stopEditing } from './boardActions';
 import type { GestureContext, GestureView, HandlersPart } from './gestureContext';
 import type { BoardModel } from './model';
@@ -157,7 +157,11 @@ function marqueeHandlers({
       base ??= additive ? selection() : EMPTY_SELECTION;
       // Карточки в колонке хранят не координаты, а порядок: рамкой выделяется только верхний уровень.
       const items = [...model.elements.getSnapshot().values()]
-        .filter((element) => element.parentId === null)
+        .filter(
+          (element) =>
+            element.parentId === null &&
+            (!definitionFor(element.type).region || encloses(rect, element)),
+        )
         .map((element) => ({ id: element.id, rect: element }));
       interaction.setState({ marquee: rect, selection: selectionInRect(items, rect, base) });
     },

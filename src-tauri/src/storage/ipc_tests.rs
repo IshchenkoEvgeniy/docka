@@ -44,7 +44,13 @@ fn request(cmd: &str, body: InvokeBody, headers: &[(&'static str, String)]) -> I
         callback: CallbackFn(0),
         error: CallbackFn(1),
         // Локальный адрес приложения; с внешних адресов Tauri команды не пропускает.
-        url: "tauri://localhost".parse().expect("url"),
+        url: if cfg!(windows) {
+            "http://tauri.localhost"
+        } else {
+            "tauri://localhost"
+        }
+        .parse()
+        .expect("url"),
         body,
         headers: header_map,
         invoke_key: INVOKE_KEY.to_string(),

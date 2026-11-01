@@ -10,6 +10,24 @@
   outline-offset: calc(2px / var(--canvas-zoom, 1));
 }
 
+.passthrough {
+  pointer-events: none;
+}
+
+.passthrough.editing,
+.passthrough.dragging {
+  z-index: auto;
+}
+
+.passthrough.dragging {
+  opacity: 1;
+}
+
+.passthrough > .handle,
+.passthrough > .connector {
+  pointer-events: auto;
+}
+
 .editing {
   z-index: 2;
 }

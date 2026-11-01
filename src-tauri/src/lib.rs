@@ -21,6 +21,7 @@ pub fn run() {
             storage::commands::storage_append,
             storage::commands::storage_list,
             storage::commands::storage_remove,
+            storage::commands::storage_remove_directory,
             storage::commands::storage_watch,
             storage::commands::storage_unwatch,
             system::net::net_fetch,

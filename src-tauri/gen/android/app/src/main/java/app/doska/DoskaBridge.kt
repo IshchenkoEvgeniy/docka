@@ -7,9 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
-import android.provider.OpenableColumns
 import android.provider.Settings
-import android.util.Base64
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import androidx.core.content.FileProvider
@@ -25,6 +23,19 @@ import org.json.JSONObject
 class DoskaBridge(private val activity: Activity) {
   private val shared = mutableListOf<JSONObject>()
   private var webView: WebView? = null
+  private val exports = ExportDocument(activity) { webView }
+  private val clipboard = ClipboardReader(activity) { webView }
+
+  @JavascriptInterface
+  fun readClipboard(requestId: String) { clipboard.read(requestId) }
+
+  @JavascriptInterface
+  fun saveExport(name: String, mime: String, base64: String, requestId: String) {
+    exports.save(name, mime, base64, requestId)
+  }
+
+  fun finishExport(requestCode: Int, resultCode: Int, data: Intent?): Boolean =
+    exports.finish(requestCode, resultCode, data)
 
   fun attach(view: WebView) {
     webView = view
@@ -146,29 +157,9 @@ class DoskaBridge(private val activity: Activity) {
   }
 
   private fun readFile(uri: Uri): JSONObject? =
-    try {
-      val resolver = activity.contentResolver
-      val mime = resolver.getType(uri) ?: "application/octet-stream"
-      val bytes = resolver.openInputStream(uri)?.use { it.readBytes() }
-      if (bytes == null || bytes.size > MAX_BYTES) {
-        null
-      } else {
-        var name = "file"
-        resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
-          if (cursor.moveToFirst()) name = cursor.getString(0) ?: name
-        }
-        JSONObject()
-          .put("kind", "file")
-          .put("name", name)
-          .put("mime", mime)
-          .put("base64", Base64.encodeToString(bytes, Base64.NO_WRAP))
-      }
-    } catch (error: Exception) {
-      null
-    }
+    try { readSharedFile(activity, uri) } catch (error: Exception) { null }
 
   companion object {
-    private const val MAX_BYTES = 30 * 1024 * 1024
     private const val REQUEST_STORAGE = 4201
   }
 }

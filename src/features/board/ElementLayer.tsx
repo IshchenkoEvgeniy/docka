@@ -10,8 +10,8 @@ import {
   type CameraControls,
   type InteractionStore,
 } from '../../canvas';
-import { compareStacking, tagIdsOf, type BoardElement, type ZoomedOutView } from '../../core';
-import { definitionFor } from '../../elements';
+import { tagIdsOf, type BoardElement, type ZoomedOutView } from '../../core';
+import { compareElementLayers, definitionFor } from '../../elements';
 import { cardColorToken } from '../../ui';
 import { TagChips } from '../tags';
 import type { BoardModel } from './model';
@@ -61,7 +61,7 @@ const BoardItem = memo(function BoardItem({
   readonly element: BoardElement;
   readonly store: InteractionStore;
 }) {
-  const { Render, resize } = definitionFor(element.type);
+  const { Render, resize, region } = definitionFor(element.type);
   const editing = useInteraction(store, (state) => state.editingId === element.id);
   return (
     <ElementFrame
@@ -70,6 +70,7 @@ const BoardItem = memo(function BoardItem({
       locked={element.locked}
       resize={resize}
       store={store}
+      passthrough={region}
     >
       <Render element={element} editing={editing} />
       <ElementTags element={element} />
@@ -88,17 +89,21 @@ export function ElementLayer({
   readonly zoomedOutView: ZoomedOutView;
 }) {
   const elements = useBoardElements(model);
-  const sorted = useMemo(() => topLevel(elements).sort(compareStacking), [elements]);
+  const sorted = useMemo(() => topLevel(elements).sort(compareElementLayers), [elements]);
   const renderRect = useRenderRect(controls);
   const detail = useDetailLevel(controls, simplifiesZoomedOut(zoomedOutView, elements.size));
   const dragged = useInteraction(model.interaction, (state) => state.drag?.ids ?? null);
+  const editingId = useInteraction(model.interaction, (state) => state.editingId);
+  const editingRoot = editingId === null ? null : (elements.get(editingId)?.parentId ?? editingId);
   const visible = useMemo(() => {
-    if (renderRect === null || detail === 'compact') return [];
     // Перетаскиваемое остаётся смонтированным, даже если ушло за край области отрисовки.
     return sorted.filter(
-      (element) => intersects(renderRect, element) || dragged?.has(element.id) === true,
+      (element) =>
+        element.id === editingRoot ||
+        dragged?.has(element.id) === true ||
+        (renderRect !== null && detail !== 'compact' && intersects(renderRect, element)),
     );
-  }, [sorted, renderRect, detail, dragged]);
+  }, [sorted, renderRect, detail, dragged, editingRoot]);
   const visibleIds = useMemo(() => visible.map((element) => element.id), [visible]);
   const mounted = useProgressiveMount(visibleIds);
   return visible
@@ -121,7 +126,7 @@ export function BoardOverview({
   const items = useMemo(
     () =>
       topLevel(elements)
-        .sort(compareStacking)
+        .sort(compareElementLayers)
         .map((element) => ({ rect: element, fill: cardColorToken(element.color) })),
     [elements],
   );

@@ -79,6 +79,8 @@ export interface ElementDefinition<D extends ElementData> {
   readonly activate: ElementActivation;
   /** Контейнер: в него можно положить другие элементы (колонка). */
   readonly container?: boolean;
+  /** Зона холста: двигается с полностью охваченными элементами, пропускает нажатия внутри. */
+  readonly region?: boolean;
   /** Новый пустой элемент сразу открывается на правку (по умолчанию — если activate = 'edit'). */
   readonly editOnCreate?: boolean;
   readonly createData: () => D;
@@ -116,6 +118,7 @@ export interface RegisteredElement {
   readonly richText: boolean;
   readonly activate: ElementActivation;
   readonly container: boolean;
+  readonly region: boolean;
   readonly editOnCreate: boolean;
   readonly createData: () => ElementData;
   /** Содержимое элемента (memo: перерисовывается только при изменении самого элемента). */

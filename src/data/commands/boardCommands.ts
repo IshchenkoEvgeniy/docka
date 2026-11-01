@@ -20,6 +20,7 @@ import { TEXT_FIELD, fillFragment } from '../richText';
 import { createRecord } from '../yjsRecords';
 import { commit, prepareRecordPatch } from './recordPatch';
 import { executeBoardTrashCommand } from './trashCommands';
+import { moveElements } from './moveElements';
 
 type Command<K extends BoardCommand['kind']> = Extract<BoardCommand, { kind: K }>;
 
@@ -215,11 +216,7 @@ export function executeBoardCommand(
         command.elementIds.map((id) => ({ id, changes: command.changes })),
       );
     case 'moveElements':
-      return patchElements(
-        doc,
-        now,
-        command.moves.map(({ elementId, x, y }) => ({ id: elementId, changes: { x, y } })),
-      );
+      return moveElements(doc, command, now);
     case 'placeElements':
       return placeElements(doc, now, command);
     case 'resizeElement':

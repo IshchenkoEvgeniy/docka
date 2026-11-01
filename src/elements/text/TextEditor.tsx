@@ -5,7 +5,6 @@ import StarterKit from '@tiptap/starter-kit';
 import { useRef, useState } from 'react';
 import { ySyncPlugin, ySyncPluginKey } from 'y-prosemirror';
 import type * as Y from 'yjs';
-import { t } from '../../i18n';
 import { useEntityLinks, type EntityLinks } from '../entityLinks';
 import type { ElementRuntime } from '../runtime';
 import { MentionPopupView } from './MentionPopupView';
@@ -48,22 +47,6 @@ function boardBindings(fragment: Y.XmlFragment, runtime: TextEditorHost) {
 interface TextEditorProps {
   readonly fragment: Y.XmlFragment;
   readonly runtime: TextEditorHost;
-}
-
-/** Телефон: правка на весь экран с кнопкой «Готово»; клавиатура не закрывает текст. */
-export function FullscreenEditor({ fragment, runtime }: TextEditorProps) {
-  return (
-    <div className={styles.fullscreen} role="dialog" aria-modal="true">
-      <div className={styles.fullscreenBar}>
-        <button type="button" className={styles.done} onClick={runtime.stopEditing}>
-          {t('elements.text.done')}
-        </button>
-      </div>
-      <div className={styles.fullscreenBody}>
-        <TextEditor fragment={fragment} runtime={runtime} />
-      </div>
-    </div>
-  );
 }
 
 /** Редактор форматированного текста поверх Yjs (TipTap + y-prosemirror). */

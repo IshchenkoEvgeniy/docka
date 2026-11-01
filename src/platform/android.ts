@@ -1,12 +1,16 @@
 /**
  * Мост к Android (MainActivity.kt → window.DoskaAndroid). На компьютере и в браузере его нет.
  */
+import type { FileSaver } from '../core';
+import { toBase64 } from './tauriStorage';
+
 interface DoskaAndroid {
   hasAllFilesAccess(): boolean;
   requestAllFilesAccess(): void;
   externalStorageRoot(): string;
   takeShared(): string;
   openFile(path: string, mime: string): boolean;
+  saveExport(name: string, mime: string, base64: string, requestId: string): void;
 }
 
 /** Получено через «Поделиться → Доска». Файл — в base64 (как его отдаёт Android). */
@@ -28,6 +32,37 @@ function bridge(): DoskaAndroid | null {
 export function androidFileOpener(): ((path: string, mime: string) => boolean) | null {
   const android = bridge();
   return android === null ? null : (path, mime) => android.openFile(path, mime);
+}
+
+/** Ответ ACTION_CREATE_DOCUMENT: отмена, успешная запись или ошибка системного провайдера. */
+export function androidFileSaver(): FileSaver | null {
+  const android = bridge();
+  if (android === null) return null;
+  return (file) =>
+    new Promise<boolean>((resolve, reject) => {
+      const requestId = crypto.randomUUID();
+      const listener = (event: Event): void => {
+        if (!(event instanceof CustomEvent)) return;
+        const detail: unknown = event.detail;
+        if (
+          typeof detail !== 'object' ||
+          detail === null ||
+          Reflect.get(detail, 'id') !== requestId
+        )
+          return;
+        window.removeEventListener('doska-export-result', listener);
+        const error: unknown = Reflect.get(detail, 'error');
+        if (typeof error === 'string') reject(new Error(error));
+        else resolve(Reflect.get(detail, 'saved') === true);
+      };
+      window.addEventListener('doska-export-result', listener);
+      try {
+        android.saveExport(file.name, file.mime, toBase64(file.bytes), requestId);
+      } catch (error: unknown) {
+        window.removeEventListener('doska-export-result', listener);
+        reject(error instanceof Error ? error : new Error(String(error)));
+      }
+    });
 }
 
 export interface AndroidStorage {

@@ -4,3 +4,4 @@ export { projectLocation } from './location';
 export { createWorkspace } from './workspace';
 export type { Route, Workspace, WorkspaceState } from './workspace';
 export { useHistorySync, useSharedInbox } from './hooks';
+export { beginProjectSession, waitForProjectClosed } from './projectSessions';

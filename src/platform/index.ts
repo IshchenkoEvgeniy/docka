@@ -16,3 +16,5 @@ export { androidFileOpener, androidStorage, onShared, takeSharedItems } from './
 export type { AndroidStorage, SharedItem } from './android';
 export { pickFolder } from './dialogs';
 export { createTauriNetwork, openFileInSystem, openUrlInSystem } from './system';
+export { saveFileInSystem, downloadFile } from './saveFile';
+export { readSystemClipboard } from './clipboard';

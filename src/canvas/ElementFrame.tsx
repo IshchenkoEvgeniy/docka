@@ -28,13 +28,22 @@ interface ElementFrameProps {
   readonly resize: ResizeMode;
   readonly store: InteractionStore;
   readonly children: ReactNode;
+  readonly passthrough?: boolean;
 }
 
 /**
  * Рамка элемента на холсте: позиция, выделение, ручки размера, предпросмотр перетаскивания.
  * Что внутри — решает тип элемента (children).
  */
-export function ElementFrame({ id, rect, locked, resize, store, children }: ElementFrameProps) {
+export function ElementFrame({
+  id,
+  rect,
+  locked,
+  resize,
+  store,
+  children,
+  passthrough = false,
+}: ElementFrameProps) {
   const selected = useInteraction(store, (state) => state.selection.has(id));
   const alone = useInteraction(store, (state) => state.selection.size === 1);
   const drag = useInteraction(store, (state) =>
@@ -58,6 +67,7 @@ export function ElementFrame({ id, rect, locked, resize, store, children }: Elem
       {...attributes}
       className={cx(
         styles.frame,
+        passthrough && styles.passthrough,
         selected && styles.selected,
         editing && styles.editing,
         locked && styles.locked,
@@ -66,7 +76,12 @@ export function ElementFrame({ id, rect, locked, resize, store, children }: Elem
         dimmed && !selected && styles.dimmed,
       )}
       style={{
-        transform: `translate(${String(shown.x)}px, ${String(shown.y)}px)`,
+        // Прозрачная область не создаёт stacking context: её подпись может лежать над карточками.
+        ...(passthrough
+          ? { left: shown.x, top: shown.y }
+          : {
+              transform: `translate(${String(shown.x)}px, ${String(shown.y)}px)`,
+            }),
         width: shown.width,
         ...(autoHeight ? { minHeight: shown.height } : { height: shown.height }),
       }}

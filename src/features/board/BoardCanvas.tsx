@@ -23,7 +23,7 @@ import { BoardOverview, ElementLayer } from './ElementLayer';
 import { ElementPalette } from './ElementPalette';
 import { createGestureHandlers } from './gestureHandlers';
 import type { BoardHost } from './host';
-import { FullscreenEditing } from './FullscreenEditing';
+import { useInlineEditing } from './useInlineEditing';
 import { ElementViewer } from './ElementViewer';
 import { HighlightSync } from './HighlightSync';
 import { FindBar } from './FindBar';
@@ -161,6 +161,7 @@ function BoardSurface({
   useSharedInbox(model, controls);
   usePlacements(model, controls);
   useFocusFeed(model, controls);
+  useInlineEditing(model, controls);
 
   return (
     <div
@@ -187,7 +188,6 @@ function BoardSurface({
         </div>
         <HighlightSync model={model} />
         <ElementViewer model={model} />
-        <FullscreenEditing model={model} runtime={runtime} />
         <BoardDialogs model={model} background={background} />
       </ElementRuntimeContext.Provider>
       <ElementPalette

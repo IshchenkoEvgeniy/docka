@@ -19,7 +19,10 @@ function ImageView({ data }: ElementViewProps<ImageData>) {
   if (asset.status === 'ready')
     return <img className={styles.image} src={asset.url} alt={data.name ?? ''} draggable={false} />;
   return (
-    <div className={styles.placeholder}>
+    <div
+      className={styles.placeholder}
+      data-asset-loading={asset.status === 'loading' ? '' : undefined}
+    >
       {asset.status === 'missing' ? t('elements.image.syncing') : ''}
     </div>
   );

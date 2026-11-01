@@ -9,3 +9,5 @@ export { createMemoryFileSystem } from './memoryFileSystem';
 export type { MemoryFileSystem } from './memoryFileSystem';
 export { scopedFileSystem, scopedFolderWatcher } from './scopedFileSystem';
 export type { FetchedResource, Network } from './network';
+export type { ExportFile, FileSaver } from './fileSaver';
+export type { ClipboardFile, ClipboardReader, SystemClipboard } from './clipboard';

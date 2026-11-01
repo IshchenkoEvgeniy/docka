@@ -16,6 +16,8 @@ export interface FileSystem {
   readonly listDir: (path: string) => Promise<string[]>;
   /** Удаляет файл (не папку); отсутствующий файл — не ошибка. */
   readonly removeFile: (path: string) => Promise<void>;
+  /** Удаляет подпапку со всем содержимым. Пустой путь (корень) и выход за корень запрещены. */
+  readonly removeDirectory: (path: string) => Promise<void>;
   /** Самое позднее время изменения файлов внутри папки (мс), null — файлов нет. */
   readonly latestChange: (path: string) => Promise<number | null>;
 }

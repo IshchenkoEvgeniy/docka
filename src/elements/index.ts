@@ -19,9 +19,16 @@ export type {
   RegisteredElement,
 } from './types';
 export { ElementRuntimeContext } from './runtime';
-export type { BoardDirectory, ElementRuntime } from './runtime';
-export { FullscreenEditor, RichTextView, TEXT_EDIT_ORIGIN, TextEditor } from './text';
+export type { BoardDirectory, ElementRuntime, LinkedBoardPreviewProps } from './runtime';
+export { RichTextView, TEXT_EDIT_ORIGIN, TextEditor } from './text';
 export type { TextEditorHost } from './text';
 export { useAsset, useAssetIn } from './image';
 export { compareInColumn } from './column';
+export {
+  compareElementLayers,
+  elementVisualRect,
+  encloses,
+  endpointInRegion,
+  withRegionContents,
+} from './regions';
 export * from './entity';

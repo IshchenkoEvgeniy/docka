@@ -136,6 +136,10 @@ export function placePayload(payload: ClipboardPayload, center: Point): NewEleme
  * Последнее скопированное в приложении: вставка из меню (у меню нет события paste)
  * и запасной путь, если система не сохранила свой формат.
  */
-export const appClipboard = createStore<{ readonly content: ClipboardContent | null }>(() => ({
+export const appClipboard = createStore<{
+  readonly content: ClipboardContent | null;
+  readonly copiedAt: number;
+}>(() => ({
   content: null,
+  copiedAt: 0,
 }));

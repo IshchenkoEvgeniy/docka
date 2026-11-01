@@ -1,4 +1,12 @@
-import type { Clock, FileSystem, FolderWatcher, IdGenerator, Network } from '../../core';
+import type {
+  ClipboardReader,
+  Clock,
+  FileSaver,
+  FileSystem,
+  FolderWatcher,
+  IdGenerator,
+  Network,
+} from '../../core';
 
 /** Получено через «Поделиться → Доска» (Android); файл — в base64. */
 export type SharedItem =
@@ -32,6 +40,8 @@ export interface OpenedFolder {
  * Собирает app (Tauri или память в браузере) — сценарии не знают, откуда это.
  */
 export interface AppServices {
+  readonly readClipboard: ClipboardReader;
+  readonly saveFile: FileSaver;
   /** Папка настроек устройства (вне синхронизации). */
   readonly settingsFs: FileSystem;
   /** Папка проектов: подпапки «Название.doska». */

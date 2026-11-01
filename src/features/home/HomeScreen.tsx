@@ -7,6 +7,8 @@ import { FolderBar } from './FolderBar';
 import { NewProjectDialog } from './NewProjectDialog';
 import { ProjectTile } from './ProjectTile';
 import { useProjects } from './useProjects';
+import type { ProjectEntry } from '../../data';
+import { DeleteProjectDialog } from './DeleteProjectDialog';
 import styles from './Home.module.css';
 
 function Favorites() {
@@ -39,7 +41,8 @@ export function HomeScreen() {
   const theme = useWorkspaceState((state) => state.settings.theme);
   const inboxCount = useWorkspaceState((state) => state.inbox.length);
   const projectPaths = useWorkspaceState((state) => state.settings.projectPaths);
-  const { entries, error } = useProjects(services, projectPaths);
+  const { entries, error, reload } = useProjects(services, projectPaths);
+  const [deleting, setDeleting] = useState<Extract<ProjectEntry, { status: 'ok' }> | null>(null);
   const [creating, setCreating] = useState(false);
   const themeOptions = THEMES.map((value) => ({ value, label: t(`settings.theme.${value}`) }));
   return (
@@ -90,7 +93,7 @@ export function HomeScreen() {
           )}
           <div className={styles.grid}>
             {entries?.map((entry) => (
-              <ProjectTile key={entry.folder} entry={entry} />
+              <ProjectTile key={entry.folder} entry={entry} onDelete={setDeleting} />
             ))}
           </div>
         </section>
@@ -99,6 +102,18 @@ export function HomeScreen() {
         <NewProjectDialog
           onClose={() => {
             setCreating(false);
+          }}
+        />
+      )}
+      {deleting !== null && (
+        <DeleteProjectDialog
+          entry={deleting}
+          onClose={() => {
+            setDeleting(null);
+          }}
+          onDeleted={() => {
+            setDeleting(null);
+            reload();
           }}
         />
       )}

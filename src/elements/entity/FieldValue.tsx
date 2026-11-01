@@ -24,7 +24,13 @@ export function FieldImage({
 }) {
   const links = useEntityLinks();
   const state = useAssetIn(links?.assets ?? null, asset);
-  if (state.status !== 'ready') return <div className={className ?? styles.imageEmpty} />;
+  if (state.status !== 'ready')
+    return (
+      <div
+        className={className ?? styles.imageEmpty}
+        data-asset-loading={state.status === 'loading' ? '' : undefined}
+      />
+    );
   return (
     <img className={className ?? styles.image} src={state.url} alt={DECORATIVE} draggable={false} />
   );

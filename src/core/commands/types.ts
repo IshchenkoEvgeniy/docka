@@ -108,10 +108,18 @@ export type BoardCommand =
     }
   | {
       readonly kind: 'moveElements';
+      /** Свободные концы стрелок: вместе с элементами одной транзакцией. */
+      readonly connections?: readonly {
+        readonly connectionId: ConnectionId;
+        readonly from: Endpoint;
+        readonly to: Endpoint;
+      }[];
       readonly moves: readonly {
         readonly elementId: ElementId;
         readonly x: number;
         readonly y: number;
+        /** При совместном переносе со стрелками можно также вынуть карточку из колонки. */
+        readonly parentId?: ElementId | null;
       }[];
     }
   /** Перенос с возможной сменой контейнера: положить в колонку или вынуть из неё. */

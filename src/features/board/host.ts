@@ -1,6 +1,7 @@
-import type { BoardBackground, BoardId, Network } from '../../core';
+import type { ComponentType } from 'react';
+import type { BoardBackground, BoardId, ClipboardReader, FileSaver, Network } from '../../core';
 import type { AssetStore, UndoHistory } from '../../data';
-import type { BoardDirectory } from '../../elements';
+import type { BoardDirectory, LinkedBoardPreviewProps } from '../../elements';
 import type { ProjectTags } from '../tags';
 import type { SharedItem } from '../workspace';
 import type { ClipboardPayload } from './clipboard';
@@ -26,6 +27,9 @@ export interface BoardEntities {
  * Без проекта (тесты, замер) всё это может отсутствовать.
  */
 export interface BoardHost {
+  readonly readClipboard: ClipboardReader | null;
+  readonly BoardPreview?: ComponentType<LinkedBoardPreviewProps>;
+  readonly saveFile: FileSaver | null;
   readonly assets: AssetStore | null;
   readonly boards: BoardDirectory | null;
   readonly openBoard: (boardId: BoardId) => void;
@@ -62,6 +66,8 @@ export interface BoardHost {
 }
 
 export const NO_HOST: BoardHost = {
+  readClipboard: null,
+  saveFile: null,
   assets: null,
   boards: null,
   openBoard: () => undefined,

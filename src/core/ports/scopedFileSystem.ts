@@ -10,6 +10,10 @@ export function scopedFileSystem(fs: FileSystem, folder: string): FileSystem {
     appendFile: (path, data) => fs.appendFile(inside(path), data),
     listDir: (path) => fs.listDir(inside(path)),
     removeFile: (path) => fs.removeFile(inside(path)),
+    removeDirectory: (path) =>
+      path === ''
+        ? Promise.reject(new Error('INVALID_PATH: нельзя удалить корень'))
+        : fs.removeDirectory(inside(path)),
     latestChange: (path) => fs.latestChange(inside(path)),
   };
 }

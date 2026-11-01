@@ -7,7 +7,18 @@ import globals from 'globals';
 const userFacingAttributes = '/^(title|placeholder|alt|aria-label|aria-description)$/';
 
 export default tseslint.config(
-  { ignores: ['dist', 'coverage', 'node_modules', 'src-tauri'] },
+  {
+    ignores: [
+      'dist',
+      'coverage',
+      'node_modules',
+      'src-tauri',
+      'release',
+      'test-results',
+      'playwright-report',
+      '.taste-skill',
+    ],
+  },
 
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,

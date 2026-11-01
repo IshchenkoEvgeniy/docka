@@ -11,6 +11,9 @@ import type { AppServices, OpenedFolder } from '../features';
 import {
   androidFileOpener,
   androidStorage,
+  saveFileInSystem,
+  readSystemClipboard,
+  downloadFile,
   createTauriNetwork,
   openFileInSystem,
   openUrlInSystem,
@@ -89,6 +92,8 @@ async function createTauriPlatform(): Promise<Platform> {
         openAppFolder('backups'),
       ]);
       return {
+        saveFile: saveFileInSystem,
+        readClipboard: readSystemClipboard,
         settingsFs: createTauriFileSystem(settings),
         projectsFs: createTauriFileSystem(projects.root),
         projectsFolderLabel: projects.root,
@@ -165,6 +170,8 @@ function createBrowserPlatform(): Platform {
       const projectsFs = createMemoryFileSystem();
       await seedExample(projectsFs, ids);
       return {
+        saveFile: downloadFile,
+        readClipboard: readSystemClipboard,
         settingsFs,
         projectsFs,
         projectsFolderLabel: 'память браузера',

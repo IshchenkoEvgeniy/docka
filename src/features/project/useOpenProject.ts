@@ -9,7 +9,8 @@ import {
   type OpenProject,
   type StoredDocument,
 } from '../../data';
-import { projectLocation, type AppServices } from '../workspace';
+import { beginProjectSession, projectLocation, type AppServices } from '../workspace';
+import type { ProjectHealth, ProjectWarning } from './projectHealth';
 
 /** Правки пишутся на диск через секунду после последней (ТЗ: накопление 1–2 с). */
 const AUTOSAVE_MS = 1000;
@@ -21,9 +22,10 @@ export type Loading<T> =
   | { readonly status: 'error'; readonly error: string }
   | { readonly status: 'ready'; readonly value: T };
 
-function report(what: string) {
+function report(what: string, health?: ProjectHealth, warning?: ProjectWarning) {
   return (error: unknown): void => {
     console.error(what, error);
+    if (warning !== undefined) health?.warn(warning);
   };
 }
 
@@ -32,11 +34,15 @@ function attachProject(
   project: OpenProject,
   services: AppServices,
   watcher: FolderWatcher | null,
-): () => void {
+  health: ProjectHealth,
+): { readonly detach: () => void; readonly backup: Promise<unknown> } {
   const sync: LiveSync = startLiveSync(project.refreshAll, {
     ...(watcher === null ? {} : { watcher }),
     ...(services.deviceKind === 'mobile' ? { pollMs: MOBILE_POLL_MS } : {}),
-    onError: report('Не удалось прочитать правки других устройств'),
+    onError: report('Не удалось прочитать правки других устройств', health, 'sync'),
+    onRefreshed: (reports) => {
+      if (reports.some((report) => report.corruptFiles.length > 0)) health.warn('corrupt');
+    },
   });
   const onFocus = (): void => {
     void sync.refreshNow();
@@ -48,20 +54,23 @@ function attachProject(
   };
   window.addEventListener('focus', onFocus);
   document.addEventListener('visibilitychange', onVisibility);
-  if (services.backupsFs !== null)
-    ensureDailyBackup(project, services.backupsFs, services.clock.now()).catch(
-      report('Резервная копия не создана'),
-    );
-  return () => {
+  const backup =
+    services.backupsFs === null
+      ? Promise.resolve()
+      : ensureDailyBackup(project, services.backupsFs, services.clock.now()).catch(
+          report('Резервная копия не создана', health, 'backup'),
+        );
+  const detach = (): void => {
     window.removeEventListener('focus', onFocus);
     document.removeEventListener('visibilitychange', onVisibility);
     sync.stop();
   };
+  return { detach, backup };
 }
 
 interface ProjectSession {
   readonly project: OpenProject;
-  readonly close: () => void;
+  readonly close: () => Promise<void>;
 }
 
 /** Открывает проект и подписывается на правки; null — открыть не удалось (текст в error). */
@@ -70,6 +79,7 @@ async function startProject(
   deviceId: DeviceId,
   deviceName: string,
   folder: string,
+  health: ProjectHealth,
 ): Promise<ProjectSession | { readonly error: string }> {
   const location = await projectLocation(services, folder);
   const result = await openProject({
@@ -79,18 +89,38 @@ async function startProject(
     ids: services.ids,
     autoFlushMs: AUTOSAVE_MS,
     onAutoFlushError: report('Не удалось сохранить правки'),
+    onSaveState: health.saved,
+    onCorruptFiles: () => {
+      health.warn('corrupt');
+    },
   });
   if (!result.ok) return { error: result.error };
   const project = result.value;
-  const detach = attachProject(project, services, location.watcher);
-  recordDeviceName(location.fs, deviceId, deviceName).catch(report('Имя устройства не записано'));
+  const attached = attachProject(project, services, location.watcher, health);
+  const nameWrite = recordDeviceName(location.fs, deviceId, deviceName).catch(
+    report('Имя устройства не записано'),
+  );
   return {
     project,
-    close: () => {
-      detach();
-      project.close().catch(report('Проект закрылся с ошибкой'));
+    close: async () => {
+      attached.detach();
+      // Копия по очереди открывает доски: она должна закончить до окончательного закрытия.
+      await Promise.all([nameWrite, attached.backup]);
+      await project.close();
     },
   };
+}
+
+function closeSession(session: ProjectSession, finish: (error?: unknown) => void): void {
+  void session
+    .close()
+    .then(() => {
+      finish();
+    })
+    .catch((error: unknown) => {
+      report('Проект закрылся с ошибкой')(error);
+      finish(error);
+    });
 }
 
 /**
@@ -102,26 +132,32 @@ export function useOpenProject(
   deviceId: DeviceId,
   deviceName: string,
   folder: string,
+  health: ProjectHealth,
 ): Loading<OpenProject> {
   const [state, setState] = useState<Loading<OpenProject>>({ status: 'loading' });
   useEffect(() => {
+    const finish = beginProjectSession(services, folder);
     let cancelled = false;
     let cleanup = (): void => undefined;
     setState({ status: 'loading' });
-    startProject(services, deviceId, deviceName, folder)
+    startProject(services, deviceId, deviceName, folder, health)
       .then((session) => {
         if ('error' in session) {
+          finish();
           if (!cancelled) setState({ status: 'error', error: session.error });
           return;
         }
         if (cancelled) {
-          session.close();
+          closeSession(session, finish);
           return;
         }
-        cleanup = session.close;
+        cleanup = () => {
+          closeSession(session, finish);
+        };
         setState({ status: 'ready', value: session.project });
       })
       .catch((error: unknown) => {
+        finish();
         if (!cancelled) setState({ status: 'error', error: String(error) });
       });
     return () => {
@@ -130,7 +166,7 @@ export function useOpenProject(
     };
     // Имя устройства пишется при открытии; переименование подхватится при следующем открытии.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [services, deviceId, folder]);
+  }, [services, deviceId, folder, health]);
   return state;
 }
 

@@ -23,6 +23,8 @@ import { BackButton, Message, MissingBoard, SearchButtons } from './ProjectParts
 import { createProjectUi, type ProjectUi } from './projectUi';
 import { useProjectTags, useTagLinks, type ProjectTags } from '../tags';
 import { useProjectAssets } from './useProjectAssets';
+import { createProjectHealth } from './projectHealth';
+import { ProjectHealthStatus } from './ProjectHealthStatus';
 import styles from './Project.module.css';
 
 const NARROW_SCREEN = '(max-width: 640px)';
@@ -106,6 +108,7 @@ function ProjectBody(props: ProjectBodyProps) {
     createBoard: createFromTree,
   });
   const host = useProjectHost({
+    previewSource: source,
     assets,
     directory,
     workspace,
@@ -238,7 +241,8 @@ export function ProjectScreen({
   const workspace = useWorkspace();
   const deviceId = useWorkspaceState((state) => state.settings.deviceId);
   const deviceName = useWorkspaceState((state) => state.settings.deviceName);
-  const project = useOpenProject(workspace.services, deviceId, deviceName, folder);
+  const [health] = useState(createProjectHealth);
+  const project = useOpenProject(workspace.services, deviceId, deviceName, folder, health);
   return (
     <div className={styles.screen}>
       {project.status === 'ready' ? (
@@ -250,6 +254,9 @@ export function ProjectScreen({
           </header>
           <Message text={project.status === 'error' ? project.error : t('project.loading')} />
         </>
+      )}
+      {project.status === 'ready' && (
+        <ProjectHealthStatus health={health} project={project.value} />
       )}
     </div>
   );

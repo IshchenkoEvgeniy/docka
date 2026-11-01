@@ -6,6 +6,11 @@ import { Button } from '../../ui';
 import type { BoardModel } from './model';
 import { fitAll, zoomBy, zoomTo } from './view';
 import styles from './Board.module.css';
+import { BoardExport } from './BoardExport';
+import { FrameNavigator } from './FrameNavigator';
+import { pasteFromApp } from './pasting';
+import { stopEditing } from './boardActions';
+import { worldPoint } from './view';
 
 /** Меню панели: «Добавить» и «Действия» с выделенным (на телефоне правой кнопки нет). */
 export type ToolbarMenu = 'add' | 'actions' | 'tags';
@@ -24,12 +29,22 @@ export function BoardToolbar({ model, controls, onHelp, onOpenMenu }: BoardToolb
   const gridSnap = useStore(model.settings, (state) => state.gridSnap);
   const tagFilter = useStore(model.settings, (state) => state.tagFilter);
   const zoom = useCamera(controls).zoom;
+  const editing = useInteraction(model.interaction, (state) => state.editingId !== null);
   const hasSelection = useInteraction(
     model.interaction,
     (state) => state.selection.size > 0 || state.connectionSelection.size > 0,
   );
   return (
     <div className={styles.toolbar}>
+      {editing && (
+        <Button
+          onClick={() => {
+            stopEditing(model);
+          }}
+        >
+          {t('elements.text.done')}
+        </Button>
+      )}
       <Button
         disabled={!canUndo}
         onClick={() => void model.undo.undo()}
@@ -49,11 +64,19 @@ export function BoardToolbar({ model, controls, onHelp, onOpenMenu }: BoardToolb
       <span className={styles.divider} />
       <Button
         onClick={() => {
+          void pasteFromApp(model, worldPoint(controls, null));
+        }}
+      >
+        {t('board.menu.paste')}
+      </Button>
+      <Button
+        onClick={() => {
           fitAll(model, controls);
         }}
       >
         {t('board.toolbar.fitAll')}
       </Button>
+      <FrameNavigator model={model} controls={controls} />
       <Button
         className={styles.desktopOnly}
         onClick={() => {
@@ -116,6 +139,7 @@ export function BoardToolbar({ model, controls, onHelp, onOpenMenu }: BoardToolb
       >
         {t('board.toolbar.help')}
       </Button>
+      <BoardExport model={model} controls={controls} />
     </div>
   );
 }

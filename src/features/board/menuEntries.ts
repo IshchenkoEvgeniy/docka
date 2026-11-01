@@ -101,7 +101,7 @@ function arrangeEntries(model: BoardModel, count: number): MenuEntry[] {
 
 function clipboardEntries(model: BoardModel, at: Point): MenuEntry[] {
   const copy = (): void => {
-    appClipboard.setState({ content: copySelection(model) });
+    appClipboard.setState({ content: copySelection(model), copiedAt: Date.now() });
   };
   const cut = (): void => {
     copy();

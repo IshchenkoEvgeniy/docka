@@ -1,6 +1,7 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Button } from './Button';
 import styles from './Dialog.module.css';
+import { keepDialogFocus } from './dialogFocus';
 
 interface DialogProps {
   readonly title: string;
@@ -12,34 +13,45 @@ interface DialogProps {
 
 /** Модальное окно поверх приложения; закрывается по Esc, кнопке и клику по фону. */
 export function Dialog({ title, closeLabel, onClose, children }: DialogProps) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const previousFocus = useRef(document.activeElement);
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      onClose();
-    };
-    window.addEventListener('keydown', onKeyDown);
+    const dialog = ref.current;
+    const previous = previousFocus.current;
+    dialog?.showModal();
     return () => {
-      window.removeEventListener('keydown', onKeyDown);
+      dialog?.close();
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
     };
-  }, [onClose]);
+  }, []);
 
   return (
-    <div
-      className={styles.backdrop}
-      onPointerDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+    <dialog
+      ref={ref}
+      className={styles.modal}
+      aria-label={title}
+      onKeyDown={keepDialogFocus}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
       }}
     >
-      <div role="dialog" aria-modal="true" aria-label={title} className={styles.dialog}>
-        <header className={styles.header}>
-          <h2 className={styles.title}>{title}</h2>
-          <Button variant="ghost" onClick={onClose} autoFocus>
-            {closeLabel}
-          </Button>
-        </header>
-        <div className={styles.body}>{children}</div>
+      <div
+        className={styles.backdrop}
+        onPointerDown={(event) => {
+          if (event.target === event.currentTarget) onClose();
+        }}
+      >
+        <div className={styles.dialog}>
+          <header className={styles.header}>
+            <h2 className={styles.title}>{title}</h2>
+            <Button variant="ghost" onClick={onClose} autoFocus>
+              {closeLabel}
+            </Button>
+          </header>
+          <div className={styles.body}>{children}</div>
+        </div>
       </div>
-    </div>
+    </dialog>
   );
 }

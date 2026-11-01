@@ -10,6 +10,7 @@ const PATHS = {
   line: 'M5 19L19 5M19 5h-6M19 5v6',
   board: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
   column: 'M5 3h14v18H5zM5 8h14',
+  frame: 'M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4M4 11v2M11 4h2M20 11v2M11 20h2',
   title: 'M5 6V4h14v2M12 4v16M9 20h6',
   image: 'M4 5h16v14H4zM4 16l5-5 4 4 2-2 5 5M15.5 8.5h.01',
   upload: 'M7 3h7l5 5v13H7zM14 3v5h5M13 18v-6M10 14l3-3 3 3',

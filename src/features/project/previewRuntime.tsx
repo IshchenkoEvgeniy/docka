@@ -28,10 +28,10 @@ export function createPreviewRuntime(source: {
   readonly boards: BoardDirectory | null;
 }): ElementRuntime {
   return {
+    exporting: true,
     textOf: (elementId) => textOf(source.doc, elementId),
     ensureText: () => null,
     stopEditing: ignore,
-    fullscreenEditing: false,
     undo: ignore,
     redo: ignore,
     assets: source.assets,

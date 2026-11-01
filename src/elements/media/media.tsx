@@ -3,6 +3,7 @@ import { CONTROL_ATTRIBUTE } from '../../canvas';
 import { t } from '../../i18n';
 import { defineElement } from '../defineElement';
 import { useAsset } from '../image';
+import { useElementRuntime } from '../runtime';
 import { useMeasuredHeight } from '../text';
 import type { ElementViewProps, StoredFile } from '../types';
 import styles from './Media.module.css';
@@ -19,6 +20,9 @@ const control = { [CONTROL_ATTRIBUTE]: '' };
 
 function Player({ data, kind }: { readonly data: MediaData; readonly kind: 'video' | 'audio' }) {
   const asset = useAsset(data.asset);
+  const runtime = useElementRuntime();
+  if (runtime.exporting === true)
+    return <div className={styles.placeholder}>{t(`elements.media.export.${kind}`)}</div>;
   if (asset.status !== 'ready')
     return (
       <div className={styles.placeholder}>

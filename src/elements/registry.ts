@@ -8,6 +8,7 @@ import { checklist } from './checklist';
 import { column } from './column';
 import { entity } from './entity';
 import { file } from './file';
+import { frame } from './frame';
 import { link } from './link';
 import { audio, video } from './media';
 import { shape } from './shape';
@@ -25,6 +26,7 @@ const ELEMENTS: readonly RegisteredElement[] = [
   image,
   boardLink,
   column,
+  frame,
   checklist,
   entity,
   swatch,

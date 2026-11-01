@@ -24,4 +24,11 @@ class MainActivity : TauriActivity() {
     bridge.attach(webView)
     webView.addJavascriptInterface(bridge, "DoskaAndroid")
   }
+
+  @Deprecated("Activity result compatibility for the export document picker")
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    if (!bridge.finishExport(requestCode, resultCode, data)) {
+      super.onActivityResult(requestCode, resultCode, data)
+    }
+  }
 }

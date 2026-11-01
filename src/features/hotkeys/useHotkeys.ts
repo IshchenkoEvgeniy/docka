@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { isEditableTarget } from '../../ui';
+import { isEditableTarget, isModalOpen } from '../../ui';
 import { isMacPlatform } from './combo';
 import { findHotkey, parseHotkeys, type HotkeyDefinition } from './registry';
 
@@ -23,7 +23,7 @@ export function useHotkeys(
     if (!enabled) return undefined;
     const isMac = isMacPlatform();
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (isEditableTarget(event.target)) return;
+      if (isEditableTarget(event.target) || isModalOpen()) return;
       const id = findHotkey(parsed, event, isMac);
       const handler = id === null ? undefined : handlersRef.current[id];
       if (handler === undefined) return;

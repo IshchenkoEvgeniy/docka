@@ -13,21 +13,36 @@ export function createBoardDirectory(projectDoc: Y.Doc): BoardDirectory & { dest
     );
   let boards = read();
   const listeners = new Set<() => void>();
+  let listening = false;
   const update = (): void => {
     boards = read();
     listeners.forEach((listener) => {
       listener();
     });
   };
-  projectDoc.on('update', update);
+  const stop = (): void => {
+    projectDoc.off('update', update);
+    listening = false;
+  };
   return {
     subscribe: (listener) => {
+      if (!listening) {
+        boards = read();
+        projectDoc.on('update', update);
+        listening = true;
+      }
       listeners.add(listener);
-      return () => listeners.delete(listener);
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0) stop();
+      };
     },
-    get: (boardId) => boards.get(boardId) ?? null,
+    get: (boardId) => {
+      if (!listening) boards = read();
+      return boards.get(boardId) ?? null;
+    },
     destroy: () => {
-      projectDoc.off('update', update);
+      stop();
       listeners.clear();
     },
   };

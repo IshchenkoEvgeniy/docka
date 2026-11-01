@@ -21,6 +21,8 @@ function mayMeasure(model: BoardModel, elementId: string): boolean {
 /** Связь элементов с открытой доской: текст, отмена, конец правки, высота, вложенные карточки. */
 export function createElementRuntime(model: BoardModel): ElementRuntime {
   return {
+    ...(model.host.BoardPreview === undefined ? {} : { BoardPreview: model.host.BoardPreview }),
+    openBoard: model.host.openBoard,
     textOf: (elementId) => textOf(model.doc, elementId),
     assets: model.host.assets,
     boards: model.host.boards,
@@ -37,23 +39,13 @@ export function createElementRuntime(model: BoardModel): ElementRuntime {
     stopEditing: () => {
       stopEditing(model);
     },
-    fullscreenEditing: window.matchMedia('(max-width: 640px)').matches,
     undo: () => {
       model.undo.undo();
     },
     redo: () => {
       model.undo.redo();
     },
-    openAsset: (() => {
-      const open = model.host.openAsset;
-      if (open === null) return null;
-      return (asset: string, mime: string) => {
-        open(asset, mime).catch((error: unknown) => {
-          console.error('Файл не открылся', error);
-          model.showNotice(t('board.notice.openFailed'));
-        });
-      };
-    })(),
+    openAsset: createAssetOpener(model),
     openUrl: (url) => {
       model.host.openUrl(url).catch((error: unknown) => {
         console.error('Ссылка не открылась', error);
@@ -66,5 +58,16 @@ export function createElementRuntime(model: BoardModel): ElementRuntime {
     reportHeight: (elementId, height) => {
       if (mayMeasure(model, elementId)) setMeasuredHeight(model.doc, elementId, height);
     },
+  };
+}
+
+function createAssetOpener(model: BoardModel): ElementRuntime['openAsset'] {
+  const open = model.host.openAsset;
+  if (open === null) return null;
+  return (asset: string, mime: string) => {
+    open(asset, mime).catch((error: unknown) => {
+      console.error('Файл не открылся', error);
+      model.showNotice(t('board.notice.openFailed'));
+    });
   };
 }

@@ -45,6 +45,7 @@ export function defineElement<D extends ElementData>(
     richText: definition.richText,
     activate: definition.activate,
     container: definition.container ?? false,
+    region: definition.region ?? false,
     editOnCreate: definition.editOnCreate ?? definition.activate === 'edit',
     createData: definition.createData,
     Render,

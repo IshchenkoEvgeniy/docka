@@ -11,3 +11,4 @@ mod ipc_tests;
 
 pub use roots::ProjectRoots;
 pub use watch::Watchers;
+pub mod removal;

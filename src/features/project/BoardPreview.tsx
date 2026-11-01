@@ -1,7 +1,8 @@
+import { compareElementLayers, elementVisualRect } from '../../elements';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type * as Y from 'yjs';
 import { arrowHead, boundsOf, connectorGeometry, type ConnectorEnd, type Rect } from '../../canvas';
-import { compareStacking, type BoardElement, type BoardId, type Endpoint } from '../../core';
+import { type BoardElement, type BoardId, type Endpoint } from '../../core';
 import {
   createBoardConnectionsStore,
   createBoardElementsStore,
@@ -12,6 +13,7 @@ import {
 } from '../../data';
 import { ElementRuntimeContext, definitionFor, type BoardDirectory } from '../../elements';
 import { inkColor } from '../../ui';
+import { t } from '../../i18n';
 import { createPreviewRuntime } from './previewRuntime';
 import styles from './Gallery.module.css';
 
@@ -35,7 +37,10 @@ interface Stores {
 /** Документ доски открывается, только когда плитка появилась на экране. */
 function usePreviewStores(source: PreviewSource, boardId: BoardId, visible: boolean) {
   const [stores, setStores] = useState<Stores | null>(null);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
+    setStores(null);
+    setFailed(false);
     if (!visible) return undefined;
     let created: Stores | null = null;
     let cancelled = false;
@@ -51,6 +56,7 @@ function usePreviewStores(source: PreviewSource, boardId: BoardId, visible: bool
       },
       (error: unknown) => {
         console.error('Превью доски не открылось', error);
+        if (!cancelled) setFailed(true);
       },
     );
     return () => {
@@ -59,7 +65,7 @@ function usePreviewStores(source: PreviewSource, boardId: BoardId, visible: bool
       created?.connections.destroy();
     };
   }, [source, boardId, visible]);
-  return stores;
+  return { stores, failed };
 }
 
 function useVisible(ref: React.RefObject<HTMLDivElement | null>): boolean {
@@ -171,10 +177,10 @@ function PreviewContent({
     () =>
       [...elements.values()]
         .filter((element) => element.parentId === null || !elements.has(element.parentId))
-        .sort(compareStacking),
+        .sort(compareElementLayers),
     [elements],
   );
-  const bounds = boundsOf(topLevel);
+  const bounds = boundsOf(topLevel.map(elementVisualRect));
   if (bounds === null) return null;
   const framed = {
     x: bounds.x - PADDING,
@@ -209,16 +215,18 @@ export function BoardPreview({
   source,
   boardId,
   onCount,
+  eager = false,
 }: {
   readonly source: PreviewSource;
   readonly boardId: BoardId;
   /** Сколько карточек на доске (известно после загрузки). */
   readonly onCount: (count: number) => void;
+  readonly eager?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const visible = useVisible(ref);
   const box = useBoxSize(ref);
-  const stores = usePreviewStores(source, boardId, visible);
+  const { stores, failed } = usePreviewStores(source, boardId, eager || visible);
   const count = useSyncExternalStore(
     stores?.elements.subscribe ?? noSubscribe,
     () => stores?.elements.getSnapshot().size ?? null,
@@ -227,7 +235,18 @@ export function BoardPreview({
     if (count !== null) onCount(count);
   }, [count, onCount]);
   return (
-    <div ref={ref} className={styles.preview} aria-hidden="true">
+    <div
+      ref={ref}
+      className={styles.preview}
+      aria-hidden="true"
+      data-board-preview=""
+      data-preview-state={failed ? 'error' : stores === null || box === null ? 'loading' : 'ready'}
+    >
+      {(failed || stores === null) && (
+        <div className={styles.emptyBoard}>
+          {failed ? t('elements.board.previewFailed') : t('elements.board.loading')}
+        </div>
+      )}
       {stores !== null && box !== null && (
         <PreviewContent stores={stores} source={source} box={box} />
       )}

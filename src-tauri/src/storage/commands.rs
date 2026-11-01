@@ -16,6 +16,15 @@ const PATH_HEADER: &str = "x-doska-path";
 const FILE_MISSING: u8 = 0;
 const FILE_PRESENT: u8 = 1;
 
+#[tauri::command]
+pub async fn storage_remove_directory(
+    roots: State<'_, ProjectRoots>,
+    root: String,
+    path: String,
+) -> Result<(), String> {
+    super::removal::remove_directory(&roots, &root, &path)
+}
+
 fn io_error(error: std::io::Error) -> String {
     format!("IO: {error}")
 }

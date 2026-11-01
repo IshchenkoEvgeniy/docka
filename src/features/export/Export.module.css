@@ -1,0 +1,91 @@
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+fieldset.form {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.row {
+  display: grid;
+  gap: var(--space-2);
+}
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+.error {
+  margin: 0;
+  color: var(--color-danger);
+}
+.staging {
+  position: fixed;
+  left: -100000px;
+  top: 0;
+  pointer-events: none;
+}
+.scene {
+  position: relative;
+  overflow: hidden;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+}
+.world {
+  position: absolute;
+  transform-origin: 0 0;
+}
+.item {
+  position: absolute;
+}
+.child {
+  position: relative;
+  min-width: 0;
+}
+.tags {
+  display: flex;
+  gap: var(--space-1);
+}
+.item > .tags {
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+.lines {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+.head {
+  fill: currentColor;
+  stroke: none;
+}
+.label {
+  position: absolute;
+  z-index: 1;
+  max-width: 240px;
+  padding: var(--space-1) var(--space-2);
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-sm);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  transform: translate(-50%, -50%);
+}
+
+@media (pointer: coarse), (max-width: 640px) {
+  .form button[role='radio'],
+  .form label {
+    min-height: var(--touch-target);
+  }
+  .form label {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+  }
+}

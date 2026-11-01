@@ -30,6 +30,29 @@ function latestIn(modified: ReadonlyMap<string, number>, path: string): number |
   return latest;
 }
 
+function removeDirectory(
+  files: Map<string, Uint8Array>,
+  modified: Map<string, number>,
+  written: string[],
+  path: string,
+): Promise<void> {
+  if (
+    path === '' ||
+    /[\\:]/.test(path) ||
+    path.startsWith('/') ||
+    path.split('/').some((part) => part === '.' || part === '..' || part === '')
+  )
+    return Promise.reject(new Error('INVALID_PATH: нельзя удалить корень или выйти за него'));
+  if (files.has(path)) return Promise.reject(new Error('NOT_A_FOLDER'));
+  for (const key of files.keys())
+    if (under(path, key)) {
+      files.delete(key);
+      modified.delete(key);
+    }
+  written.push(path);
+  return Promise.resolve();
+}
+
 /** Файловая система в памяти для тестов: та же семантика, что у реальной. */
 export function createMemoryFileSystem(clock: Clock = systemClock): MemoryFileSystem {
   const files = new Map<string, Uint8Array>();
@@ -72,6 +95,7 @@ export function createMemoryFileSystem(clock: Clock = systemClock): MemoryFileSy
       written.push(path);
       return Promise.resolve();
     },
+    removeDirectory: (path) => removeDirectory(files, modified, written, path),
     snapshot: () => new Map([...files].map(([path, data]) => [path, data.slice()])),
     putExternal: (path, data) => {
       store(path, data.slice());

@@ -101,6 +101,7 @@ export function createTauriFileSystem(
       call<undefined>(bridge, 'storage_append', body(data), pathHeaders(root, path)),
     listDir: (path) => call<string[]>(bridge, 'storage_list', { root, path }),
     removeFile: (path) => call<undefined>(bridge, 'storage_remove', { root, path }),
+    removeDirectory: (path) => call<undefined>(bridge, 'storage_remove_directory', { root, path }),
     latestChange: (path) => call<number | null>(bridge, 'storage_latest_change', { root, path }),
   };
 }

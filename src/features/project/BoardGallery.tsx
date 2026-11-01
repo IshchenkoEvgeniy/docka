@@ -56,8 +56,10 @@ function DeletedBoards({
 }) {
   if (boards.length === 0) return null;
   return (
-    <section className={styles.trash}>
-      <h2 className={styles.trashTitle}>{t('project.gallery.trash')}</h2>
+    <details className={styles.trash}>
+      <summary className={styles.trashTitle}>
+        {t('project.gallery.trashCount', { count: boards.length })}
+      </summary>
       <ul className={styles.trashList}>
         {boards.map((board) => (
           <li key={board.id} className={styles.trashItem}>
@@ -76,7 +78,7 @@ function DeletedBoards({
           </li>
         ))}
       </ul>
-    </section>
+    </details>
   );
 }
 

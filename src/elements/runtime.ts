@@ -1,6 +1,6 @@
 import { createContext, useContext, type ComponentType } from 'react';
 import type * as Y from 'yjs';
-import type { BoardElement, RichNode } from '../core';
+import type { BoardElement, BoardId, RichNode } from '../core';
 import type { AssetStore, BoardElementsStore } from '../data';
 
 /**
@@ -8,13 +8,16 @@ import type { AssetStore, BoardElementsStore } from '../data';
  * измеренная высота. Даёт сценарий доски (features/board) через контекст.
  */
 export interface ElementRuntime {
+  /** Проект подставляет миниатюру; внутри самих миниатюр её нет, чтобы избежать рекурсии. */
+  readonly BoardPreview?: ComponentType<LinkedBoardPreviewProps>;
+  readonly openBoard?: (boardId: BoardId) => void;
+  /** Статичное представление для экспорта; медиа показывают подписанную карточку без плеера. */
+  readonly exporting?: boolean;
   /** Текст элемента или null (старая заметка, где был только data.text). */
   readonly textOf: (elementId: string) => Y.XmlFragment | null;
   /** Текст для редактирования; если его нет — создаётся из initial. */
   readonly ensureText: (elementId: string, initial: readonly RichNode[]) => Y.XmlFragment | null;
   readonly stopEditing: () => void;
-  /** Узкий экран (телефон): текст правится на весь экран, а не в маленькой карточке. */
-  readonly fullscreenEditing: boolean;
   readonly undo: () => void;
   readonly redo: () => void;
   /** Файлы проекта (картинки); null — доска без проекта. */
@@ -34,6 +37,12 @@ export interface ElementRuntime {
   readonly refresh: (elementId: string) => void;
   /** Высота содержимого изменилась (растёт текст): доска решает, записать ли её. */
   readonly reportHeight: (elementId: string, height: number) => void;
+}
+
+export interface LinkedBoardPreviewProps {
+  readonly boardId: BoardId;
+  readonly onCount: (count: number) => void;
+  readonly eager?: boolean;
 }
 
 /** Доски проекта для карточек досок: название и удалена ли. */

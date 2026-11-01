@@ -41,7 +41,12 @@ export type {
   LiveRecords,
 } from './boardElements';
 export { openDocument } from './documentStore';
-export type { DocumentStoreOptions, RefreshReport, StoredDocument } from './documentStore';
+export type {
+  DocumentStoreOptions,
+  RefreshReport,
+  StoredDocument,
+  SaveState,
+} from './documentStore';
 export { startLiveSync } from './liveSync';
 export type { LiveSync, LiveSyncOptions } from './liveSync';
 export { createProject, openProject } from './project';
@@ -107,3 +112,4 @@ export type { ProjectDevice } from './devices';
 export { ENTITY_TEXTS_FIELD, ensureEntityText, entityTextOf, entityTexts } from './entityText';
 export { TEMPLATES_DIR, listTemplates, removedTemplateIds, saveTemplate } from './templates';
 export type { TemplateList } from './templates';
+export { deleteProjectIn } from './deleteProject';

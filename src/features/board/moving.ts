@@ -10,12 +10,15 @@ import {
   type Rect,
 } from '../../canvas';
 import type { BoardElement, ElementId } from '../../core';
-import { compareInColumn, definitionFor } from '../../elements';
+import { compareInColumn, definitionFor, withRegionContents } from '../../elements';
+import { t } from '../../i18n';
+import { runMoves } from './runMoves';
 import { stopEditing } from './boardActions';
 import type { GestureContext, HandlersPart } from './gestureContext';
 import type { BoardModel } from './model';
 
 interface MoveSession {
+  readonly regional: boolean;
   readonly ids: ReadonlySet<string>;
   readonly start: readonly BoardElement[];
   /** Где элементы были на экране в начале (у карточек в колонке — по DOM). */
@@ -47,9 +50,15 @@ function startSession({ model, view, selection }: GestureContext): MoveSession |
   const picked = [...selection()]
     .map((id) => snapshot.get(id))
     .filter((element): element is BoardElement => element !== undefined && !element.locked);
-  const pickedIds = new Set(picked.map((element) => element.id));
+  const expanded = withRegionContents(snapshot, picked);
+  if (expanded.some((element) => element.locked)) {
+    model.showNotice(t('frames.lockedContent'));
+    return null;
+  }
+  const regional = picked.some((element) => definitionFor(element.type).region);
+  const pickedIds = new Set(expanded.map((element) => element.id));
   // Карточка едет вместе со своей колонкой — отдельно её двигать не нужно.
-  const start = picked.filter(
+  const start = expanded.filter(
     (element) => element.parentId === null || !pickedIds.has(element.parentId),
   );
   const rects = new Map(
@@ -61,17 +70,19 @@ function startSession({ model, view, selection }: GestureContext): MoveSession |
   const bounds = boundsOf(rects.values());
   if (bounds === null) return null;
   const ids = new Set(start.map((element) => element.id));
-  const columns = start.some((element) => !isContainer(element))
-    ? [...snapshot.values()]
-        .filter(
-          (element) => isContainer(element) && element.parentId === null && !ids.has(element.id),
-        )
-        .map((element) => ({ id: element.id, rect: view.measure(element.id) ?? element }))
-    : [];
+  const columns =
+    !regional && start.some((element) => !isContainer(element))
+      ? [...snapshot.values()]
+          .filter(
+            (element) => isContainer(element) && element.parentId === null && !ids.has(element.id),
+          )
+          .map((element) => ({ id: element.id, rect: view.measure(element.id) ?? element }))
+      : [];
   const raise = new Set(
     start.flatMap((element) => (element.parentId === null ? [] : [element.parentId])),
   );
   return {
+    regional,
     ids,
     start,
     rects,
@@ -146,6 +157,20 @@ function placementsAfterDrop(
   return { placements, touched: touched.filter((id): id is ElementId => id !== null) };
 }
 
+function commitPlacements(
+  model: BoardModel,
+  regional: boolean,
+  placements: readonly Placement[],
+): void {
+  if (regional)
+    runMoves(
+      model,
+      placements.map((item) => ({ id: item.elementId, x: item.x, y: item.y })),
+      'regionDrop',
+    );
+  else model.run({ kind: 'placeElements', placements });
+}
+
 export function moveHandlers(
   context: GestureContext,
 ): HandlersPart<'startMove' | 'updateMove' | 'endMove'> {
@@ -182,7 +207,7 @@ export function moveHandlers(
           drag.target !== null || move.start.some((element) => element.parentId !== null);
         if (drag.dx !== 0 || drag.dy !== 0 || intoContainer) {
           const { placements, touched } = placementsAfterDrop(context, move, drag.dx, drag.dy);
-          model.run({ kind: 'placeElements', placements });
+          commitPlacements(model, move.regional, placements);
           model.markForMeasure(touched);
         }
       }

@@ -5,7 +5,6 @@ import {
   distribute,
   type AlignMode,
   type DistributeAxis,
-  type Move,
   type Point,
   type Size,
 } from '../../canvas';
@@ -23,6 +22,7 @@ import {
   definitionFor,
   draftFromPastedText,
   type ElementDraft,
+  withRegionContents,
 } from '../../elements';
 import { enrichElement } from './enrich';
 import { t } from '../../i18n';
@@ -34,6 +34,7 @@ import {
 } from './clipboard';
 import type { BoardModel } from './model';
 import { placeElements } from './references';
+import { runMoves } from './runMoves';
 
 /**
  * Действия над доской. Одно действие = одна команда = один шаг отмены.
@@ -146,14 +147,6 @@ export function toggleLockSelection(model: BoardModel): void {
   model.run({ kind: 'updateElements', elementIds: ids(selected), changes: { locked } });
 }
 
-function runMoves(model: BoardModel, moves: readonly Move[]): void {
-  if (moves.length === 0) return;
-  model.run({
-    kind: 'moveElements',
-    moves: moves.map((move) => ({ elementId: move.id as ElementId, x: move.x, y: move.y })), // id из снимка доски
-  });
-}
-
 const placed = (elements: readonly BoardElement[]) =>
   elements.map((element) => ({ id: element.id, rect: element }));
 
@@ -192,7 +185,8 @@ function withChildren(model: BoardModel, selected: readonly BoardElement[]): Boa
 }
 
 export function copySelection(model: BoardModel): ClipboardContent | null {
-  return copyContent(withChildren(model, selectedElements(model)), model.richTextOf);
+  const selected = withRegionContents(model.elements.getSnapshot(), selectedElements(model));
+  return copyContent(withChildren(model, selected), model.richTextOf);
 }
 
 /** ask — спросить «ссылка или копия», если вставляются представления сущностей. */
@@ -258,7 +252,11 @@ export function createElementAt(
 ): void {
   const definition = definitionFor(type);
   // Контейнер в контейнер не кладётся.
-  const where = placementAt(definition.defaultSize, center, definition.container ? null : slot);
+  const where = placementAt(
+    definition.defaultSize,
+    center,
+    definition.container || definition.region ? null : slot,
+  );
   const result = model.run({
     kind: 'createElement',
     type: definition.type,

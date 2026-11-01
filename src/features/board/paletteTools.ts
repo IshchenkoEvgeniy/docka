@@ -66,6 +66,14 @@ export const CARD_TOOLS: readonly PaletteTool[] = [
   },
   { id: 'line', icon: 'line', label: 'board.palette.line', place: createLine },
   {
+    id: 'frame',
+    icon: 'frame',
+    label: 'elementTypes.frame',
+    place: (model, at) => {
+      createElementAt(model, 'frame', at);
+    },
+  },
+  {
     id: 'board',
     icon: 'board',
     label: 'board.palette.board',
