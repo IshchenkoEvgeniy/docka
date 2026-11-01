@@ -29,7 +29,8 @@
   background: transparent;
   border: 0;
   border-radius: var(--radius-md);
-  touch-action: none;
+  /* Прокрутка панели — вдоль неё; поперёк значок тянут на доску. */
+  touch-action: pan-y;
   user-select: none;
 }
 
@@ -99,6 +100,12 @@
   .tool {
     flex-shrink: 0;
     min-width: 56px;
+    touch-action: pan-x;
+  }
+
+  .trash {
+    margin-top: 0;
+    margin-left: auto;
   }
 
   .toolIcon {
@@ -111,4 +118,70 @@
     height: auto;
     margin: var(--space-2) var(--space-1);
   }
+}
+
+.trash {
+  margin-top: auto;
+}
+
+.trashOver .toolIcon {
+  color: var(--color-on-accent);
+  background: var(--color-danger);
+  transform: scale(1.15);
+}
+
+.ghost {
+  position: fixed;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-menu);
+  opacity: 0.6;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.ghostOverCanvas {
+  border-color: var(--color-accent);
+  opacity: 0.95;
+}
+
+.trashList {
+  display: grid;
+  gap: var(--space-1);
+  max-height: 60vh;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.trashItem {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.trashText {
+  flex: 1 1 200px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.trashDate,
+.trashEmpty,
+.trashHint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
 }

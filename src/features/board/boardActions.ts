@@ -7,6 +7,7 @@ import {
   type DistributeAxis,
   type Move,
   type Point,
+  type Size,
 } from '../../canvas';
 import {
   compareStacking,
@@ -225,22 +226,43 @@ export function duplicateSelection(model: BoardModel): void {
   placeElements(model, elements, true);
 }
 
+/** Место в колонке: карточку бросили на колонку (order — ключ порядка, поле y карточки). */
+export interface ColumnSlot {
+  readonly columnId: ElementId;
+  readonly order: number;
+}
+
+/** Центром в точке на доске или в колонку (там x не нужен, y — порядок). */
+function placementAt(size: Size, center: Point, slot: ColumnSlot | null) {
+  if (slot !== null)
+    return { placement: { x: 0, y: slot.order, ...size }, parentId: slot.columnId };
+  return {
+    placement: {
+      x: Math.round(center.x - size.width / 2),
+      y: Math.round(center.y - size.height / 2),
+      ...size,
+    },
+  };
+}
+
 /**
- * Новый элемент центром в точке (кнопка, горячая клавиша, вставка текста).
+ * Новый элемент центром в точке (кнопка, горячая клавиша, вставка текста) или в колонку.
  * Пустой элемент с текстом сразу открывается на правку.
  */
-export function createElementAt(model: BoardModel, type: string, center: Point, text = ''): void {
+export function createElementAt(
+  model: BoardModel,
+  type: string,
+  center: Point,
+  text = '',
+  slot: ColumnSlot | null = null,
+): void {
   const definition = definitionFor(type);
-  const { width, height } = definition.defaultSize;
+  // Контейнер в контейнер не кладётся.
+  const where = placementAt(definition.defaultSize, center, definition.container ? null : slot);
   const result = model.run({
     kind: 'createElement',
     type: definition.type,
-    placement: {
-      x: Math.round(center.x - width / 2),
-      y: Math.round(center.y - height / 2),
-      width,
-      height,
-    },
+    ...where,
     data: definition.createData(),
     ...(definition.richText ? { richText: plainToRichText(text) } : {}),
   });
@@ -251,24 +273,22 @@ export function createElementAt(model: BoardModel, type: string, center: Point, 
   else select(model, [id]);
 }
 
-/** Карточка новой вложенной доски в точке; сразу предлагается название. */
-export function createBoardCard(model: BoardModel, center: Point): void {
+/** Карточка новой вложенной доски в точке (или в колонке); сразу предлагается название. */
+export function createBoardCard(
+  model: BoardModel,
+  center: Point,
+  slot: ColumnSlot | null = null,
+): void {
   const boardId = model.host.createBoard();
   if (boardId === null) {
     model.showNotice(t('board.notice.noProjectBoards'));
     return;
   }
   const definition = definitionFor('board');
-  const { width, height } = definition.defaultSize;
   const result = model.run({
     kind: 'createElement',
     type: definition.type,
-    placement: {
-      x: Math.round(center.x - width / 2),
-      y: Math.round(center.y - height / 2),
-      width,
-      height,
-    },
+    ...placementAt(definition.defaultSize, center, slot),
     data: { boardId },
   });
   if (result?.createdId === undefined) return;
@@ -276,8 +296,13 @@ export function createBoardCard(model: BoardModel, center: Point): void {
   model.host.renameBoard(boardId);
 }
 
-export function createNote(model: BoardModel, center: Point, text = ''): void {
-  createElementAt(model, 'note', center, text);
+export function createNote(
+  model: BoardModel,
+  center: Point,
+  text = '',
+  slot: ColumnSlot | null = null,
+): void {
+  createElementAt(model, 'note', center, text, slot);
 }
 
 /** Элемент из распознанного текста (таблица из Excel) центром в точке. */

@@ -3,7 +3,7 @@ import type { ConnectionId } from '../../core';
 import type { TranslationKey } from '../../i18n';
 import type { IconName } from '../../ui';
 import type { AddPickers } from './addMenu';
-import { createBoardCard, createElementAt, createNote } from './boardActions';
+import { createBoardCard, createElementAt, createNote, type ColumnSlot } from './boardActions';
 import type { BoardModel } from './model';
 
 /** Что кладёт значок панели: в точку, куда его бросили, или в центр экрана по нажатию. */
@@ -11,7 +11,13 @@ export interface PaletteTool {
   readonly id: string;
   readonly icon: IconName;
   readonly label: TranslationKey;
-  readonly place: (model: BoardModel, at: Point, pickers: AddPickers) => void;
+  /** slot — значок бросили на колонку (тогда карточка ляжет в неё, если умеет). */
+  readonly place: (
+    model: BoardModel,
+    at: Point,
+    pickers: AddPickers,
+    slot: ColumnSlot | null,
+  ) => void;
 }
 
 const LINE_LENGTH = 200;
@@ -38,8 +44,8 @@ export const CARD_TOOLS: readonly PaletteTool[] = [
     id: 'note',
     icon: 'note',
     label: 'board.palette.note',
-    place: (model, at) => {
-      createNote(model, at);
+    place: (model, at, _pickers, slot) => {
+      createNote(model, at, '', slot);
     },
   },
   {
@@ -54,8 +60,8 @@ export const CARD_TOOLS: readonly PaletteTool[] = [
     id: 'checklist',
     icon: 'todo',
     label: 'board.palette.checklist',
-    place: (model, at) => {
-      createElementAt(model, 'checklist', at);
+    place: (model, at, _pickers, slot) => {
+      createElementAt(model, 'checklist', at, '', slot);
     },
   },
   { id: 'line', icon: 'line', label: 'board.palette.line', place: createLine },
@@ -63,8 +69,8 @@ export const CARD_TOOLS: readonly PaletteTool[] = [
     id: 'board',
     icon: 'board',
     label: 'board.palette.board',
-    place: (model, at) => {
-      createBoardCard(model, at);
+    place: (model, at, _pickers, slot) => {
+      createBoardCard(model, at, slot);
     },
   },
   {
