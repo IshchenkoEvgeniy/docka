@@ -50,6 +50,7 @@ export async function loadDeviceSettings(
     projectsFolder: null,
     favorites: [],
     projectPaths: [],
+    zoomedOutView: 'auto',
   };
   const settings = parseDeviceSettings(raw, fallback);
   if (JSON.stringify(settings) !== JSON.stringify(raw)) await saveDeviceSettings(fs, settings);

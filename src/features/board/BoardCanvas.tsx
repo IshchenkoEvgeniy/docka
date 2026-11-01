@@ -9,7 +9,7 @@ import {
   type CameraControls,
   type Point,
 } from '../../canvas';
-import type { BoardBackground, BoardId, CommandEnvironment } from '../../core';
+import type { BoardBackground, BoardId, CommandEnvironment, ZoomedOutView } from '../../core';
 import { t } from '../../i18n';
 import { ElementRuntimeContext, useTags } from '../../elements';
 import { Dialog, Menu } from '../../ui';
@@ -110,10 +110,12 @@ function BoardSurface({
   model,
   camera,
   background,
+  zoomedOutView,
 }: {
   readonly model: BoardModel;
   readonly camera: BoardCameraMemory | undefined;
   readonly background: BoardBackground;
+  readonly zoomedOutView: ZoomedOutView;
 }) {
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [help, setHelp] = useState(false);
@@ -172,10 +174,12 @@ function BoardSurface({
         <Viewport
           controls={controls}
           background={background}
-          underlay={<BoardOverview model={model} controls={controls} />}
+          underlay={
+            <BoardOverview model={model} controls={controls} zoomedOutView={zoomedOutView} />
+          }
         >
           <ConnectionLayer model={model} />
-          <ElementLayer model={model} controls={controls} />
+          <ElementLayer model={model} controls={controls} zoomedOutView={zoomedOutView} />
           <InteractionOverlay store={model.interaction} />
         </Viewport>
         <HighlightSync model={model} />
@@ -214,6 +218,8 @@ interface BoardCanvasProps {
   /** Проект доски: файлы и переходы. Стабильный объект. */
   readonly host?: BoardHost;
   readonly background?: BoardBackground;
+  /** Карточки на мелком масштабе: содержимым или контурами (настройка устройства). */
+  readonly zoomedOutView?: ZoomedOutView;
 }
 
 /** Доска: холст с элементами, жесты, меню, горячие клавиши, буфер обмена. */
@@ -224,6 +230,7 @@ export function BoardCanvas({
   camera,
   host,
   background = 'dots',
+  zoomedOutView = 'auto',
 }: BoardCanvasProps) {
   const [model, setModel] = useState<BoardModel | null>(null);
   useEffect(() => {
@@ -234,6 +241,12 @@ export function BoardCanvas({
     };
   }, [doc, boardId, environment, host]);
   return model === null ? null : (
-    <BoardSurface key={model.boardId} model={model} camera={camera} background={background} />
+    <BoardSurface
+      key={model.boardId}
+      model={model}
+      camera={camera}
+      background={background}
+      zoomedOutView={zoomedOutView}
+    />
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { THEMES, type Theme } from '../../core';
+import { THEMES, ZOOMED_OUT_VIEWS, type Theme, type ZoomedOutView } from '../../core';
 import { t, type TranslationKey } from '../../i18n';
 import { Button, Segmented, TextField } from '../../ui';
 import { BOARD_HOTKEYS } from '../board';
@@ -42,6 +42,29 @@ function DeviceSection() {
   );
 }
 
+/** Как выглядят карточки, когда доску отдалили (ADR 0001). */
+function ZoomedOutSection() {
+  const workspace = useWorkspace();
+  const view = useWorkspaceState((state) => state.settings.zoomedOutView);
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.heading}>{t('settings.zoomedOut.title')}</h2>
+      <Segmented<ZoomedOutView>
+        label={t('settings.zoomedOut.title')}
+        value={view}
+        options={ZOOMED_OUT_VIEWS.map((value) => ({
+          value,
+          label: t(`settings.zoomedOut.${value}`),
+        }))}
+        onChange={(value) => {
+          workspace.updateSettings({ zoomedOutView: value });
+        }}
+      />
+      <p className={styles.hint}>{t(`settings.zoomedOut.${view}Hint`)}</p>
+    </section>
+  );
+}
+
 /** Настройки устройства: имя, тема, папка проектов, синхронизация, горячие клавиши. */
 export function SettingsScreen() {
   const workspace = useWorkspace();
@@ -67,6 +90,7 @@ export function SettingsScreen() {
             }}
           />
         </section>
+        <ZoomedOutSection />
         <ProjectsFolder />
         <section className={styles.section}>
           <h2 className={styles.heading}>{t('settings.sync.title')}</h2>

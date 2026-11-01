@@ -39,6 +39,7 @@ function BoardArea({
   const workspace = useWorkspace();
   const { services, cameras } = workspace;
   const document = useBoardDocument(project, board.id);
+  const zoomedOutView = useWorkspaceState((state) => state.settings.zoomedOutView);
   const environment = useMemo(() => ({ clock: services.clock, ids: services.ids }), [services]);
   const projectId = project.meta.id;
   const camera = useMemo<BoardCameraMemory>(
@@ -61,6 +62,7 @@ function BoardArea({
       camera={camera}
       host={host}
       background={board.background}
+      zoomedOutView={zoomedOutView}
     />
   );
 }

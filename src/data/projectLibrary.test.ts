@@ -79,7 +79,13 @@ describe('настройки устройства', () => {
     const ids = createSequentialIdGenerator('dev');
     const settings = await loadDeviceSettings(fs, defaults, ids);
     await saveDeviceSettings(fs, settings);
-    const broken = { ...settings, theme: 'neon', favorites: [{ boardId: 1 }], deviceName: '' };
+    const broken = {
+      ...settings,
+      theme: 'neon',
+      favorites: [{ boardId: 1 }],
+      deviceName: '',
+      zoomedOutView: 'blur',
+    };
     await fs.writeFileAtomic(SETTINGS_FILE, encoder.encode(JSON.stringify(broken)));
     const repaired = await loadDeviceSettings(fs, defaults, ids);
     expect(repaired).toMatchObject({
@@ -87,6 +93,7 @@ describe('настройки устройства', () => {
       theme: 'system',
       favorites: [],
       deviceName: 'Компьютер',
+      zoomedOutView: 'auto',
     });
   });
 });

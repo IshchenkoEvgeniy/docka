@@ -9,6 +9,13 @@ import { BoardIdSchema, DeviceIdSchema, ProjectIdSchema } from './ids';
 export const THEMES = ['system', 'light', 'dark'] as const;
 export type Theme = (typeof THEMES)[number];
 
+/**
+ * Карточки на мелком масштабе (ADR 0001): содержимым, контурами (одной картинкой — быстро
+ * на тысячах элементов) или «авто» — контурами только на больших досках.
+ */
+export const ZOOMED_OUT_VIEWS = ['content', 'auto', 'outline'] as const;
+export type ZoomedOutView = (typeof ZOOMED_OUT_VIEWS)[number];
+
 /** Избранная доска на главном экране; название запоминается, чтобы не открывать проект ради списка. */
 export const FavoriteSchema = z.object({
   projectId: ProjectIdSchema,
@@ -34,6 +41,7 @@ export const DeviceSettingsSchema = z.object({
   favorites: z.array(FavoriteSchema).max(200),
   /** Проекты вне папки проектов: полные пути папок «Название.doska». */
   projectPaths: z.array(ProjectPathSchema).max(200),
+  zoomedOutView: z.enum(ZOOMED_OUT_VIEWS),
 });
 export type DeviceSettings = z.infer<typeof DeviceSettingsSchema>;
 
@@ -67,6 +75,7 @@ export function parseDeviceSettings(raw: unknown, defaults: DeviceSettings): Dev
     projectsFolder: field('projectsFolder'),
     favorites,
     projectPaths,
+    zoomedOutView: field('zoomedOutView'),
   };
 }
 

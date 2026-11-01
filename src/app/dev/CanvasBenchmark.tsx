@@ -116,7 +116,7 @@ export function CanvasBenchmark() {
   const cards = useMemo(() => generateCards(CARD_COUNT), []);
   const overviewItems = useMemo(() => toOverviewItems(cards), [cards]);
   const controls = useCameraControls({ offsetX: 24, offsetY: 24, zoom: 1 });
-  const detail = useDetailLevel(controls);
+  const detail = useDetailLevel(controls, true);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<BenchmarkResult | null>(null);
 

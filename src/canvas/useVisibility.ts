@@ -48,14 +48,18 @@ export function useRenderRect(controls: CameraControls): Rect | null {
   return useSyncExternalStore(controls.subscribe, getSnapshot);
 }
 
-/** Уровень детализации элементов; компонент перерисовывается только при смене уровня. */
-export function useDetailLevel(controls: CameraControls): DetailLevel {
+/**
+ * Уровень детализации элементов; компонент перерисовывается только при смене уровня.
+ * simplify = false — содержимое на любом масштабе (настройка устройства).
+ */
+export function useDetailLevel(controls: CameraControls, simplify = true): DetailLevel {
   const levelRef = useRef<DetailLevel | null>(null);
   const getSnapshot = useCallback((): DetailLevel => {
+    if (!simplify) return 'full';
     const zoom = controls.controller.getCamera().zoom;
     levelRef.current =
       levelRef.current === null ? detailForZoom(zoom) : nextDetailLevel(levelRef.current, zoom);
     return levelRef.current;
-  }, [controls]);
+  }, [controls, simplify]);
   return useSyncExternalStore(controls.subscribe, getSnapshot);
 }

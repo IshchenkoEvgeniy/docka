@@ -10,7 +10,7 @@ import {
   type CameraControls,
   type InteractionStore,
 } from '../../canvas';
-import { compareStacking, tagIdsOf, type BoardElement } from '../../core';
+import { compareStacking, tagIdsOf, type BoardElement, type ZoomedOutView } from '../../core';
 import { definitionFor } from '../../elements';
 import { cardColorToken } from '../../ui';
 import { TagChips } from '../tags';
@@ -39,6 +39,14 @@ function topLevel(elements: ReadonlyMap<string, BoardElement>): BoardElement[] {
   return [...elements.values()].filter(
     (element) => element.parentId === null || !elements.has(element.parentId),
   );
+}
+
+/** «Авто»: контуры на мелком масштабе только там, где DOM-карточек слишком много для 60 FPS. */
+export const AUTO_OUTLINE_ELEMENTS = 300;
+
+export function simplifiesZoomedOut(view: ZoomedOutView, elementCount: number): boolean {
+  if (view === 'auto') return elementCount > AUTO_OUTLINE_ELEMENTS;
+  return view === 'outline';
 }
 
 function useBoardElements(model: BoardModel): ReadonlyMap<string, BoardElement> {
@@ -73,14 +81,16 @@ const BoardItem = memo(function BoardItem({
 export function ElementLayer({
   model,
   controls,
+  zoomedOutView,
 }: {
   readonly model: BoardModel;
   readonly controls: CameraControls;
+  readonly zoomedOutView: ZoomedOutView;
 }) {
   const elements = useBoardElements(model);
   const sorted = useMemo(() => topLevel(elements).sort(compareStacking), [elements]);
   const renderRect = useRenderRect(controls);
-  const detail = useDetailLevel(controls);
+  const detail = useDetailLevel(controls, simplifiesZoomedOut(zoomedOutView, elements.size));
   const dragged = useInteraction(model.interaction, (state) => state.drag?.ids ?? null);
   const visible = useMemo(() => {
     if (renderRect === null || detail === 'compact') return [];
@@ -100,12 +110,14 @@ export function ElementLayer({
 export function BoardOverview({
   model,
   controls,
+  zoomedOutView,
 }: {
   readonly model: BoardModel;
   readonly controls: CameraControls;
+  readonly zoomedOutView: ZoomedOutView;
 }) {
   const elements = useBoardElements(model);
-  const detail = useDetailLevel(controls);
+  const detail = useDetailLevel(controls, simplifiesZoomedOut(zoomedOutView, elements.size));
   const items = useMemo(
     () =>
       topLevel(elements)
