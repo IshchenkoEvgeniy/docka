@@ -222,3 +222,13 @@
   margin: 0 0 var(--space-3);
   font-size: var(--font-size-sm);
 }
+
+.projectTitle {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--font-size-lg);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

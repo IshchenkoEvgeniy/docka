@@ -1,0 +1,239 @@
+.gallery {
+  height: 100%;
+  padding: var(--space-6);
+  padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  background: var(--color-canvas);
+  touch-action: pan-y;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-6);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.tile,
+.newTile {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.tile:hover,
+.tile:focus-within {
+  border-color: var(--color-accent);
+}
+
+.tileOpen {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.tileOpen:focus-visible,
+.newTile:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.previewFrame {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  background: var(--color-canvas);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.preview {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.previewWorld {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.previewItem {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+.previewChild {
+  position: relative;
+}
+
+.previewLines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.previewHead {
+  fill: currentColor;
+}
+
+.emptyBoard {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+}
+
+.tileTitle {
+  padding: var(--space-4) var(--space-4) 0;
+  overflow: hidden;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tileMeta {
+  padding: var(--space-1) var(--space-4) 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+}
+
+.tileActions {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: flex-end;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+}
+
+.tileButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: 0;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+}
+
+.tileButton:hover {
+  color: var(--color-text);
+  background: var(--color-overlay);
+}
+
+.tileButtonOn {
+  color: var(--color-accent);
+}
+
+.newTile {
+  align-items: stretch;
+  padding: 0 0 var(--space-4);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.newTile:hover {
+  border-color: var(--color-accent);
+}
+
+.newIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 10;
+  color: var(--color-text-muted);
+}
+
+.newTile:hover .newIcon {
+  color: var(--color-accent);
+}
+
+.trash {
+  max-width: 1600px;
+  margin: var(--space-6) auto 0;
+}
+
+.trashTitle {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-lg);
+}
+
+.trashList {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trashItem {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.trashItem .tileMeta {
+  flex: 1;
+  padding: 0;
+}
+
+.trashName {
+  font-weight: 600;
+}
+
+.error {
+  max-width: 1600px;
+  margin: 0 auto var(--space-4);
+  color: var(--color-danger);
+}
+
+@media (max-width: 640px) {
+  .gallery {
+    padding: var(--space-3);
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--space-3);
+  }
+}

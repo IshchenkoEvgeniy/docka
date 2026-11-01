@@ -14,3 +14,5 @@ export { applyTheme } from './theme';
 export { ColorPalette } from './ColorPalette';
 export type { PaletteColor } from './ColorPalette';
 export { Chip } from './Chip';
+export { Icon } from './Icon';
+export type { IconName } from './Icon';

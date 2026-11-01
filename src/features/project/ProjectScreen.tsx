@@ -1,82 +1,31 @@
-import { useEffect, useMemo, useState } from 'react';
-import { type Board, type BoardId, type CommandEnvironment } from '../../core';
+import { useMemo, useState } from 'react';
+import { type BoardId, type CommandEnvironment } from '../../core';
 import type { AssetStore, OpenProject } from '../../data';
 import { t } from '../../i18n';
-import { Button } from '../../ui';
 import { EntityContext } from '../../elements';
-import { BoardCanvas, type BoardCameraMemory, type BoardHost } from '../board';
 import { EntityOverlays, useProjectEntities, type ProjectEntitiesSession } from '../entities';
 import { useWorkspace, useWorkspaceState } from '../workspace';
-import { createBoardDirectory } from './boardDirectory';
+import { BoardArea, useBoardDirectory } from './BoardArea';
+import { BoardGallery } from './BoardGallery';
+import { createGalleryActions } from './galleryActions';
 import { BoardTree } from './BoardTree';
 import { buildBoardTree } from './treeModel';
-import { Breadcrumbs } from './Breadcrumbs';
+import { BoardHeader } from './BoardHeader';
 import { RenameBoardDialog } from './RenameBoardDialog';
 import { SyncStatus } from './SyncStatus';
-import { useBoardDocument, useOpenProject } from './useOpenProject';
+import { useOpenProject } from './useOpenProject';
 import { createProjectActions } from './projectActions';
-import { useBoards } from './useBoards';
+import { useAllBoards } from './useBoards';
 import { useProjectHost } from './useProjectHost';
 import { ProjectOverlays } from './ProjectOverlays';
 import { useProjectSearch } from './useProjectSearch';
-import { BackButton, FavoriteButton, Message, pathTo } from './ProjectParts';
+import { BackButton, Message, MissingBoard, SearchButtons } from './ProjectParts';
 import { createProjectUi, type ProjectUi } from './projectUi';
 import { useProjectTags, useTagLinks, type ProjectTags } from '../tags';
 import { useProjectAssets } from './useProjectAssets';
 import styles from './Project.module.css';
 
 const NARROW_SCREEN = '(max-width: 640px)';
-
-function BoardArea({
-  project,
-  board,
-  host,
-}: {
-  readonly project: OpenProject;
-  readonly board: Board;
-  readonly host: BoardHost;
-}) {
-  const workspace = useWorkspace();
-  const { services, cameras } = workspace;
-  const document = useBoardDocument(project, board.id);
-  const zoomedOutView = useWorkspaceState((state) => state.settings.zoomedOutView);
-  const environment = useMemo(() => ({ clock: services.clock, ids: services.ids }), [services]);
-  const projectId = project.meta.id;
-  const camera = useMemo<BoardCameraMemory>(
-    () => ({
-      initial: cameras.get(projectId, board.id),
-      onChange: (value) => {
-        cameras.set(projectId, board.id, value);
-      },
-    }),
-    [cameras, projectId, board.id],
-  );
-  if (document.status !== 'ready')
-    return <Message text={document.status === 'error' ? document.error : t('project.loading')} />;
-  return (
-    <BoardCanvas
-      key={board.id}
-      doc={document.value.doc}
-      boardId={board.id}
-      environment={environment}
-      camera={camera}
-      host={host}
-      background={board.background}
-      zoomedOutView={zoomedOutView}
-    />
-  );
-}
-
-function useBoardDirectory(project: OpenProject) {
-  const directory = useMemo(() => createBoardDirectory(project.projectDoc.doc), [project]);
-  useEffect(
-    () => () => {
-      directory.destroy();
-    },
-    [directory],
-  );
-  return directory;
-}
 
 interface ProjectBodyProps {
   readonly project: OpenProject;
@@ -114,15 +63,24 @@ function ProjectView({
 function ProjectBody(props: ProjectBodyProps) {
   const { project, folder, boardId, assets, openAsset, environment, session, tags, ui } = props;
   const workspace = useWorkspace();
-  const boards = useBoards(project.projectDoc.doc);
+  const allBoards = useAllBoards(project.projectDoc.doc);
+  const boards = useMemo(() => allBoards.filter((item) => item.deletedAt === null), [allBoards]);
   const rootId = project.meta.rootBoardId;
   const tree = useMemo(() => buildBoardTree(boards, rootId), [boards, rootId]);
-  const [treeOpen, setTreeOpen] = useState(() => !window.matchMedia(NARROW_SCREEN).matches);
+  // Доски выбирают на экране досок; дерево — по кнопке ☰, когда нужно прыгнуть вглубь.
+  const [treeOpen, setTreeOpen] = useState(false);
   const [renaming, setRenaming] = useState<BoardId | null>(null);
   const directory = useBoardDirectory(project);
   const actions = useMemo(() => createProjectActions(project, environment), [project, environment]);
-  const board =
-    boards.find((item) => item.id === boardId) ?? boards.find((item) => item.id === rootId);
+  const gallery = useMemo(
+    () => createGalleryActions(project, environment, actions),
+    [project, environment, actions],
+  );
+  const source = useMemo(
+    () => ({ project, assets, boards: directory }),
+    [project, assets, directory],
+  );
+  const board = boardId === null ? undefined : boards.find((item) => item.id === boardId);
   const currentId = board?.id ?? rootId;
   const open = (id: BoardId): void => {
     workspace.openBoard(id);
@@ -160,49 +118,42 @@ function ProjectBody(props: ProjectBodyProps) {
     ui,
     focus: search.focus,
   });
-  if (board === undefined || tree === null) return <Message text={t('project.noBoard')} />;
+  if (tree === null) return <Message text={t('project.noBoard')} />;
+  // Доска пропала (удалили на другом устройстве) — назад к списку досок.
+  if (boardId !== null && board === undefined) return <MissingBoard />;
 
-  const renamed = renaming === null ? undefined : boards.find((item) => item.id === renaming);
+  const renamed = renaming === null ? undefined : allBoards.find((item) => item.id === renaming);
+  const openSearch = (): void => {
+    ui.setState({ search: true });
+  };
 
   return (
     <EntityContext.Provider value={session.links}>
-      <header className={styles.header}>
-        <Button
-          variant="ghost"
-          pressed={treeOpen}
-          aria-label={t('project.tree.title')}
-          title={t('project.tree.title')}
-          onClick={() => {
+      {board === undefined ? (
+        <header className={styles.header}>
+          <BackButton />
+          <h1 className={styles.projectTitle}>{project.meta.name}</h1>
+          <SearchButtons onSearch={openSearch} onLibrary={session.ui.openLibrary} />
+          <SyncStatus folder={folder} />
+        </header>
+      ) : (
+        <BoardHeader
+          board={board}
+          boards={boards}
+          folder={folder}
+          project={project}
+          treeOpen={treeOpen}
+          onToggleTree={() => {
             setTreeOpen(!treeOpen);
           }}
-        >
-          {'☰'}
-        </Button>
-        <BackButton />
-        <Breadcrumbs
-          path={pathTo(board, boards)}
           onOpen={open}
-          onRename={() => {
-            setRenaming(board.id);
-          }}
+          onRename={setRenaming}
+          onSearch={openSearch}
+          onLibrary={session.ui.openLibrary}
         />
-        <Button
-          variant="ghost"
-          onClick={() => {
-            ui.setState({ search: true });
-          }}
-          title={t('project.search')}
-        >
-          {t('project.searchButton')}
-        </Button>
-        <Button variant="ghost" onClick={session.ui.openLibrary} title={t('project.entities')}>
-          {t('project.entitiesButton')}
-        </Button>
-        <SyncStatus folder={folder} />
-        <FavoriteButton project={project} folder={folder} board={board} />
-      </header>
+      )}
       <div className={styles.body}>
-        {treeOpen && (
+        {board !== undefined && treeOpen && (
           <>
             <div
               className={styles.treeBackdrop}
@@ -222,7 +173,19 @@ function ProjectBody(props: ProjectBodyProps) {
           </>
         )}
         <div className={styles.board}>
-          <BoardArea key={board.id} project={project} board={board} host={host} />
+          {board === undefined ? (
+            <BoardGallery
+              allBoards={allBoards}
+              rootId={rootId}
+              folder={folder}
+              projectId={project.meta.id}
+              source={source}
+              actions={gallery}
+              onRename={setRenaming}
+            />
+          ) : (
+            <BoardArea key={board.id} project={project} board={board} host={host} />
+          )}
           <EntityOverlays
             session={session}
             project={project}

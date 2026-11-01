@@ -20,6 +20,50 @@ export function BackButton() {
   );
 }
 
+/** С доски — к списку досок проекта. */
+export function BoardsButton() {
+  const workspace = useWorkspace();
+  return (
+    <Button
+      variant="ghost"
+      onClick={() => {
+        workspace.openBoard(null);
+      }}
+    >
+      {t('project.backToBoards')}
+    </Button>
+  );
+}
+
+/** Открытой доски больше нет (удалили здесь или на другом устройстве). */
+export function MissingBoard() {
+  return (
+    <div className={styles.message}>
+      <p>{t('project.boardMissing')}</p>
+      <BoardsButton />
+    </div>
+  );
+}
+
+export function SearchButtons({
+  onSearch,
+  onLibrary,
+}: {
+  readonly onSearch: () => void;
+  readonly onLibrary: () => void;
+}) {
+  return (
+    <>
+      <Button variant="ghost" onClick={onSearch} title={t('project.search')}>
+        {t('project.searchButton')}
+      </Button>
+      <Button variant="ghost" onClick={onLibrary} title={t('project.entities')}>
+        {t('project.entitiesButton')}
+      </Button>
+    </>
+  );
+}
+
 /** Путь от корня до доски по данным проекта. */
 export function pathTo(board: Board, boards: readonly Board[]): Board[] {
   const byId = new Map(boards.map((item) => [item.id, item]));

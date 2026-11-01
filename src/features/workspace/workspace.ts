@@ -23,7 +23,8 @@ export interface Workspace {
   readonly store: StoreApi<WorkspaceState>;
   readonly updateSettings: (changes: Partial<Omit<DeviceSettings, 'version' | 'deviceId'>>) => void;
   readonly openProject: (folder: string, boardId?: BoardId | null) => void;
-  readonly openBoard: (boardId: BoardId) => void;
+  /** null — экран досок проекта. */
+  readonly openBoard: (boardId: BoardId | null) => void;
   readonly goHome: () => void;
   readonly openSettings: () => void;
   /** Переход по истории (кнопка «Назад» телефона): без новой записи в историю. */
