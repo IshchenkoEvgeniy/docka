@@ -12,7 +12,7 @@ import {
 import type { BoardBackground, BoardId, CommandEnvironment, ZoomedOutView } from '../../core';
 import { t } from '../../i18n';
 import { ElementRuntimeContext, useTags } from '../../elements';
-import { Dialog, Menu } from '../../ui';
+import { cx, Dialog, Menu } from '../../ui';
 import { HotkeyList } from '../hotkeys';
 import { pastePayload } from './boardActions';
 import { BOARD_HOTKEYS } from './boardHotkeys';
@@ -120,6 +120,7 @@ function BoardSurface({
 }) {
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [help, setHelp] = useState(false);
+  const [paletteCollapsed, setPaletteCollapsed] = useState(false);
   const controlsRef = useRef<CameraControls | null>(null);
   const pointerRef = useRef<Point | null>(null);
   const handlers = useMemo(
@@ -165,7 +166,7 @@ function BoardSurface({
 
   return (
     <div
-      className={styles.board}
+      className={cx(styles.board, paletteCollapsed && styles.paletteCollapsed)}
       onPointerMove={(event) => {
         const rect = controls.containerRef.current?.getBoundingClientRect();
         if (rect !== undefined)
@@ -191,6 +192,10 @@ function BoardSurface({
         <BoardDialogs model={model} background={background} />
       </ElementRuntimeContext.Provider>
       <ElementPalette
+        collapsed={paletteCollapsed}
+        onToggle={() => {
+          setPaletteCollapsed(!paletteCollapsed);
+        }}
         model={model}
         controls={controls}
         pickers={pickers}
@@ -210,7 +215,18 @@ function BoardSurface({
       <FindBar model={model} controls={controls} />
       {inputs}
       {menu !== null && (
-        <Menu {...menuContent(menu, model, controls, pickers, tags)} onClose={closeMenu} />
+        <Menu
+          {...menuContent(menu, model, controls, pickers, tags)}
+          title={t(
+            menu.kind === 'add'
+              ? 'board.toolbar.add'
+              : menu.kind === 'tags'
+                ? 'board.toolbar.tags'
+                : 'board.toolbar.actions',
+          )}
+          closeLabel={t('common.close')}
+          onClose={closeMenu}
+        />
       )}
       {help && (
         <Dialog title={t('hotkeys.title')} closeLabel={t('common.close')} onClose={closeHelp}>

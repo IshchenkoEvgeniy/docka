@@ -1,0 +1,80 @@
+.toolbar {
+  position: absolute;
+  top: var(--space-3);
+  left: calc(var(--palette-width) + var(--space-3));
+  right: var(--space-3);
+  z-index: 21;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  width: fit-content;
+  max-width: calc(100% - var(--palette-width) - 2 * var(--space-3));
+  padding: var(--space-2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-menu);
+  user-select: none;
+}
+
+.toolbar > * {
+  flex-shrink: 0;
+}
+.extras {
+  display: contents;
+}
+.toggle,
+.compactIcon {
+  display: none;
+}
+
+@media (pointer: coarse), (max-width: 640px) {
+  .toolbar {
+    top: var(--space-2);
+    right: var(--space-2);
+    left: var(--space-2);
+    gap: var(--space-1);
+    width: fit-content;
+    max-width: calc(100% - 2 * var(--space-2));
+    max-height: 50dvh;
+    padding: var(--space-1);
+    overflow-y: auto;
+    touch-action: pan-y;
+  }
+
+  .toolbar > button {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    padding: 0 var(--space-1);
+  }
+
+  .toolbar .zoomButton {
+    font-size: var(--font-size-sm);
+  }
+  .fullLabel,
+  .extras {
+    display: none;
+  }
+  .toggle,
+  .compactIcon {
+    display: inline-flex;
+  }
+
+  .expanded .extras {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    width: 100%;
+    padding-top: var(--space-1);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .extras button {
+    min-height: var(--touch-target);
+  }
+  .editing .fitButton,
+  .editing .zoomButton {
+    display: none;
+  }
+}

@@ -1,19 +1,17 @@
-import { useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useStore } from 'zustand';
 import { useCamera, useInteraction, type CameraControls } from '../../canvas';
 import { t } from '../../i18n';
-import { Button } from '../../ui';
+import { Button, Icon, cx } from '../../ui';
 import type { BoardModel } from './model';
-import { fitAll, zoomBy, zoomTo } from './view';
-import styles from './Board.module.css';
-import { BoardExport } from './BoardExport';
-import { FrameNavigator } from './FrameNavigator';
-import { pasteFromApp } from './pasting';
+import { fitAll, zoomTo } from './view';
+import styles from './Toolbar.module.css';
+import boardStyles from './Board.module.css';
+import { BoardToolbarExtras, type ToolbarMenu } from './BoardToolbarExtras';
 import { stopEditing } from './boardActions';
-import { worldPoint } from './view';
 
 /** Меню панели: «Добавить» и «Действия» с выделенным (на телефоне правой кнопки нет). */
-export type ToolbarMenu = 'add' | 'actions' | 'tags';
+export type { ToolbarMenu } from './BoardToolbarExtras';
 
 interface BoardToolbarProps {
   readonly model: BoardModel;
@@ -24,10 +22,9 @@ interface BoardToolbarProps {
 
 /** Всё, что есть в горячих клавишах и меню, доступно и пальцем (CLAUDE.md, раздел UX). */
 export function BoardToolbar({ model, controls, onHelp, onOpenMenu }: BoardToolbarProps) {
+  const [expanded, setExpanded] = useState(false);
   const canUndo = useSyncExternalStore(model.undo.subscribe, model.undo.canUndo);
   const canRedo = useSyncExternalStore(model.undo.subscribe, model.undo.canRedo);
-  const gridSnap = useStore(model.settings, (state) => state.gridSnap);
-  const tagFilter = useStore(model.settings, (state) => state.tagFilter);
   const zoom = useCamera(controls).zoom;
   const editing = useInteraction(model.interaction, (state) => state.editingId !== null);
   const hasSelection = useInteraction(
@@ -35,7 +32,11 @@ export function BoardToolbar({ model, controls, onHelp, onOpenMenu }: BoardToolb
     (state) => state.selection.size > 0 || state.connectionSelection.size > 0,
   );
   return (
-    <div className={styles.toolbar}>
+    <div
+      role="toolbar"
+      aria-label={t('board.toolbar.title')}
+      className={cx(styles.toolbar, expanded && styles.expanded, editing && styles.editing)}
+    >
       {editing && (
         <Button
           onClick={() => {
@@ -61,32 +62,20 @@ export function BoardToolbar({ model, controls, onHelp, onOpenMenu }: BoardToolb
       >
         {t('board.toolbar.redo')}
       </Button>
-      <span className={styles.divider} />
       <Button
-        onClick={() => {
-          void pasteFromApp(model, worldPoint(controls, null));
-        }}
-      >
-        {t('board.menu.paste')}
-      </Button>
-      <Button
+        className={styles.fitButton}
+        aria-label={t('board.toolbar.fitAll')}
         onClick={() => {
           fitAll(model, controls);
         }}
       >
-        {t('board.toolbar.fitAll')}
-      </Button>
-      <FrameNavigator model={model} controls={controls} />
-      <Button
-        className={styles.desktopOnly}
-        onClick={() => {
-          zoomBy(controls, -1);
-        }}
-        title={t('hotkeys.zoomOut')}
-      >
-        {t('board.toolbar.zoomOut')}
+        <span className={styles.fullLabel}>{t('board.toolbar.fitAll')}</span>
+        <span className={styles.compactIcon}>
+          <Icon name="fit" />
+        </span>
       </Button>
       <Button
+        className={styles.zoomButton}
         onClick={() => {
           zoomTo(controls, 1);
         }}
@@ -94,52 +83,38 @@ export function BoardToolbar({ model, controls, onHelp, onOpenMenu }: BoardToolb
       >
         {`${String(Math.round(zoom * 100))} %`}
       </Button>
-      <Button
-        className={styles.desktopOnly}
-        onClick={() => {
-          zoomBy(controls, 1);
-        }}
-        title={t('hotkeys.zoomIn')}
-      >
-        {t('board.toolbar.zoomIn')}
-      </Button>
-      <span className={styles.divider} />
-      <Button
-        pressed={gridSnap}
-        onClick={() => {
-          model.settings.setState({ gridSnap: !gridSnap });
-        }}
-      >
-        {t('board.toolbar.grid')}
-      </Button>
-      <Button
-        aria-haspopup="menu"
-        pressed={tagFilter !== null}
-        onClick={(event) => {
-          onOpenMenu('tags', event.currentTarget.getBoundingClientRect());
-        }}
-      >
-        {t('board.toolbar.tags')}
-      </Button>
       {hasSelection && (
         <Button
+          aria-label={t('board.toolbar.actions')}
           aria-haspopup="menu"
           onClick={(event) => {
             onOpenMenu('actions', event.currentTarget.getBoundingClientRect());
           }}
         >
-          {t('board.toolbar.actions')}
+          <span className={styles.fullLabel}>{t('board.toolbar.actions')}</span>
+          <span className={styles.compactIcon}>
+            <Icon name="more" />
+          </span>
         </Button>
       )}
       <Button
-        variant="ghost"
-        className={styles.desktopOnly}
-        onClick={onHelp}
-        title={t('hotkeys.help')}
+        className={styles.toggle}
+        aria-label={t('board.toolbar.controls')}
+        title={t('board.toolbar.controls')}
+        aria-expanded={expanded}
+        pressed={expanded}
+        onClick={() => {
+          setExpanded(!expanded);
+        }}
       >
-        {t('board.toolbar.help')}
+        <Icon name="controls" />
       </Button>
-      <BoardExport model={model} controls={controls} />
+      <BoardToolbarExtras
+        model={model}
+        controls={controls}
+        onHelp={onHelp}
+        onOpenMenu={onOpenMenu}
+      />
     </div>
   );
 }
@@ -149,7 +124,7 @@ export function BoardNotice({ model }: { readonly model: BoardModel }) {
   const message = useStore(model.notice, (state) => state.message);
   if (message === null) return null;
   return (
-    <div className={styles.notice} role="status">
+    <div className={boardStyles.notice} role="status">
       {message}
     </div>
   );

@@ -146,6 +146,7 @@ test('пустая середина рамки пропускает нажати
 test('рамки доступны на телефоне и их названия входят в PNG', async ({ page }, info) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/e2e/frames-fixture.html');
+  await page.getByRole('button', { name: 'Управление', exact: true }).click();
   const frames = page.getByRole('button', { name: 'Рамки', exact: true });
   await frames.click();
   const panel = page.getByRole('complementary', { name: 'Рамки' });
@@ -178,9 +179,13 @@ test('название рамки масштабируется вместе с �
   const card = page.getByText('Смотритель маяка', { exact: true });
   await expect(title).toBeVisible();
   const ratio = async (): Promise<number> => {
-    const [titleBox, cardBox] = [await title.boundingBox(), await card.boundingBox()];
-    if (titleBox === null || cardBox === null) throw new Error('Нет текста');
-    return titleBox.height / cardBox.height;
+    // Камера обновляется через RAF: обе высоты читаем в одном кадре браузера.
+    return page.evaluate(
+      ({ title, card }) => {
+        return title.getBoundingClientRect().height / card.getBoundingClientRect().height;
+      },
+      { title: await title.elementHandle(), card: await card.elementHandle() },
+    );
   };
   const before = await ratio();
   await page.mouse.move(640, 400);

@@ -4,6 +4,9 @@
  */
 const PATHS = {
   plus: 'M12 5v14M5 12h14',
+  chevronDown: 'm6 9 6 6 6-6',
+  fit: 'M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4',
+  controls: 'M4 7h4M12 7h8M8 4v6M4 17h8M16 17h4M16 14v6',
   note: 'M5 6h14M5 10h14M5 14h14M5 18h9',
   link: 'M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1',
   todo: 'M4 7l2 2 3-3M4 15l2 2 3-3M12 8h8M12 16h8',

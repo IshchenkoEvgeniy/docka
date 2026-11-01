@@ -58,6 +58,7 @@ test('телефон: кнопка «Вставить» получает изо�
     });
   });
   await page.goto('/e2e/board-previews-fixture.html');
+  await page.getByRole('button', { name: 'Управление', exact: true }).click();
   await page.getByRole('button', { name: 'Вставить', exact: true }).click();
   const image = page.getByRole('img', { name: 'clipboard.svg', exact: true });
   await expect(image).toBeVisible();

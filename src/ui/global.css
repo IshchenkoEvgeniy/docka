@@ -21,3 +21,10 @@ body {
   overscroll-behavior: none;
   touch-action: none;
 }
+
+/* Долгое нажатие на команду не должно запускать системное выделение текста Android. */
+button {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}

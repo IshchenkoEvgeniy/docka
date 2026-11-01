@@ -1,16 +1,53 @@
-.menu {
+.modal {
   position: fixed;
-  z-index: 100;
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  margin: 0;
+  color: var(--color-text);
+  background: transparent;
+  border: 0;
+}
+
+.modal::backdrop {
+  background: transparent;
+}
+
+.surface {
+  position: absolute;
+  left: var(--menu-x);
+  top: var(--menu-y);
   display: flex;
   flex-direction: column;
   min-width: 220px;
-  max-height: calc(100vh - 16px);
-  padding: var(--space-1);
-  overflow-y: auto;
+  max-width: calc(100% - 2 * var(--space-2));
+  max-height: calc(100% - 2 * var(--space-2));
+  overflow: hidden;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-menu);
+}
+
+.header {
+  display: none;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-1);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.menu > * {
+  flex-shrink: 0;
 }
 
 .item {
@@ -62,9 +99,47 @@
   border-top: 1px solid var(--color-border);
 }
 
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 640px) {
+  .modal::backdrop {
+    background: var(--color-scrim);
+  }
+
+  .surface {
+    top: auto;
+    right: var(--space-2);
+    bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+    left: var(--space-2);
+    min-width: 0;
+    max-width: none;
+    max-height: min(
+      65%,
+      calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2 * var(--space-2))
+    );
+    border-radius: var(--radius-lg);
+  }
+
+  .header {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--space-2);
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    user-select: none;
+  }
+
+  .header h2 {
+    margin: 0;
+    font-size: var(--font-size-md);
+  }
+  .header button {
+    min-height: var(--touch-target);
+  }
+
   .item {
     min-height: var(--touch-target);
+    padding: var(--space-2) var(--space-3);
   }
 
   /* Сочетания клавиш на телефоне — лишний шум. */

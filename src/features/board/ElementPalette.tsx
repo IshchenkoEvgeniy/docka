@@ -53,12 +53,16 @@ export function ElementPalette({
   controls,
   pickers,
   onMore,
+  collapsed,
+  onToggle,
 }: {
   readonly model: BoardModel;
   readonly controls: CameraControls;
   readonly pickers: AddPickers;
   /** «Ещё»: меню со всеми видами элементов. */
   readonly onMore: (anchor: DOMRect) => void;
+  readonly collapsed: boolean;
+  readonly onToggle: () => void;
 }) {
   const { ghost, handlers } = usePaletteDrag(model, controls, pickers);
   const trashRef = useRef<HTMLButtonElement>(null);
@@ -75,28 +79,52 @@ export function ElementPalette({
     />
   );
   return (
-    <nav className={styles.palette} aria-label={t('board.palette.title')}>
-      {CARD_TOOLS.map(button)}
+    <nav
+      className={cx(styles.palette, collapsed && styles.collapsed)}
+      aria-label={t('board.palette.title')}
+    >
+      <div className={styles.tools}>
+        {CARD_TOOLS.map(button)}
+        <PaletteButton
+          icon="more"
+          className={styles.desktopMore}
+          label="board.palette.more"
+          aria-haspopup="menu"
+          onClick={(event) => {
+            onMore(event.currentTarget.getBoundingClientRect());
+          }}
+        />
+        <span className={styles.separator} />
+        {FILE_TOOLS.map(button)}
+        <PaletteButton
+          ref={trashRef}
+          icon="trash"
+          label="board.palette.trash"
+          className={cx(styles.trash, overTrash && styles.trashOver)}
+          title={t('board.trash.dropHint')}
+          onClick={() => {
+            setTrashOpen(true);
+          }}
+        />
+      </div>
       <PaletteButton
         icon="more"
+        className={styles.mobileMore}
         label="board.palette.more"
         aria-haspopup="menu"
         onClick={(event) => {
           onMore(event.currentTarget.getBoundingClientRect());
         }}
       />
-      <span className={styles.separator} />
-      {FILE_TOOLS.map(button)}
-      <PaletteButton
-        ref={trashRef}
-        icon="trash"
-        label="board.palette.trash"
-        className={cx(styles.trash, overTrash && styles.trashOver)}
-        title={t('board.trash.dropHint')}
-        onClick={() => {
-          setTrashOpen(true);
-        }}
-      />
+      <button
+        type="button"
+        className={styles.toggle}
+        aria-label={t(collapsed ? 'board.palette.show' : 'board.palette.hide')}
+        aria-expanded={!collapsed}
+        onClick={onToggle}
+      >
+        <Icon name={collapsed ? 'plus' : 'chevronDown'} />
+      </button>
       {ghost !== null && <Ghost ghost={ghost} />}
       {trashOpen && (
         <TrashDialog

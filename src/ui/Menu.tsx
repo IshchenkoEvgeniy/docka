@@ -1,5 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { cx } from './cx';
+import { Button } from './Button';
+import { keepDialogFocus } from './dialogFocus';
+import { menuViewport } from './menuViewport';
 import styles from './Menu.module.css';
 
 export interface MenuAction {
@@ -19,6 +23,8 @@ export type MenuEntry =
   | { readonly kind: 'heading'; readonly id: string; readonly label: string };
 
 interface MenuProps {
+  readonly title: string;
+  readonly closeLabel: string;
   readonly entries: readonly MenuEntry[];
   /** Точка в координатах окна (clientX/clientY). */
   readonly position: { readonly x: number; readonly y: number };
@@ -35,35 +41,47 @@ function focusSibling(menu: HTMLElement, step: 1 | -1): void {
 }
 
 /** Контекстное меню: не выходит за край окна, закрывается по Esc, клику мимо и выбору пункта. */
-export function Menu({ entries, position, onClose }: MenuProps) {
+export function Menu({ entries, position, onClose, title, closeLabel }: MenuProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const previousFocus = useRef(document.activeElement);
+  const pointerStartedInside = useRef(false);
+  const [viewport, setViewport] = useState(menuViewport);
   const [placed, setPlaced] = useState(position);
 
   useLayoutEffect(() => {
-    const menu = ref.current;
-    if (menu === null) return;
-    const { width, height } = menu.getBoundingClientRect();
-    setPlaced({
-      x: Math.max(EDGE, Math.min(position.x, window.innerWidth - width - EDGE)),
-      y: Math.max(EDGE, Math.min(position.y, window.innerHeight - height - EDGE)),
-    });
-    menu.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
-  }, [position]);
-
-  useEffect(() => {
-    const onPointerDown = (event: PointerEvent): void => {
-      if (!(event.target instanceof Node) || ref.current?.contains(event.target) !== true)
-        onClose();
+    const dialog = dialogRef.current;
+    const previous = previousFocus.current;
+    dialog?.showModal();
+    const place = (): void => {
+      const bounds = menuViewport();
+      setViewport(bounds);
+      const { width, height } = surfaceRef.current?.getBoundingClientRect() ?? {
+        width: 0,
+        height: 0,
+      };
+      setPlaced({
+        x: Math.max(EDGE, Math.min(position.x - bounds.left, bounds.width - width - EDGE)),
+        y: Math.max(EDGE, Math.min(position.y - bounds.top, bounds.height - height - EDGE)),
+      });
     };
-    window.addEventListener('pointerdown', onPointerDown, { capture: true });
-    window.addEventListener('blur', onClose);
-    window.addEventListener('resize', onClose);
+    place();
+    ref.current
+      ?.querySelector<HTMLButtonElement>('button:not(:disabled)')
+      ?.focus({ preventScroll: true });
+    window.addEventListener('resize', place);
+    window.visualViewport?.addEventListener('resize', place);
+    window.visualViewport?.addEventListener('scroll', place);
     return () => {
-      window.removeEventListener('pointerdown', onPointerDown, { capture: true });
-      window.removeEventListener('blur', onClose);
-      window.removeEventListener('resize', onClose);
+      window.removeEventListener('resize', place);
+      window.visualViewport?.removeEventListener('resize', place);
+      window.visualViewport?.removeEventListener('scroll', place);
+      dialog?.close();
+      if (previous instanceof HTMLElement && previous.isConnected)
+        previous.focus({ preventScroll: true });
     };
-  }, [onClose]);
+  }, [position]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     const menu = ref.current;
@@ -75,39 +93,75 @@ export function Menu({ entries, position, onClose }: MenuProps) {
     event.stopPropagation();
   };
 
-  return (
-    <div
-      ref={ref}
-      role="menu"
-      className={styles.menu}
-      style={{ left: placed.x, top: placed.y }}
-      onKeyDown={onKeyDown}
+  const placement = {
+    '--menu-x': `${String(placed.x)}px`,
+    '--menu-y': `${String(placed.y)}px`,
+  } as CSSProperties; // CSS-переменные задают только координаты меню
+  return createPortal(
+    <dialog
+      ref={dialogRef}
+      className={styles.modal}
+      aria-label={title}
+      style={viewport}
+      onKeyDown={keepDialogFocus}
+      onPointerDownCapture={() => {
+        pointerStartedInside.current = true;
+      }}
+      onClickCapture={(event) => {
+        // Отпускание долгого нажатия, открывшего меню под пальцем, не выбирает его пункт.
+        if (event.detail > 0 && !pointerStartedInside.current) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onPointerDown={(event) => {
+        if (event.target === event.currentTarget) {
+          event.preventDefault();
+          onClose();
+        }
+      }}
     >
-      {entries.map((entry) => {
-        if (entry.kind === 'separator') return <hr key={entry.id} className={styles.separator} />;
-        if (entry.kind === 'heading')
-          return (
-            <div key={entry.id} className={styles.heading}>
-              {entry.label}
-            </div>
-          );
-        return (
-          <button
-            key={entry.id}
-            type="button"
-            role="menuitem"
-            disabled={entry.disabled}
-            className={cx(styles.item, entry.danger === true && styles.danger)}
-            onClick={() => {
-              onClose();
-              entry.onSelect();
-            }}
-          >
-            <span>{entry.label}</span>
-            {entry.hint !== undefined && <span className={styles.hint}>{entry.hint}</span>}
-          </button>
-        );
-      })}
-    </div>
+      <div ref={surfaceRef} className={styles.surface} style={placement}>
+        <header className={styles.header}>
+          <h2>{title}</h2>
+          <Button variant="ghost" onClick={onClose}>
+            {closeLabel}
+          </Button>
+        </header>
+        <div ref={ref} role="menu" aria-label={title} className={styles.menu} onKeyDown={onKeyDown}>
+          {entries.map((entry) => {
+            if (entry.kind === 'separator')
+              return <hr key={entry.id} className={styles.separator} />;
+            if (entry.kind === 'heading')
+              return (
+                <div key={entry.id} className={styles.heading}>
+                  {entry.label}
+                </div>
+              );
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                role="menuitem"
+                disabled={entry.disabled}
+                className={cx(styles.item, entry.danger === true && styles.danger)}
+                onClick={() => {
+                  onClose();
+                  entry.onSelect();
+                }}
+              >
+                <span>{entry.label}</span>
+                {entry.hint !== undefined && <span className={styles.hint}>{entry.hint}</span>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </dialog>,
+    document.body,
   );
 }
