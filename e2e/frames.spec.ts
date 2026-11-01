@@ -169,3 +169,22 @@ test('рамки доступны на телефоне и их названия
   expect(pixels.blue[2]).toBeGreaterThan(100);
   await expect(page.getByRole('status')).toContainText('сохранён');
 });
+
+test('название рамки масштабируется вместе с доской, а не остаётся одного размера на экране', async ({
+  page,
+}) => {
+  await page.goto('/e2e/frames-fixture.html');
+  const title = page.getByText('Персонажи и сюжет', { exact: true });
+  const card = page.getByText('Смотритель маяка', { exact: true });
+  await expect(title).toBeVisible();
+  const ratio = async (): Promise<number> => {
+    const [titleBox, cardBox] = [await title.boundingBox(), await card.boundingBox()];
+    if (titleBox === null || cardBox === null) throw new Error('Нет текста');
+    return titleBox.height / cardBox.height;
+  };
+  const before = await ratio();
+  await page.mouse.move(640, 400);
+  for (let step = 0; step < 4; step += 1) await page.keyboard.press('Control+Minus');
+  await expect(page.getByRole('button', { name: /^\d+ %$/ })).not.toHaveText('100 %');
+  expect(await ratio()).toBeCloseTo(before, 1);
+});
