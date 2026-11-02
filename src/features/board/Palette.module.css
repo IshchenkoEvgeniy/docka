@@ -98,9 +98,9 @@
     bottom: 0;
     flex-direction: row;
     width: auto;
-    height: calc(var(--palette-height) + env(safe-area-inset-bottom));
+    height: calc(var(--palette-height) + var(--board-safe-bottom, var(--safe-area-bottom)));
     padding: var(--space-1) var(--space-2);
-    padding-bottom: calc(var(--space-1) + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--space-1) + var(--board-safe-bottom, var(--safe-area-bottom)));
     overflow-x: auto;
     overflow-y: hidden;
     border-top: 1px solid var(--color-border);
@@ -137,7 +137,7 @@
   .collapsed {
     left: auto;
     right: var(--space-2);
-    bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+    bottom: calc(var(--space-2) + var(--board-safe-bottom, var(--safe-area-bottom)));
     height: auto;
     padding: 0;
     overflow: visible;
@@ -160,6 +160,7 @@
   .tool {
     flex-shrink: 0;
     min-width: 56px;
+    padding: 0;
     touch-action: pan-x;
   }
 
@@ -169,6 +170,7 @@
   }
 
   .toolIcon {
+    flex-shrink: 0;
     width: 36px;
     height: 36px;
   }

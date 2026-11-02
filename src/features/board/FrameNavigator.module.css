@@ -90,6 +90,8 @@
 @media (pointer: coarse), (max-width: 640px) {
   .panel {
     top: 72px;
-    max-height: calc(100% - var(--palette-height) - 88px - env(safe-area-inset-bottom));
+    max-height: calc(
+      100% - var(--palette-height) - 88px - var(--board-safe-bottom, var(--safe-area-bottom))
+    );
   }
 }

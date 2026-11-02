@@ -1,4 +1,7 @@
 .screen {
+  /* Системную область снизу уже учитывает строка состояния под доской. */
+  --board-safe-bottom: 0px;
+
   display: flex;
   flex-direction: column;
   height: 100%;

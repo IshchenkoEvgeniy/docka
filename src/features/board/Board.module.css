@@ -1,6 +1,6 @@
 .board {
   --palette-width: 76px;
-  --palette-height: 72px;
+  --palette-height: 64px;
 
   position: relative;
   width: 100%;
@@ -33,7 +33,7 @@
 /* Свёрнутая панель освобождает нижнюю часть холста. */
 @media (pointer: coarse), (max-width: 640px) {
   .canvasArea {
-    bottom: calc(var(--palette-height) + env(safe-area-inset-bottom));
+    bottom: calc(var(--palette-height) + var(--board-safe-bottom, var(--safe-area-bottom)));
     left: 0;
   }
 
@@ -42,7 +42,9 @@
   }
 
   .notice {
-    bottom: calc(var(--palette-height) + var(--space-3) + env(safe-area-inset-bottom));
+    bottom: calc(
+      var(--palette-height) + var(--space-3) + var(--board-safe-bottom, var(--safe-area-bottom))
+    );
   }
 }
 

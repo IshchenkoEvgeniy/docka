@@ -2,6 +2,44 @@ import { expect, test } from '@playwright/test';
 
 test.use({ viewport: { width: 390, height: 780 }, hasTouch: true, isMobile: true });
 
+for (const bottomInset of [0, 48]) {
+  test(`панель элементов компактная, нижний системный отступ ${String(bottomInset)} px учтён один раз`, async ({
+    page,
+  }, info) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto('/');
+    await page.addStyleTag({ content: `:root { --safe-area-bottom: ${String(bottomInset)}px; }` });
+    await page.getByRole('button', { name: /^Пример/ }).click();
+    await page.getByRole('button', { name: /Пример 48 карточек/ }).click();
+    const hide = page.getByRole('button', { name: 'Скрыть панель элементов', exact: true });
+    const palette = page.locator('nav').filter({ has: hide });
+    const status = page.getByText('Сохранено на устройстве', { exact: true }).locator('..');
+    await expect(hide).toBeVisible();
+    const [bar, footer] = [await palette.boundingBox(), await status.boundingBox()];
+    if (bar === null || footer === null) throw new Error('Нет нижней панели');
+    expect(bar.height).toBeLessThanOrEqual(64);
+    expect(bar.y + bar.height).toBeCloseTo(footer.y, 0);
+    expect(await status.evaluate((node) => parseFloat(getComputedStyle(node).paddingBottom))).toBe(
+      4 + bottomInset,
+    );
+    const note = page.getByRole('button', { name: 'Заметка', exact: true });
+    const target = await note.boundingBox();
+    if (target === null) throw new Error('Нет кнопки');
+    expect(target.height).toBeGreaterThanOrEqual(44);
+    const label = await note.locator('span').last().boundingBox();
+    if (label === null) throw new Error('Нет подписи');
+    expect(label.y + label.height).toBeLessThanOrEqual(bar.y + bar.height);
+    await page.screenshot({ path: info.outputPath(`compact-palette-${String(bottomInset)}.png`) });
+    await hide.click();
+    const canvas = await page.locator('[data-canvas-background]').first().boundingBox();
+    if (canvas === null) throw new Error('Нет холста');
+    expect(canvas.y + canvas.height).toBeCloseTo(footer.y, 0);
+    await expect(
+      page.getByRole('button', { name: 'Показать панель элементов', exact: true }),
+    ).toBeInViewport();
+  });
+}
+
 test('на компьютере одна кнопка «Ещё», меню остаётся рядом с указателем', async ({ browser }) => {
   const context = await browser.newContext({
     viewport: { width: 1280, height: 800 },

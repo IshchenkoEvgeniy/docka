@@ -21,6 +21,7 @@
   --radius-lg: 12px;
 
   --touch-target: 44px;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 
   /* Просмотр на весь экран — тёмный в обеих темах. */
   --color-viewer: rgb(0 0 0 / 85%);
