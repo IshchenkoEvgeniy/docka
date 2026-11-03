@@ -58,4 +58,6 @@ export {
   ELEMENT_ID_ATTRIBUTE,
 } from './attachPointerEvents';
 export { arrowHead, connectorGeometry, facingSide } from './connectors';
+export { mindMapBranches } from './mindMapLines';
+export type { MindMapBranch } from './mindMapLines';
 export type { AnchorSide, ConnectorEnd, ConnectorGeometry, LineStyle, Side } from './connectors';

@@ -23,6 +23,7 @@ import {
 } from '../../data';
 import { TEXT_EDIT_ORIGIN } from '../../elements';
 import { NO_HOST, type BoardHost } from './host';
+import { createMindMapView, type MindMapView } from './mindMapView';
 
 /** Настройки работы с доской (эфемерные; в настройки приложения переедут на этапе 3). */
 export interface BoardSettings {
@@ -48,7 +49,9 @@ export type BoardDialog =
   /** Адрес новой ссылки; at — куда положить карточку. */
   | { readonly kind: 'link'; readonly at: Point }
   /** Вставка элементов-ссылок на сущности: ссылка на те же или независимые копии. */
-  | { readonly kind: 'references'; readonly elements: readonly NewElement[] };
+  | { readonly kind: 'references'; readonly elements: readonly NewElement[] }
+  /** Удаление узлов майнд-карты с ветками: с ветками или только узлы. */
+  | { readonly kind: 'mindMapDelete'; readonly elementIds: readonly string[] };
 
 /** Поверх доски: картинка на весь экран или окно настройки. */
 export interface BoardOverlay {
@@ -62,7 +65,10 @@ export interface BoardModel {
   readonly boardId: BoardId;
   readonly host: BoardHost;
   readonly overlay: StoreApi<BoardOverlay>;
+  /** Видимые элементы: без веток, скрытых сворачиванием майнд-карты. */
   readonly elements: BoardElementsStore;
+  /** Карты доски по всем элементам (дерево, скрытое) — для линий ветвей и кнопок. */
+  readonly mindMaps: MindMapView['maps'];
   readonly connections: BoardConnectionsStore;
   /** batch — несколько команд разных документов одним шагом отмены. */
   readonly undo: CombinedUndoHistory;
@@ -160,7 +166,7 @@ export function createBoardModel(
   environment: CommandEnvironment,
   host: BoardHost = NO_HOST,
 ): BoardModel {
-  const elements = createBoardElementsStore(doc);
+  const { visible: elements, maps } = createMindMapView(createBoardElementsStore(doc));
   const connections = createBoardConnectionsStore(doc);
   const { undo, destroyHistory } = boardHistory(doc, host);
   const interaction = createInteractionStore();
@@ -176,6 +182,7 @@ export function createBoardModel(
     host,
     overlay: createStore<BoardOverlay>(() => ({ viewingId: null, dialog: null })),
     elements,
+    mindMaps: maps,
     connections,
     undo,
     interaction,

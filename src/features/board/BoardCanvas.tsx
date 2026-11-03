@@ -19,6 +19,7 @@ import { BOARD_HOTKEYS } from './boardHotkeys';
 import { BoardNotice, BoardToolbar } from './BoardToolbar';
 import { BoardDialogs } from './BoardDialogs';
 import { ConnectionLayer } from './ConnectionLayer';
+import { MindMapLines, MindMapToggles } from './MindMapLayer';
 import { BoardOverview, ElementLayer } from './ElementLayer';
 import { ElementPalette } from './ElementPalette';
 import { createGestureHandlers } from './gestureHandlers';
@@ -182,8 +183,10 @@ function BoardSurface({
               <BoardOverview model={model} controls={controls} zoomedOutView={zoomedOutView} />
             }
           >
+            <MindMapLines model={model} />
             <ConnectionLayer model={model} />
             <ElementLayer model={model} controls={controls} zoomedOutView={zoomedOutView} />
+            <MindMapToggles model={model} />
             <InteractionOverlay store={model.interaction} />
           </Viewport>
         </div>

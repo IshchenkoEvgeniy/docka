@@ -62,6 +62,7 @@ function newElement(
     tagIds: (element.tags ?? []).flatMap((name) => tagId(applying, name) ?? []),
     ...(definition.richText && richText !== undefined ? { richText } : {}),
     ...(element.parentIndex === undefined ? {} : { parentIndex: element.parentIndex }),
+    ...(element.mindMap === undefined ? {} : { mindMap: element.mindMap }),
   };
 }
 

@@ -1,4 +1,4 @@
-import { arrowHead, connectorGeometry, type Point } from '../../canvas';
+import { arrowHead, connectorGeometry, mindMapBranches, type Point } from '../../canvas';
 import type { Connection } from '../../core';
 import { inkColor } from '../../ui';
 import { exportEnd, type ExportPlan } from './plan';
@@ -25,9 +25,18 @@ export function ExportConnections({ plan }: { readonly plan: ExportPlan }) {
     if (from === null || to === null) return [];
     return [{ connection, geometry: connectorGeometry(from, to, connection.lineStyle) }];
   });
+  const branches = mindMapBranches(plan.elements);
   return (
     <>
       <svg className={styles.lines} aria-hidden="true">
+        {branches.map((branch) => (
+          <path
+            key={`branch-${branch.childId}`}
+            d={branch.path}
+            // Обводка — прямо на линии: снимок сцены переносит вычисленные стили каждого узла.
+            style={{ stroke: inkColor(branch.color) }}
+          />
+        ))}
         {lines.map(({ connection, geometry }) => (
           <g key={connection.id} style={{ color: inkColor(connection.color) }}>
             <path d={geometry.path} />

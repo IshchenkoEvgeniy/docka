@@ -2,7 +2,8 @@ import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { CameraControls, Point } from '../../canvas';
 import type { AddPickers } from './addMenu';
 import type { BoardModel } from './model';
-import { canvasPoint, columnAt, columnSlot } from './paletteDrop';
+import { canvasPoint, columnAt, columnSlot, mindMapNodeAt } from './paletteDrop';
+import { placeOnMindMapNode } from './mindMapActions';
 import type { PaletteTool } from './paletteTools';
 import { worldPoint } from './view';
 
@@ -87,12 +88,20 @@ export function usePaletteDrag(model: BoardModel, controls: CameraControls, pick
   const hover = (tool: PaletteTool, client: Point): void => {
     const overCanvas = canvasPoint(controls, client) !== null;
     setGhost({ tool, client, overCanvas });
-    showColumnTarget(model, overCanvas ? (columnAt(model, client)?.id ?? null) : null);
+    const target = columnAt(model, client)?.id ?? mindMapNodeAt(model, client);
+    showColumnTarget(model, overCanvas ? target : null);
   };
   const drop = (tool: PaletteTool, client: Point): void => {
     const at = canvasPoint(controls, client);
     if (at === null) return;
     const column = columnAt(model, client);
+    const node = column === null ? mindMapNodeAt(model, client) : null;
+    if (node !== null) {
+      placeOnMindMapNode(model, node, () => {
+        tool.place(model, at, pickers, null);
+      });
+      return;
+    }
     tool.place(
       model,
       at,

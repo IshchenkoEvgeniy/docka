@@ -4,6 +4,8 @@
  */
 const PATHS = {
   plus: 'M12 5v14M5 12h14',
+  minus: 'M5 12h14',
+  mindMap: 'M3 10h6v4H3zM9 12h3M12 12l3-5h5M12 12l3 5h5',
   chevronDown: 'm6 9 6 6 6-6',
   fit: 'M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4',
   controls: 'M4 7h4M12 7h8M8 4v6M4 17h8M16 17h4M16 14v6',

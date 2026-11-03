@@ -61,7 +61,20 @@ export const BOARD_HOTKEYS: readonly HotkeyDefinition[] = [
   },
   { id: 'addShape', combos: ['KeyS'], label: 'hotkeys.addShape', group: 'hotkeys.group.edit' },
   { id: 'addLink', combos: ['KeyL'], label: 'hotkeys.addLink', group: 'hotkeys.group.edit' },
+  // Enter у узла майнд-карты добавляет соседнюю ветку; править текст узла — F2 или двойной щелчок.
   { id: 'editText', combos: ['Enter'], label: 'hotkeys.editText', group: 'hotkeys.group.edit' },
+  {
+    id: 'editTextAlways',
+    combos: ['F2'],
+    label: 'hotkeys.editTextAlways',
+    group: 'hotkeys.group.edit',
+  },
+  {
+    id: 'mindMapChild',
+    combos: ['Tab'],
+    label: 'hotkeys.mindMapChild',
+    group: 'hotkeys.group.edit',
+  },
   {
     id: 'selectAll',
     combos: ['Mod+KeyA'],

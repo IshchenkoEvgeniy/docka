@@ -1,5 +1,6 @@
 import type * as Y from 'yjs';
 import {
+  buildMindMapForest,
   compareStacking,
   fieldsOf,
   optionsOf,
@@ -94,7 +95,35 @@ function captureElements(
       ...(tags.length === 0 ? {} : { tags }),
     });
   }
-  return { elements, indexOf };
+  return { elements: withMindMaps(doc, elements, indexOf), indexOf };
+}
+
+/** Места в картах — номерами в шаблоне; родитель не попал в шаблон — узел становится корнем. */
+function withMindMaps(
+  doc: Y.Doc,
+  elements: readonly TemplateElement[],
+  indexOf: ReadonlyMap<string, number>,
+): TemplateElement[] {
+  const forest = buildMindMapForest(readElements(doc).items);
+  const result = [...elements];
+  for (const [id, index] of indexOf) {
+    const node = forest.nodes.get(id);
+    const element = result[index];
+    if (node === undefined || element === undefined) continue;
+    const parentIndex = node.parentId === null ? undefined : indexOf.get(node.parentId);
+    const direction = forest.nodes.get(node.rootId)?.link.direction;
+    const place =
+      parentIndex === undefined
+        ? direction === undefined
+          ? {}
+          : { direction }
+        : { parentIndex, ...(node.link.side === undefined ? {} : { side: node.link.side }) };
+    result[index] = {
+      ...element,
+      mindMap: { order: node.link.order, collapsed: node.link.collapsed, ...place },
+    };
+  }
+  return result;
 }
 
 function captureConnections(doc: Y.Doc, indexOf: ReadonlyMap<string, number>) {

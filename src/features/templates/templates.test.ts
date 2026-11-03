@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildMindMapForest,
   createManualClock,
   createMemoryFileSystem,
   createSequentialIdGenerator,
   fieldsOf,
+  type ElementId,
 } from '../../core';
 import {
   createProject,
+  executeBoardCommand,
   executeProjectCommand,
   listTemplates,
   readBoards,
@@ -100,5 +103,39 @@ describe('шаблоны', () => {
       (type) => type.name === 'Квест',
     );
     expect(types).toHaveLength(1);
+  });
+
+  it('майнд-карта переживает «сохранить как шаблон» и применение', async () => {
+    const { environment, project } = await newProject();
+    const root = project.meta.rootBoardId;
+    const board = await project.openBoard(root);
+    const run = (command: Parameters<typeof executeBoardCommand>[2]) => {
+      const result = executeBoardCommand(board.doc, root, command, environment);
+      if (!result.ok) throw new Error(result.error);
+      return (result.value.createdId ?? '') as ElementId; // id новой карточки
+    };
+    const note = { type: 'note', placement: { x: 0, y: 0, width: 200, height: 40 }, data: {} };
+    const center = run({ kind: 'createElement', ...note });
+    run({ kind: 'makeMindMapRoot', elementId: center, direction: 'down' });
+    const a = run({ kind: 'addMindMapNode', anchorId: center, relation: 'child', element: note });
+    run({ kind: 'addMindMapNode', anchorId: a, relation: 'child', element: note });
+    run({ kind: 'setMindMapCollapsed', elementId: a, collapsed: true });
+    const template = await captureTemplate(project, root, {
+      id: 'map-template-1',
+      name: 'Карта',
+      description: '',
+    });
+    if (template === null) throw new Error('нет шаблона');
+    const copy = await applyTemplate(project, environment, template, { parentId: root });
+    if (!copy.ok) throw new Error(copy.error);
+    const forest = buildMindMapForest(
+      readElements((await project.openBoard(copy.value)).doc).items,
+    );
+    expect(forest.roots).toHaveLength(1);
+    const copiedRoot = forest.nodes.get(forest.roots[0] ?? '');
+    expect(copiedRoot?.link.direction).toBe('down');
+    const branch = forest.nodes.get(copiedRoot?.children[0] ?? '');
+    expect(branch?.link.collapsed).toBe(true);
+    expect(branch?.children).toHaveLength(1);
   });
 });

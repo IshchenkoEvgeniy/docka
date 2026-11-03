@@ -56,3 +56,14 @@ export function columnSlot(
         : (before.y + after.y) / 2;
   return { columnId: column.id, order };
 }
+
+/** Узел майнд-карты под точкой экрана (сама карточка-узел). */
+export function mindMapNodeAt(model: BoardModel, client: Point): string | null {
+  const { forest } = model.mindMaps.getSnapshot();
+  if (forest.nodes.size === 0) return null;
+  for (const node of document.elementsFromPoint(client.x, client.y)) {
+    const id = node.closest(`[${ELEMENT_ID_ATTRIBUTE}]`)?.getAttribute(ELEMENT_ID_ATTRIBUTE);
+    if (id !== null && id !== undefined && forest.nodes.has(id)) return id;
+  }
+  return null;
+}

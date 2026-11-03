@@ -17,6 +17,7 @@ import {
 } from './boardActions';
 import type { AddPickers } from './addMenu';
 import { BOARD_HOTKEYS } from './boardHotkeys';
+import { addMindMapBranch, selectedMindMapNode } from './mindMapActions';
 import type { BoardModel } from './model';
 import { fitAll, worldPoint, zoomBy, zoomTo } from './view';
 
@@ -97,6 +98,26 @@ function createHandlers(
   };
 }
 
+/** Enter у узла карты — соседняя ветка, иначе правка текста; Tab — ветка (не у узла — фокус). */
+function mindMapHandlers(model: BoardModel): HotkeyHandlers {
+  return {
+    editText: () => {
+      const node = selectedMindMapNode(model);
+      if (node === null) editSelection(model);
+      else addMindMapBranch(model, node.id, 'sibling');
+    },
+    editTextAlways: () => {
+      editSelection(model);
+    },
+    mindMapChild: () => {
+      const node = selectedMindMapNode(model);
+      if (node === null) return false;
+      addMindMapBranch(model, node.id, 'child');
+      return true;
+    },
+  };
+}
+
 function editHandlers({ model, controls, pointer, pickers }: HotkeyContext): HotkeyHandlers {
   const on = (action: (target: BoardModel) => void) => () => {
     action(model);
@@ -106,7 +127,7 @@ function editHandlers({ model, controls, pointer, pickers }: HotkeyContext): Hot
     redo: () => void model.undo.redo(),
     duplicate: on(duplicateSelection),
     delete: on(deleteSelection),
-    editText: on(editSelection),
+    ...mindMapHandlers(model),
     ...createHandlers(model, controls, pointer, pickers),
     selectAll: on(selectAll),
     search: () => {

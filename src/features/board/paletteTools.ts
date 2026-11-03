@@ -4,6 +4,7 @@ import type { TranslationKey } from '../../i18n';
 import type { IconName } from '../../ui';
 import type { AddPickers } from './addMenu';
 import { createBoardCard, createElementAt, createNote, type ColumnSlot } from './boardActions';
+import { createMindMap } from './mindMapActions';
 import type { BoardModel } from './model';
 
 /** Что кладёт значок панели: в точку, куда его бросили, или в центр экрана по нажатию. */
@@ -65,6 +66,14 @@ export const CARD_TOOLS: readonly PaletteTool[] = [
     },
   },
   { id: 'line', icon: 'line', label: 'board.palette.line', place: createLine },
+  {
+    id: 'mindMap',
+    icon: 'mindMap',
+    label: 'board.palette.mindMap',
+    place: (model, at) => {
+      createMindMap(model, at);
+    },
+  },
   {
     id: 'frame',
     icon: 'frame',

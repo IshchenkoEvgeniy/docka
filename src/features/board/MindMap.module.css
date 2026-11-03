@@ -1,0 +1,65 @@
+.lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.branch {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: calc(2px / var(--canvas-zoom, 1));
+  stroke-linecap: round;
+}
+
+/*
+ * Размер кнопки постоянен на экране от масштаба 50 % и выше; при сильном отдалении кнопка
+ * уменьшается вместе с карточками, чтобы не закрывать их текст.
+ */
+.toggle {
+  --toggle-unit: min(calc(1px / var(--canvas-zoom, 1)), 2px);
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  min-width: calc(24 * var(--toggle-unit));
+  height: calc(24 * var(--toggle-unit));
+  padding: 0 calc(4 * var(--toggle-unit));
+  border: var(--toggle-unit) solid var(--color-border);
+  border-radius: calc(12 * var(--toggle-unit));
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: calc(12 * var(--toggle-unit));
+  line-height: 1;
+  cursor: pointer;
+}
+
+.toggle svg {
+  width: calc(14 * var(--toggle-unit));
+  height: calc(14 * var(--toggle-unit));
+}
+
+.toggle:hover,
+.toggle:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Палец: зона нажатия не меньше 44 px на экране. */
+@media (pointer: coarse) {
+  .toggle::before {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: calc(44px / var(--canvas-zoom, 1));
+    height: calc(44px / var(--canvas-zoom, 1));
+    transform: translate(-50%, -50%);
+  }
+}

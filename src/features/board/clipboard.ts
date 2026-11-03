@@ -3,12 +3,17 @@ import { createStore } from 'zustand/vanilla';
 import { boundsOf, type Point } from '../../canvas';
 import {
   ElementSchema,
+  MindMapPlacementSchema,
   RichTextSchema,
+  formatOutline,
   TagIdSchema,
   tagIdsOf,
   type TagId,
   type BoardElement,
   type NewElement,
+  type MindMapForest,
+  type MindMapPlacement,
+  type OutlineItem,
   type RichNode,
 } from '../../core';
 import { definitionFor } from '../../elements';
@@ -35,6 +40,8 @@ const ClipboardElementSchema = ElementSchema.pick({
   richText: RichTextSchema.optional(),
   /** Карточка колонки: номер колонки в этом же списке (координаты — порядок внутри неё). */
   parentIndex: z.number().int().nonnegative().optional(),
+  /** Узел майнд-карты: родитель — номер в этом же списке; нет — корень новой карты. */
+  mindMap: MindMapPlacementSchema.optional(),
 });
 
 const ClipboardPayloadSchema = z.object({
@@ -51,15 +58,72 @@ export interface ClipboardContent {
   readonly plainText: string;
 }
 
-/** elements — в порядке наложения снизу вверх; richTextOf — текст элемента из Yjs. */
+/** Место узла в пачке: родитель, если он тоже копируется; иначе — корень с направлением карты. */
+function placementOf(
+  forest: MindMapForest | null,
+  id: string,
+  indexOf: ReadonlyMap<string, number>,
+): MindMapPlacement | undefined {
+  const node = forest?.nodes.get(id);
+  if (forest === null || node === undefined) return undefined;
+  const parentIndex = node.parentId === null ? undefined : indexOf.get(node.parentId);
+  const base = { order: node.link.order, collapsed: node.link.collapsed };
+  if (parentIndex === undefined) {
+    const direction = forest.nodes.get(node.rootId)?.link.direction;
+    return { ...base, ...(direction === undefined ? {} : { direction }) };
+  }
+  return {
+    ...base,
+    parentIndex,
+    ...(node.link.side === undefined ? {} : { side: node.link.side }),
+  };
+}
+
+/** Текст копии: карточки — абзацами, карты — вложенными списками (первая строка узла). */
+function plainTextOf(
+  elements: readonly BoardElement[],
+  texts: ReadonlyMap<string, string>,
+  places: readonly (MindMapPlacement | undefined)[],
+): string {
+  const childrenOf = new Map<number, number[]>();
+  places.forEach((place, index) => {
+    if (place?.parentIndex === undefined) return;
+    childrenOf.set(place.parentIndex, [...(childrenOf.get(place.parentIndex) ?? []), index]);
+  });
+  const textAt = (index: number) => texts.get(elements[index]?.id ?? '') ?? '';
+  const item = (index: number, seen: Set<number>): OutlineItem => {
+    seen.add(index);
+    const kids = (childrenOf.get(index) ?? [])
+      .filter((kid) => !seen.has(kid))
+      .sort((a, b) => (places[a]?.order ?? 0) - (places[b]?.order ?? 0));
+    return {
+      text: textAt(index).split('\n')[0] ?? '',
+      children: kids.map((kid) => item(kid, seen)),
+    };
+  };
+  const blocks = elements.flatMap((_, index) => {
+    const place = places[index];
+    if (place === undefined) return textAt(index) === '' ? [] : [textAt(index)];
+    if (place.parentIndex !== undefined) return [];
+    return [formatOutline([item(index, new Set())]).join('\n')];
+  });
+  return blocks.join('\n\n');
+}
+
+/**
+ * elements — в порядке наложения снизу вверх; richTextOf — текст элемента из Yjs;
+ * forest — карты доски: узлы копируются вместе с местом в карте (ADR 0011).
+ */
 export function copyContent(
   elements: readonly BoardElement[],
   richTextOf: (elementId: string) => readonly RichNode[] | null,
+  forest: MindMapForest | null = null,
 ): ClipboardContent | null {
   if (elements.length === 0) return null;
-  const texts: string[] = [];
+  const texts = new Map<string, string>();
   const indexOf = new Map(elements.map((element, index) => [element.id as string, index]));
-  const copied = elements.map((element) => {
+  const places = elements.map((element) => placementOf(forest, element.id, indexOf));
+  const copied = elements.map((element, index) => {
     const { type, x, y, width, height, color, data } = element;
     const tagIds = tagIdsOf(element.tags).flatMap((id): TagId[] => {
       const parsed = TagIdSchema.safeParse(id);
@@ -68,9 +132,9 @@ export function copyContent(
     const definition = definitionFor(type);
     const stored = richTextOf(element.id);
     const richText = definition.toRichText(element, stored);
-    const text = definition.toPlainText(element, stored);
-    if (text !== '') texts.push(text);
+    texts.set(element.id, definition.toPlainText(element, stored));
     const parentIndex = element.parentId === null ? undefined : indexOf.get(element.parentId);
+    const mindMap = places[index];
     const base = {
       type,
       x,
@@ -81,6 +145,7 @@ export function copyContent(
       tagIds,
       data,
       ...(parentIndex === undefined ? {} : { parentIndex }),
+      ...(mindMap === undefined ? {} : { mindMap }),
     };
     return richText === null ? base : { ...base, richText: [...richText] };
   });
@@ -90,7 +155,7 @@ export function copyContent(
     version: 1,
     elements: copied,
   };
-  return { payload, plainText: texts.join('\n\n') };
+  return { payload, plainText: plainTextOf(elements, texts, places) };
 }
 
 export function serializePayload(payload: ClipboardPayload): string {
@@ -128,6 +193,7 @@ export function placePayload(payload: ClipboardPayload, center: Point): NewEleme
       data: element.data,
       ...(element.richText === undefined ? {} : { richText: element.richText }),
       ...(element.parentIndex === undefined ? {} : { parentIndex: element.parentIndex }),
+      ...(element.mindMap === undefined ? {} : { mindMap: element.mindMap }),
     };
   });
 }

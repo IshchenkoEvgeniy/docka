@@ -1,9 +1,10 @@
 import type { Point } from '../../canvas';
-import type { SystemClipboard } from '../../core';
+import { parseOutline, type SystemClipboard } from '../../core';
 import { t } from '../../i18n';
 import { createFromText, createNote, pastePayload, stopEditing } from './boardActions';
 import { insertFiles } from './files';
 import { appClipboard, parsePayload, type ClipboardContent } from './clipboard';
+import { createMindMapFromOutline } from './mindMapActions';
 import type { BoardModel } from './model';
 
 /** Что вставить из системного буфера: свой формат, наш же текст (система потеряла формат) или чужой текст. */
@@ -30,8 +31,30 @@ export function applyPaste(
 ): void {
   if (resolved === null) model.showNotice(t('board.notice.nothingToPaste'));
   else if (resolved.kind === 'elements') pastePayload(model, resolved.content, at);
-  // Ссылка — карточкой ссылки, текст из Excel — таблицей, остальное — заметкой.
-  else if (!createFromText(model, resolved.text, at)) createNote(model, at, resolved.text);
+  else pasteText(model, resolved.text, at);
+}
+
+/**
+ * Вложенный список с маркерами — майнд-картой; ссылка — карточкой ссылки, текст из Excel —
+ * таблицей, остальное — заметкой.
+ */
+function pasteText(model: BoardModel, text: string, at: Point): void {
+  const outline = parseOutline(text);
+  if (outline !== null) createMindMapFromOutline(model, outline, at);
+  else if (!createFromText(model, text, at)) createNote(model, at, text);
+}
+
+/** «Вставить как майнд-карту»: каждая строка текста из буфера — пункт карты. */
+export async function pasteAsMindMap(model: BoardModel, at: Point): Promise<void> {
+  let text = '';
+  try {
+    text = model.host.readClipboard === null ? '' : (await model.host.readClipboard()).text;
+  } catch (error: unknown) {
+    console.error('Буфер обмена не прочитан', error);
+  }
+  const outline = parseOutline(text, true);
+  if (outline === null) model.showNotice(t('mindMap.nothingToPaste'));
+  else createMindMapFromOutline(model, outline, at);
 }
 
 /**

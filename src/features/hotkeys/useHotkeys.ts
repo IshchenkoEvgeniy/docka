@@ -3,7 +3,8 @@ import { isEditableTarget, isModalOpen } from '../../ui';
 import { isMacPlatform } from './combo';
 import { findHotkey, parseHotkeys, type HotkeyDefinition } from './registry';
 
-export type HotkeyHandlers = Readonly<Partial<Record<string, () => void>>>;
+/** Обработчик может вернуть false: «не моё» — тогда браузер делает своё (Tab двигает фокус). */
+export type HotkeyHandlers = Readonly<Partial<Record<string, () => unknown>>>;
 
 /**
  * Один обработчик клавиатуры на окно. Пока фокус в поле ввода, горячие клавиши не мешают печатать.
@@ -26,9 +27,8 @@ export function useHotkeys(
       if (isEditableTarget(event.target) || isModalOpen()) return;
       const id = findHotkey(parsed, event, isMac);
       const handler = id === null ? undefined : handlersRef.current[id];
-      if (handler === undefined) return;
+      if (handler === undefined || handler() === false) return;
       event.preventDefault();
-      handler();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {

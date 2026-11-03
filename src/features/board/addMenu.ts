@@ -2,7 +2,7 @@ import type { Point } from '../../canvas';
 import type { TranslationKey } from '../../i18n';
 import type { MenuEntry } from '../../ui';
 import { createBoardCard, createElementAt, openLibrary } from './boardActions';
-import { action } from './menuEntries';
+import { action } from './menuAction';
 import type { BoardModel } from './model';
 
 /** Системные окна выбора файлов и окно адреса ссылки (их держит доска). */

@@ -6,6 +6,7 @@ import { t } from '../../i18n';
 import { Button, ColorPalette, Dialog, Segmented, TextField, cardColor, inkColor } from '../../ui';
 import { createFromText, selectedElements, updateConnection } from './boardActions';
 import { TagPicker } from '../tags';
+import { MindMapDeleteDialog } from './MindMapDeleteDialog';
 import type { BoardModel } from './model';
 import { placeElements, placeWithCopies } from './references';
 import styles from './Board.module.css';
@@ -143,6 +144,8 @@ export function BoardDialogs({
   const close = (): void => {
     model.overlay.setState({ dialog: null });
   };
+  if (dialog.kind === 'mindMapDelete')
+    return <MindMapDeleteDialog model={model} elementIds={dialog.elementIds} onClose={close} />;
   if (dialog.kind === 'label')
     return (
       <Dialog title={t('board.dialog.label')} closeLabel={t('common.cancel')} onClose={close}>

@@ -6,35 +6,16 @@ import {
   useInteraction,
   type ConnectorEnd,
   type ConnectorGeometry,
-  type InteractionState,
   type Point,
-  type Rect,
 } from '../../canvas';
 import type { BoardElement, Connection, Endpoint } from '../../core';
 import { cx, inkColor } from '../../ui';
 import type { BoardModel } from './model';
+import { previewRect as rectOf, type Preview } from './previewRect';
 import { regionConnectionMoves } from './regionMoves';
 import styles from './Connections.module.css';
 
 const HEAD_SIZE = 12;
-
-type Preview = Pick<InteractionState, 'drag' | 'resize'>;
-
-/** Прямоугольник элемента с учётом перетаскивания; у карточки в колонке — сама колонка. */
-function rectOf(
-  elements: ReadonlyMap<string, BoardElement>,
-  id: string,
-  preview: Preview,
-): Rect | null {
-  const element = elements.get(id);
-  if (element === undefined) return null;
-  const parent = element.parentId === null ? undefined : elements.get(element.parentId);
-  const target = parent ?? element;
-  const base = preview.resize?.id === target.id ? preview.resize.rect : target;
-  const drag = preview.drag;
-  if (drag?.ids.has(target.id) !== true) return base;
-  return { ...base, x: base.x + drag.dx, y: base.y + drag.dy };
-}
 
 function endOf(
   elements: ReadonlyMap<string, BoardElement>,

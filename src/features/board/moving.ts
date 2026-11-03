@@ -6,13 +6,15 @@ import {
   expandRect,
   intersects,
   snapMove,
+  type InteractionState,
   type Point,
   type Rect,
 } from '../../canvas';
-import type { BoardElement, ElementId } from '../../core';
+import { branchOf, isInBranch, type BoardElement, type ElementId } from '../../core';
 import { compareInColumn, definitionFor, withRegionContents } from '../../elements';
 import { t } from '../../i18n';
 import { runMoves } from './runMoves';
+import { attachToMindMap, mindMapNode } from './mindMapActions';
 import { stopEditing } from './boardActions';
 import type { GestureContext, HandlersPart } from './gestureContext';
 import type { BoardModel } from './model';
@@ -29,6 +31,10 @@ interface MoveSession {
   readonly columns: readonly { readonly id: string; readonly rect: Rect }[];
   /** Контейнеры, которые надо поднять над соседями, пока из них тянут карточку. */
   readonly raise: ReadonlySet<string>;
+  /** Узлы карт, на которые можно бросить перетаскиваемое — оно станет их ветками. */
+  readonly nodes: readonly { readonly id: string; readonly rect: Rect }[];
+  /** Что взяли рукой (без веток узлов, которые едут следом): это и прицепится к узлу. */
+  readonly picked: readonly string[];
 }
 
 const isContainer = (element: BoardElement) => definitionFor(element.type).container;
@@ -50,7 +56,7 @@ function startSession({ model, view, selection }: GestureContext): MoveSession |
   const picked = [...selection()]
     .map((id) => snapshot.get(id))
     .filter((element): element is BoardElement => element !== undefined && !element.locked);
-  const expanded = withRegionContents(snapshot, picked);
+  const expanded = withMindMapBranches(model, withRegionContents(snapshot, picked));
   if (expanded.some((element) => element.locked)) {
     model.showNotice(t('frames.lockedContent'));
     return null;
@@ -70,8 +76,9 @@ function startSession({ model, view, selection }: GestureContext): MoveSession |
   const bounds = boundsOf(rects.values());
   if (bounds === null) return null;
   const ids = new Set(start.map((element) => element.id));
+  const hasNodes = start.some((element) => mindMapNode(model, element.id) !== null);
   const columns =
-    !regional && start.some((element) => !isContainer(element))
+    !regional && !hasNodes && start.some((element) => !isContainer(element))
       ? [...snapshot.values()]
           .filter(
             (element) => isContainer(element) && element.parentId === null && !ids.has(element.id),
@@ -90,7 +97,40 @@ function startSession({ model, view, selection }: GestureContext): MoveSession |
     others: neighbours(model, ids, view.getVisibleRect()),
     columns,
     raise,
+    nodes: regional ? [] : nodeTargets(model, ids),
+    picked: picked.map((element) => element.id),
   };
+}
+
+/** Ветки взятых узлов едут вместе с ними (видимые; свёрнутые и так не на доске). */
+function withMindMapBranches(model: BoardModel, elements: BoardElement[]): BoardElement[] {
+  const { forest } = model.mindMaps.getSnapshot();
+  if (forest.nodes.size === 0) return elements;
+  const snapshot = model.elements.getSnapshot();
+  const ids = new Set<string>(elements.map((element) => element.id));
+  const extra = elements
+    .flatMap((element): string[] =>
+      forest.nodes.has(element.id) ? branchOf(forest, element.id) : [],
+    )
+    .filter((id) => !ids.has(id) && snapshot.has(id))
+    .map((id) => snapshot.get(id))
+    .filter((element): element is BoardElement => element !== undefined && !element.locked);
+  return [...elements, ...extra];
+}
+
+/** Узлы-цели: видимые, не перетаскиваемые и не внутри перетаскиваемых веток. */
+function nodeTargets(model: BoardModel, dragged: ReadonlySet<string>) {
+  const { forest } = model.mindMaps.getSnapshot();
+  const snapshot = model.elements.getSnapshot();
+  return [...forest.nodes.values()]
+    .filter(
+      (node) =>
+        snapshot.has(node.id) && ![...dragged].some((id) => isInBranch(forest, id, node.id)),
+    )
+    .map((node) => ({
+      id: node.id,
+      rect: snapshot.get(node.id) ?? { x: 0, y: 0, width: 0, height: 0 },
+    }));
 }
 
 function center(rect: Rect): Point {
@@ -99,7 +139,8 @@ function center(rect: Rect): Point {
 
 function dropTarget(session: MoveSession, dx: number, dy: number): string | null {
   const moved = center({ ...session.bounds, x: session.bounds.x + dx, y: session.bounds.y + dy });
-  return session.columns.find((column) => containsPoint(column.rect, moved))?.id ?? null;
+  const column = session.columns.find((item) => containsPoint(item.rect, moved));
+  return column?.id ?? session.nodes.find((node) => containsPoint(node.rect, moved))?.id ?? null;
 }
 
 interface Placement {
@@ -171,6 +212,24 @@ function commitPlacements(
   else model.run({ kind: 'placeElements', placements });
 }
 
+type Drag = NonNullable<InteractionState['drag']>;
+
+/** Отпускание: на узел карты — стать его веткой; иначе в колонку или на новое место. */
+function finishMove(context: GestureContext, move: MoveSession, drag: Drag): void {
+  const { model } = context;
+  const node = move.nodes.find((item) => item.id === drag.target);
+  if (node !== undefined) {
+    attachToMindMap(model, move.picked, node.id);
+    return;
+  }
+  const intoContainer =
+    drag.target !== null || move.start.some((element) => element.parentId !== null);
+  if (drag.dx === 0 && drag.dy === 0 && !intoContainer) return;
+  const { placements, touched } = placementsAfterDrop(context, move, drag.dx, drag.dy);
+  commitPlacements(model, move.regional, placements);
+  model.markForMeasure(touched);
+}
+
 export function moveHandlers(
   context: GestureContext,
 ): HandlersPart<'startMove' | 'updateMove' | 'endMove'> {
@@ -202,15 +261,7 @@ export function moveHandlers(
     },
     endMove: (commit) => {
       const drag = interaction.getState().drag;
-      if (commit && move !== null && drag !== null) {
-        const intoContainer =
-          drag.target !== null || move.start.some((element) => element.parentId !== null);
-        if (drag.dx !== 0 || drag.dy !== 0 || intoContainer) {
-          const { placements, touched } = placementsAfterDrop(context, move, drag.dx, drag.dy);
-          commitPlacements(model, move.regional, placements);
-          model.markForMeasure(touched);
-        }
-      }
+      if (commit && move !== null && drag !== null) finishMove(context, move, drag);
       move = null;
       interaction.setState({ drag: null, guides: [] });
     },

@@ -1,7 +1,7 @@
 import type { AlignMode, DistributeAxis, Point, PointerTarget } from '../../canvas';
 import { t, type TranslationKey } from '../../i18n';
+import { action } from './menuAction';
 import type { MenuEntry } from '../../ui';
-import { formatCombo, isMacPlatform, parseCombo } from '../hotkeys';
 import {
   alignSelection,
   copySelection,
@@ -14,12 +14,12 @@ import {
   selectedElements,
   toggleLockSelection,
 } from './boardActions';
-import { BOARD_HOTKEYS } from './boardHotkeys';
 import { appClipboard } from './clipboard';
 import type { BoardModel } from './model';
 import { connectionMenuEntries } from './connectionMenu';
 import { elementTypeEntries } from './elementMenu';
-import { pasteFromApp } from './pasting';
+import { mindMapEntries } from './mindMapMenu';
+import { pasteAsMindMap, pasteFromApp } from './pasting';
 
 export interface MenuContext {
   readonly model: BoardModel;
@@ -27,29 +27,6 @@ export interface MenuContext {
   /** Точка мира, где открыто меню (туда вставляется и создаётся). */
   readonly at: Point;
   readonly fitAll: () => void;
-}
-
-export function hint(id: string): string | undefined {
-  const combo = BOARD_HOTKEYS.find((hotkey) => hotkey.id === id)?.combos[0];
-  return combo === undefined ? undefined : formatCombo(parseCombo(combo), isMacPlatform());
-}
-
-export function action(
-  id: string,
-  label: TranslationKey,
-  onSelect: () => void,
-  options: { disabled?: boolean; danger?: boolean; hotkey?: string } = {},
-): MenuEntry {
-  const shortcut = options.hotkey === undefined ? undefined : hint(options.hotkey);
-  return {
-    kind: 'action',
-    id,
-    label: t(label),
-    onSelect,
-    ...(shortcut === undefined ? {} : { hint: shortcut }),
-    ...(options.disabled === undefined ? {} : { disabled: options.disabled }),
-    ...(options.danger === undefined ? {} : { danger: options.danger }),
-  };
 }
 
 const separator = (id: string): MenuEntry => ({ kind: 'separator', id });
@@ -129,6 +106,7 @@ function elementEntries({ model, at }: MenuContext): MenuEntry[] {
   const [only] = selected;
   return [
     ...(only !== undefined && selected.length === 1 ? elementTypeEntries(model, only) : []),
+    ...(only !== undefined && selected.length === 1 ? mindMapEntries(model, only) : []),
     ...clipboardEntries(model, at),
     action('duplicate', 'board.menu.duplicate', run(duplicateSelection), { hotkey: 'duplicate' }),
     separator('s1'),
@@ -185,6 +163,9 @@ function backgroundEntries({ model, at, fitAll }: MenuContext): MenuEntry[] {
       },
       { hotkey: 'paste' },
     ),
+    action('pasteAsMindMap', 'mindMap.pasteAsMap', () => {
+      void pasteAsMindMap(model, at);
+    }),
     separator('s1'),
     action(
       'selectAll',

@@ -32,6 +32,7 @@ import {
   type ClipboardContent,
   type ClipboardPayload,
 } from './clipboard';
+import { askMindMapDelete, withMindMapBranches } from './mindMapActions';
 import type { BoardModel } from './model';
 import { placeElements } from './references';
 import { runMoves } from './runMoves';
@@ -130,7 +131,7 @@ export function deleteSelection(model: BoardModel): void {
     model.interaction.setState({ connectionSelection: EMPTY_SELECTION });
   }
   const selected = selectedElements(model);
-  if (selected.length === 0) return;
+  if (selected.length === 0 || askMindMapDelete(model, selected)) return;
   model.run({ kind: 'deleteElements', elementIds: ids(selected) });
 }
 
@@ -186,7 +187,12 @@ function withChildren(model: BoardModel, selected: readonly BoardElement[]): Boa
 
 export function copySelection(model: BoardModel): ClipboardContent | null {
   const selected = withRegionContents(model.elements.getSnapshot(), selectedElements(model));
-  return copyContent(withChildren(model, selected), model.richTextOf);
+  const maps = model.mindMaps.getSnapshot();
+  return copyContent(
+    withChildren(model, withMindMapBranches(maps, selected)),
+    model.richTextOf,
+    maps.forest,
+  );
 }
 
 /** ask — спросить «ссылка или копия», если вставляются представления сущностей. */
@@ -216,6 +222,7 @@ export function duplicateSelection(model: BoardModel): void {
     data: element.data,
     ...(element.richText === undefined ? {} : { richText: element.richText }),
     ...(element.parentIndex === undefined ? {} : { parentIndex: element.parentIndex }),
+    ...(element.mindMap === undefined ? {} : { mindMap: element.mindMap }),
   }));
   placeElements(model, elements, true);
 }
