@@ -4,6 +4,7 @@ import {
   ElementSchema,
   RichTextSchema,
   err,
+  isMindMapCommand,
   ok,
   planConnection,
   planElement,
@@ -16,11 +17,18 @@ import {
   type NewElement,
   type Result,
 } from '../../core';
-import { TEXT_FIELD, fillFragment } from '../richText';
 import { createRecord } from '../yjsRecords';
-import { commit, prepareRecordPatch } from './recordPatch';
+import { LOCAL_ORIGIN, commit, prepareRecordPatch } from './recordPatch';
 import { executeBoardTrashCommand } from './trashCommands';
-import { moveElements } from './moveElements';
+import { executeMindMapCommand } from './mindMapCommands';
+import { writeNewElement } from './newElementRecord';
+import {
+  moveWithMindMaps,
+  placeMindMapNodes,
+  placeNewMindMapNodes,
+  withMindMapLayout,
+} from './mindMapEffects';
+import { relayoutMindMaps, touchesMindMap } from '../mindMapLayout';
 
 type Command<K extends BoardCommand['kind']> = Extract<BoardCommand, { kind: K }>;
 
@@ -95,18 +103,22 @@ function createElements(
       return err('Некорректный текст элемента');
     planned.push({ element: element.value, richText: spec.richText });
   }
-  commit(
-    doc,
-    planned.map(({ element, richText }) => () => {
-      const record = createRecord(element);
-      elementsOf(doc).set(element.id, record);
-      if (richText === undefined) return;
-      const fragment = new Y.XmlFragment();
-      record.set(TEXT_FIELD, fragment);
-      fillFragment(fragment, richText);
-    }),
+  const placed = placeNewMindMapNodes(
+    specs,
+    planned.map(({ element }) => element),
   );
-  const createdIds = planned.map(({ element }) => element.id);
+  if (!placed.ok) return placed;
+  const createdIds = placed.value.map((element) => element.id);
+  doc.transact(() => {
+    commit(
+      doc,
+      placed.value.map((element, index) => () => {
+        writeNewElement(doc, element, planned[index]?.richText);
+      }),
+    );
+    // Новые узлы карт сразу раскладываются тем же шагом отмены.
+    if (specs.some((spec) => spec.mindMap !== undefined)) relayoutMindMaps(doc, createdIds);
+  }, LOCAL_ORIGIN);
   return ok({ ...(createdIds[0] === undefined ? {} : { createdId: createdIds[0] }), createdIds });
 }
 
@@ -201,6 +213,7 @@ export function executeBoardCommand(
   command: BoardCommand,
   environment: CommandEnvironment,
 ): Result<CommandResult> {
+  if (isMindMapCommand(command)) return executeMindMapCommand(doc, boardId, command, environment);
   const now = environment.clock.now();
   switch (command.kind) {
     case 'createElement':
@@ -216,13 +229,18 @@ export function executeBoardCommand(
         command.elementIds.map((id) => ({ id, changes: command.changes })),
       );
     case 'moveElements':
-      return moveElements(doc, command, now);
+      return moveWithMindMaps(doc, command, now);
     case 'placeElements':
-      return placeElements(doc, now, command);
+      return touchesMindMap(
+        doc,
+        command.placements.map((item) => item.elementId),
+      )
+        ? placeMindMapNodes(doc, now, command)
+        : placeElements(doc, now, command);
     case 'resizeElement':
-      return patchElements(doc, now, [
-        { id: command.elementId, changes: { ...command.placement } },
-      ]);
+      return withMindMapLayout(doc, [command.elementId], () =>
+        patchElements(doc, now, [{ id: command.elementId, changes: { ...command.placement } }]),
+      );
     case 'reorderElements':
       return reorder(doc, command, now);
     case 'createConnection':
@@ -231,6 +249,9 @@ export function executeBoardCommand(
       return updateConnection(doc, command);
     case 'deleteElements':
     case 'restoreElements':
+      return withMindMapLayout(doc, command.elementIds, () =>
+        executeBoardTrashCommand(doc, command, now),
+      );
     case 'deleteConnections':
     case 'restoreConnections':
       return executeBoardTrashCommand(doc, command, now);

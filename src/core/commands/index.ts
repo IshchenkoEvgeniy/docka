@@ -10,3 +10,7 @@ export type {
 } from './types';
 export { checkValues, planEntity, planEntityType, planField, storesFlags } from './entityCommands';
 export type { EntityCommand, NewField } from './entityCommands';
+export { planMindMapCommand } from './mindMapPlan';
+export type { MindMapPlan, MindMapPlanContext } from './mindMapPlan';
+export { isMindMapCommand } from './mindMapCommandTypes';
+export type { MindMapCommand, MindMapCommandKind } from './mindMapCommandTypes';

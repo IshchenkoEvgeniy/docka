@@ -3,6 +3,7 @@ export * from './color';
 export * from './connection';
 export * from './element';
 export * from './ids';
+export * from './mindMap';
 export * from './project';
 export * from './tag';
 export * from './trash';

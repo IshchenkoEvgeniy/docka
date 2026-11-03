@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ColorNameSchema } from './color';
 import { BoardIdSchema, ElementIdSchema, TimestampSchema } from './ids';
+import { MindMapLinkSchema } from './mindMap';
 import { TagSetSchema } from './tag';
 
 /** Пределы размеров и координат: защищают от мусора в файлах (NaN, бесконечность, гигантские числа). */
@@ -38,6 +39,12 @@ export const ElementSchema = z.object({
   /** Момент удаления в корзину; null — элемент на доске. */
   deletedAt: TimestampSchema.nullable(),
   data: z.record(z.string(), z.unknown()),
+  /**
+   * Место в майнд-карте (ADR 0011); нет или null — обычная карточка (null пишется, когда
+   * карточку убирают из карты). Битое значение из файла не делает элемент битым:
+   * карточка остаётся на доске без места в карте.
+   */
+  tree: MindMapLinkSchema.nullable().optional().catch(undefined),
 });
 export type BoardElement = z.infer<typeof ElementSchema>;
 

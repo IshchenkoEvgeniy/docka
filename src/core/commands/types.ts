@@ -1,15 +1,9 @@
-import type {
-  BoardId,
-  ColorName,
-  ConnectionId,
-  ElementId,
-  Endpoint,
-  RichNode,
-  TagId,
-} from '../model';
+import type { BoardId, ColorName, ConnectionId, ElementId, Endpoint, TagId } from '../model';
 import type { BOARD_BACKGROUNDS } from '../model/board';
 import type { LINE_STYLES, MARKERS } from '../model/connection';
 import type { EntityCommand } from './entityCommands';
+import type { MindMapCommand } from './mindMapCommandTypes';
+import type { ElementPlacement, NewElement } from './newElement';
 
 /**
  * Команды — единственный способ менять данные (CLAUDE.md). Здесь — их описания,
@@ -56,30 +50,11 @@ export type ProjectCommand =
   /** «Удалить шаблон»: файл остаётся, шаблон скрывается во всех устройствах (ADR 0006). */
   | { readonly kind: 'removeTemplate'; readonly templateId: string };
 
-export interface ElementPlacement {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
-
-/** Описание нового элемента (одного или из пачки — например, при вставке). */
-export interface NewElement {
-  readonly type: string;
-  readonly placement: ElementPlacement;
-  readonly color?: ColorName;
-  readonly parentId?: ElementId | null;
-  /** Контейнер из этой же пачки (номер в списке, раньше этого элемента): вставка колонки с карточками. */
-  readonly parentIndex?: number;
-  readonly locked?: boolean;
-  readonly tagIds?: readonly TagId[];
-  readonly data: Readonly<Record<string, unknown>>;
-  /** Форматированный текст (заметка, заголовок): ляжет в Yjs отдельным полем `text`. */
-  readonly richText?: readonly RichNode[];
-}
+export type { ElementPlacement, NewElement } from './newElement';
 
 /** Команды документа доски: элементы и связи. */
 export type BoardCommand =
+  | MindMapCommand
   | ({ readonly kind: 'createElement' } & NewElement)
   /** Несколько элементов одним шагом отмены, в порядке наложения снизу вверх (вставка, дублирование). */
   | { readonly kind: 'createElements'; readonly elements: readonly NewElement[] }

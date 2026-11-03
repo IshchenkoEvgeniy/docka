@@ -7,6 +7,7 @@ import {
   isBoardInTrash,
   ok,
   type BoardCommand,
+  type BoardElement,
   type BoardId,
   type CommandResult,
   type Connection,
@@ -27,7 +28,13 @@ const touches = (connection: Connection, ids: ReadonlySet<string>) =>
   (connection.from.kind === 'element' && ids.has(connection.from.elementId)) ||
   (connection.to.kind === 'element' && ids.has(connection.to.elementId));
 
-/** Элементы вместе со всем, что лежит в них (колонки), рекурсивно. */
+/** Где лежит элемент: колонка и родитель в майнд-карте (ветки удаляются вместе с узлом). */
+const holdersOf = (element: BoardElement): (string | null)[] => [
+  element.parentId,
+  element.tree?.parentId ?? null,
+];
+
+/** Элементы вместе со всем, что лежит в них (колонки, ветки карт), рекурсивно. */
 function withContents(doc: Y.Doc, ids: readonly string[]): Set<string> {
   const all = readElements(doc).items;
   const result = new Set(ids);
@@ -35,7 +42,8 @@ function withContents(doc: Y.Doc, ids: readonly string[]): Set<string> {
   while (grew) {
     grew = false;
     for (const element of all) {
-      if (element.parentId !== null && result.has(element.parentId) && !result.has(element.id)) {
+      const held = holdersOf(element).some((holder) => holder !== null && result.has(holder));
+      if (held && !result.has(element.id)) {
         result.add(element.id);
         grew = true;
       }

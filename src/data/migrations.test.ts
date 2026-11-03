@@ -234,6 +234,19 @@ describe('миграция проекта', () => {
     expect(readBoards(opened.value.projectDoc.doc).invalid).toEqual([]);
   });
 
+  it('формат 4: старая доска открывается без изменений карточек, поле tree появляется только по команде', async () => {
+    const fs = createMemoryFileSystem();
+    const boardId = await oldProject(fs);
+    const opened = await openProject(context(fs));
+    if (!opened.ok) throw new Error(opened.error);
+    const board = await opened.value.openBoard(boardId);
+    const elements = readElements(board.doc);
+    expect(elements.invalid).toEqual([]);
+    expect(elements.items[0]?.tree).toBeUndefined();
+    expect(documentFormatVersion(board.doc)).toBe(4);
+    expect(projectJson(fs).formatVersion).toBe(4);
+  });
+
   it('версия документа при слиянии только растёт', () => {
     const pc = new Y.Doc();
     const phone = new Y.Doc();

@@ -6,6 +6,7 @@ import { FIELD_KINDS } from './entity';
 import { BUILTIN_TYPE_KEYS } from './entityBuiltinKeys';
 import { ElementTypeSchema } from './element';
 import { KeySchema } from './ids';
+import { MindMapPlacementSchema } from './mindMap';
 import { RichTextSchema } from './richText';
 
 /**
@@ -28,6 +29,8 @@ export const TemplateElementSchema = z.object({
   text: z.string().max(20_000).optional(),
   /** Карточка колонки: номер колонки в этом же списке. */
   parentIndex: z.number().int().nonnegative().optional(),
+  /** Узел майнд-карты: родитель — номер в этом же списке (ADR 0011). */
+  mindMap: MindMapPlacementSchema.optional(),
   /** Карточка вложенной доски: номер дочерней доски шаблона. */
   board: z.number().int().nonnegative().optional(),
   tags: z.array(z.string().max(100)).max(50).optional(),

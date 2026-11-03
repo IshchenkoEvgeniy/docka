@@ -77,6 +77,12 @@ export const MIGRATIONS: readonly Migration[] = [
     migrateProjectDoc: tagSetsForProject,
     migrateBoardDoc: tagSetsForBoards,
   },
+  {
+    // Новое необязательное поле не требует переноса данных; версия поднята, чтобы старое
+    // приложение не открывало проект и не сдвигало узлы карт без раскладки.
+    version: 4,
+    description: 'Майнд-карта: необязательное поле tree у элементов (ADR 0011)',
+  },
 ];
 
 /** Метка транзакций миграции: пишутся в журнал, не отменяются «Отменить». */

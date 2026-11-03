@@ -1,5 +1,6 @@
 import * as Y from 'yjs';
 import type { RichNode } from '../core';
+import { relayoutMindMaps, touchesMindMap } from './mindMapLayout';
 
 /**
  * Текст элемента — Y.XmlFragment в поле `text` записи элемента (рядом с x, y, data).
@@ -117,5 +118,7 @@ export function setMeasuredHeight(doc: Y.Doc, elementId: string, height: number)
   if (record.get('height') === value) return;
   doc.transact(() => {
     record.set('height', value);
+    // Узел карты вырос — его карта раскладывается заново той же записью (ADR 0011).
+    if (touchesMindMap(doc, [elementId])) relayoutMindMaps(doc, [elementId]);
   }, MEASURE_ORIGIN);
 }
